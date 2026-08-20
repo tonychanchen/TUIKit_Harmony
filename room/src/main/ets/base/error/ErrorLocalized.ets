@@ -95,4 +95,5 @@ const ERROR_CODE_RESOURCE_MAP: Map<number, string> = new Map([
   [100502, 'roomkit_err_100502_room_metadata_total_limit'],
   [100503, 'roomkit_err_100503_room_metadata_no_valid_keys'],
   [100504, 'roomkit_err_100504_room_metadata_key_size_limit'],
+  [101072, 'roomkit_err_101072_recording_config_not_enabled'],
 ]);

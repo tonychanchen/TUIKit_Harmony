@@ -60,6 +60,18 @@
           ]
         }
       ]
+    },
+    {
+      "name": "tuicallkit",
+      "srcPath": "../call",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
     }
   ]
 }

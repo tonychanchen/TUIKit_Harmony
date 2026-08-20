@@ -1,6 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { TUICallKit } from '@tencentcloud/tuicallkit';
 import { UserStore } from '../common/UserStore';
 
 const DOMAIN = 0x0000;
@@ -33,11 +34,22 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading content: %{public}s', startPage);
+      try {
+        TUICallKit.createInstance(this.context).attach(windowStage);
+        hilog.info(DOMAIN, 'testTag', 'TUICallKit.attach done');
+      } catch (e) {
+        hilog.error(DOMAIN, 'testTag', 'TUICallKit.attach failed: %{public}s', JSON.stringify(e));
+      }
     });
   }
 
   onWindowStageDestroy(): void {
     hilog.info(DOMAIN, 'testTag', 'Ability onWindowStageDestroy');
+    try {
+      TUICallKit.createInstance(this.context).detach();
+    } catch (e) {
+      hilog.warn(DOMAIN, 'testTag', 'TUICallKit.detach failed: %{public}s', JSON.stringify(e));
+    }
   }
 
   onForeground(): void {

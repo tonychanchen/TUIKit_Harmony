@@ -235,23 +235,23 @@ export struct RoomParticipantListView {
     return this.roomId.startsWith(RoomConstants.webinarPrefix);
   }
 
-  private getString(resource: Resource): string {
-    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource) ?? '';
+  private getString(resource: Resource, ...args: Array<string | number>): string {
+    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource, ...args) ?? '';
   }
 
   private getMemberCountTitle(): string {
     const count = this.roomState.currentRoom?.participantCount ?? 0;
-    return this.getString($r('app.string.roomkit_member_count')).replace('xxx', count.toString());
+    return this.getString($r('app.string.roomkit_member_count'), count.toString());
   }
 
   private getParticipantTabTitle(): string {
     const count = this.roomState.currentRoom?.participantCount ?? 0;
-    return this.getString($r('app.string.roomkit_participant')).replace('xxx', count.toString());
+    return this.getString($r('app.string.roomkit_participant'), count.toString());
   }
 
   private getAudienceTabTitle(): string {
     const count = this.roomState.currentRoom?.audienceCount ?? 0;
-    return this.getString($r('app.string.roomkit_audience')).replace('xxx', count.toString());
+    return this.getString($r('app.string.roomkit_audience'), count.toString());
   }
 
   private shouldShowBottomButtons(): boolean {

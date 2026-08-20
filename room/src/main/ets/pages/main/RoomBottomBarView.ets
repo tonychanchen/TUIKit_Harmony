@@ -170,8 +170,8 @@ export struct RoomBottomBarView {
     return this.roomId.startsWith(RoomConstants.webinarPrefix);
   }
 
-  private getString(resource: Resource): string {
-    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource) ?? '';
+  private getString(resource: Resource, ...args: Array<string | number>): string {
+    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource, ...args) ?? '';
   }
 
   private getMemberCountText(): string {
@@ -179,7 +179,7 @@ export struct RoomBottomBarView {
       return this.getString($r('app.string.roomkit_member'));
     }
     const count = this.roomState.currentRoom?.participantCount ?? 0;
-    return this.getString($r('app.string.roomkit_member_count')).replace('xxx', count.toString());
+    return this.getString($r('app.string.roomkit_member_count'), count.toString());
   }
 
   private isMicDisabledByAdmin(): boolean {

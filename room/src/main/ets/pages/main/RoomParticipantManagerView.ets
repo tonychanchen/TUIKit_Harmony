@@ -403,7 +403,7 @@ export struct RoomParticipantManagerView {
   private handleTransferOwner(participant: RoomParticipant): void {
     const participantDisplayName = this.getParticipantDisplayName(participant);
     const title =
-      this.getString($r('app.string.roomkit_msg_transfer_owner_to')).replace('xxx', participantDisplayName);
+      this.getString($r('app.string.roomkit_msg_transfer_owner_to'), participantDisplayName);
     const content = `${this.getString($r('app.string.roomkit_msg_transfer_owner_tip'))}？`;
     AlertDialog.show(
       title,
@@ -416,7 +416,7 @@ export struct RoomParticipantManagerView {
         try {
           await this.participantStore?.transferOwner(participant.userID);
           const msg =
-            this.getString($r('app.string.roomkit_toast_owner_transferred')).replace('xxx', participantDisplayName);
+            this.getString($r('app.string.roomkit_toast_owner_transferred'), participantDisplayName);
           Toast.success(msg, this.getUIContext());
         } catch (_e) {
         }
@@ -429,14 +429,14 @@ export struct RoomParticipantManagerView {
     if (isAdmin) {
       try {
         await this.participantStore?.revokeAdmin(userID);
-        const msg = this.getString($r('app.string.roomkit_toast_admin_revoked')).replace('xxx', displayName);
+        const msg = this.getString($r('app.string.roomkit_toast_admin_revoked'), displayName);
         Toast.success(msg, this.getUIContext());
       } catch (_e) {
       }
     } else {
       try {
         await this.participantStore?.setAdmin(userID);
-        const msg = this.getString($r('app.string.roomkit_toast_admin_set')).replace('xxx', displayName);
+        const msg = this.getString($r('app.string.roomkit_toast_admin_set'), displayName);
         Toast.success(msg, this.getUIContext());
       } catch (_e) {
       }
@@ -444,7 +444,7 @@ export struct RoomParticipantManagerView {
   }
 
   private handleKick(userID: string, displayName: string): void {
-    const content = this.getString($r('app.string.roomkit_confirm_remove_member')).replace('xxx', displayName);
+    const content = this.getString($r('app.string.roomkit_confirm_remove_member'), displayName);
     AlertDialog.show(
       $r('app.string.roomkit_remove_member'),
       content,
@@ -537,8 +537,8 @@ export struct RoomParticipantManagerView {
     return this.roomId.startsWith(RoomConstants.webinarPrefix);
   }
 
-  private getString(resource: Resource): string {
-    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource) ?? '';
+  private getString(resource: Resource, ...args: Array<string | number>): string {
+    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource, ...args) ?? '';
   }
 }
 

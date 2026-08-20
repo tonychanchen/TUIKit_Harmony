@@ -213,8 +213,8 @@ export struct RoomCreatePage {
     const uiContext = this.getUIContext();
     let roomName = '';
     try {
-      roomName = uiContext.getHostContext()?.resourceManager.getStringByNameSync('roomkit_user_room')
-        ?.replace('xxx', userName) ?? `${userName}'s room`;
+      roomName = uiContext.getHostContext()?.resourceManager
+        .getStringSync($r('app.string.roomkit_user_room'), userName) ?? `${userName}'s room`;
     } catch (_e) {
       roomName = `${userName}'s room`;
     }

@@ -1,4 +1,4 @@
-import { TUIRoomEngine } from '@tencentcloud/rtcroomengine';
+import { RoomStore } from '@tencentcloud/atomicxcore';
 import { RoomConstants } from '../constants/RoomConstants';
 
 export class RoomDataReporter {
@@ -15,6 +15,6 @@ export class RoomDataReporter {
     };
 
     const jsonString: string = JSON.stringify(jsonObject);
-    TUIRoomEngine.sharedInstance().callExperimentalAPI(jsonString);
+    RoomStore.shared().callExperimentalAPI(jsonString);
   }
 }
