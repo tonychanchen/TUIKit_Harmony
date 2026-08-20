@@ -1,0 +1,368 @@
+{
+  "string": [
+    {
+      "name": "action_copy",
+      "value": "複製"
+    },
+    {
+      "name": "action_forward",
+      "value": "轉發"
+    },
+    {
+      "name": "action_multi_select",
+      "value": "多選"
+    },
+    {
+      "name": "action_quote",
+      "value": "引用"
+    },
+    {
+      "name": "action_more",
+      "value": "更多"
+    },
+    {
+      "name": "action_reply",
+      "value": "回覆"
+    },
+    {
+      "name": "action_translate",
+      "value": "翻譯"
+    },
+    {
+      "name": "messagelist_translate_failed",
+      "value": "翻譯失敗"
+    },
+    {
+      "name": "action_hide",
+      "value": "隱藏"
+    },
+    {
+      "name": "action_recall",
+      "value": "撤回"
+    },
+    {
+      "name": "action_delete",
+      "value": "刪除"
+    },
+    {
+      "name": "action_detail",
+      "value": "詳情"
+    },
+    {
+      "name": "action_back",
+      "value": "返回"
+    },
+    {
+      "name": "read_receipt_detail_title",
+      "value": "已讀回执"
+    },
+    {
+      "name": "read_receipt_read_by",
+      "value": "已讀"
+    },
+    {
+      "name": "read_receipt_delivered_to",
+      "value": "未讀"
+    },
+    {
+      "name": "read_receipt_load_failed",
+      "value": "載入失敗"
+    },
+    {
+      "name": "read_receipt_all_read",
+      "value": "全部已讀"
+    },
+    {
+      "name": "read_receipt_n_person_read",
+      "value": "%d人已讀"
+    },
+    {
+      "name": "messagelist_loading_more",
+      "value": "載入更多"
+    },
+    {
+      "name": "messagelist_loading",
+      "value": "載入中..."
+    },
+    {
+      "name": "messagelist_loading_history",
+      "value": "載入歷史訊息..."
+    },
+    {
+      "name": "messagelist_loading_new",
+      "value": "載入新訊息..."
+    },
+    {
+      "name": "messagelist_delete_failed_invalid_state",
+      "value": "刪除失敗：訊息列表狀態無效"
+    },
+    {
+      "name": "messagelist_message_deleted",
+      "value": "訊息已刪除"
+    },
+    {
+      "name": "messagelist_delete_message_failed",
+      "value": "刪除訊息失敗"
+    },
+    {
+      "name": "messagelist_delete_failed_not_found",
+      "value": "刪除失敗：未找到訊息"
+    },
+    {
+      "name": "messagelist_recall_failed_invalid_state",
+      "value": "撤回失敗：訊息列表狀態無效"
+    },
+    {
+      "name": "messagelist_recall_only_own",
+      "value": "只能撤回自己發送的訊息"
+    },
+    {
+      "name": "messagelist_recall_failed",
+      "value": "撤回失敗"
+    },
+    {
+      "name": "messagelist_recall_failed_not_found",
+      "value": "撤回失敗：未找到訊息"
+    },
+    {
+      "name": "messagelist_image_load_failed",
+      "value": "圖片載入失敗"
+    },
+    {
+      "name": "messagelist_unknown_file",
+      "value": "未知檔案"
+    },
+    {
+      "name": "messagelist_downloading",
+      "value": "下载中..."
+    },
+    {
+      "name": "messagelist_file_download_success",
+      "value": "檔案下载成功"
+    },
+    {
+      "name": "messagelist_file_download_failed",
+      "value": "檔案下载失敗"
+    },
+    {
+      "name": "messagelist_unknown_size",
+      "value": "未知大小"
+    },
+    {
+      "name": "messagelist_copy_unsupported",
+      "value": "該類型訊息不支援複製"
+    },
+    {
+      "name": "messagelist_copy_failed",
+      "value": "複製失敗"
+    },
+    {
+      "name": "messagelist_copied",
+      "value": "已複製"
+    },
+    {
+      "name": "messagelist_translation_tips",
+      "value": "由腾讯云 IM 提供翻譯支援"
+    },
+    {
+      "name": "messagelist_recall_failed_no_callback",
+      "value": "撤回失敗：未設定撤回回调"
+    },
+    {
+      "name": "messagelist_delete_failed_no_callback",
+      "value": "刪除失敗：未設定刪除回调"
+    },
+    {
+      "name": "action_resend",
+      "value": "重發"
+    },
+    {
+      "name": "resend_confirm_title",
+      "value": "重發訊息"
+    },
+    {
+      "name": "resend_confirm_message",
+      "value": "確定要重新發送這條訊息吗？"
+    },
+    {
+      "name": "messagelist_resend_success",
+      "value": "訊息重發成功"
+    },
+    {
+      "name": "messagelist_resend_failed",
+      "value": "訊息重發失敗"
+    },
+    {
+      "name": "action_multiselect",
+      "value": "多選"
+    },
+    {
+      "name": "multiselect_selected",
+      "value": "已選擇"
+    },
+    {
+      "name": "forward_select_conversation",
+      "value": "選擇會話"
+    },
+    {
+      "name": "forward_select_from_contacts",
+      "value": "從通訊錄選擇"
+    },
+    {
+      "name": "forward_recent_chats",
+      "value": "最近聊天"
+    },
+    {
+      "name": "forward_unnamed_conversation",
+      "value": "未命名會話"
+    },
+    {
+      "name": "forward_send",
+      "value": "轉發"
+    },
+    {
+      "name": "forward_success",
+      "value": "轉發成功"
+    },
+    {
+      "name": "forward_failed",
+      "value": "轉發失敗"
+    },
+    {
+      "name": "forward_selected_count",
+      "value": "個會話已選擇"
+    },
+    {
+      "name": "messagelist_messages_deleted",
+      "value": "訊息已刪除"
+    },
+    {
+      "name": "forward_separately",
+      "value": "逐條轉發"
+    },
+    {
+      "name": "forward_merged",
+      "value": "合並轉發"
+    },
+    {
+      "name": "multiselect_delete",
+      "value": "刪除"
+    },
+    {
+      "name": "multiselect_delete_confirm",
+      "value": "確定刪除已選訊息？"
+    },
+    {
+      "name": "forward_limit_tip",
+      "value": "選擇的訊息超過30條，請使用合並轉發"
+    },
+    {
+      "name": "forward_failed_message_tip",
+      "value": "發送失敗的訊息不支援轉發"
+    },
+    {
+      "name": "forward_violation_message_tip",
+      "value": "安全打击訊息不支援轉發"
+    },
+    {
+      "name": "merged_message_title",
+      "value": "聊天記錄"
+    },
+    {
+      "name": "merged_message_hint",
+      "value": "聊天記錄"
+    },
+    {
+      "name": "messagelist_reaction_tap_to_delete",
+      "value": "点击刪除"
+    },
+    {
+      "name": "messagelist_reaction_added",
+      "value": "表情已添加"
+    },
+    {
+      "name": "messagelist_reaction_removed",
+      "value": "表情已移除"
+    },
+    {
+      "name": "action_convert_to_text",
+      "value": "轉文字"
+    },
+    {
+      "name": "messagelist_convert_to_text_failed",
+      "value": "轉換失敗"
+    },
+    {
+      "name": "messagelist_floating_new_messages",
+      "value": "條新訊息"
+    },
+    {
+      "name": "messagelist_floating_mention",
+      "value": "有人@我"
+    },
+    {
+      "name": "messagelist_floating_someone_mentioned_me",
+      "value": "有人@我"
+    },
+    {
+      "name": "messagelist_floating_at_all",
+      "value": "有人@所有人"
+    },
+    {
+      "name": "messagelist_floating_back_to_latest",
+      "value": "回到最新位置"
+    },
+    {
+      "name": "messagelist_floating_back_to_quote",
+      "value": "回到引用位置"
+    },
+    {
+      "name": "messagelist_violation_warning",
+      "value": "涉及敏感內容"
+    },
+    {
+      "name": "message_list_quote_deleted",
+      "value": "原訊息已被刪除"
+    },
+    {
+      "name": "message_list_quote_revoked",
+      "value": "原訊息已被撤回"
+    },
+    {
+      "name": "message_list_message_type_image",
+      "value": "[圖片]"
+    },
+    {
+      "name": "message_list_message_type_video",
+      "value": "[影片]"
+    },
+    {
+      "name": "message_list_message_type_voice",
+      "value": "[語音]"
+    },
+    {
+      "name": "message_list_message_type_file",
+      "value": "[檔案]"
+    },
+    {
+      "name": "message_list_message_type_animate_emoji",
+      "value": "[動畫表情]"
+    },
+    {
+      "name": "message_list_message_type_custom",
+      "value": "[自訂訊息]"
+    },
+    {
+      "name": "message_list_message_type_merged",
+      "value": "[聊天記錄]"
+    },
+    {
+      "name": "message_list_unsupported_message",
+      "value": "[不支援的訊息類型]"
+    },
+    {
+      "name": "custom_message_view_details",
+      "value": "查看詳情"
+    }
+  ]
+}

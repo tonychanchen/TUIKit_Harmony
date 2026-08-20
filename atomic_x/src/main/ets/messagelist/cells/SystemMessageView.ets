@@ -12,7 +12,7 @@ export struct SystemMessageViewContent {
   build() {
     Row() {
       Text(this.formatSystemInfo())
-        .fontSize(14)
+        .fontSize(12)
         .fontColor(this.themeState.colors.textColorSecondary)
         .padding({
           left: 8,

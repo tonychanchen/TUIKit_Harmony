@@ -110,7 +110,7 @@
     },
     {
       "name": "call_stop_tip",
-      "value": "Duration:"
+      "value": "Duration"
     },
     {
       "name": "call_switch_to_audio",

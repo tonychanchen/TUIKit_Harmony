@@ -21,6 +21,7 @@ interface AZGroup<T> {
 export struct AZOrderedList {
   private static readonly ITEM_HEIGHT: number = 56;
   private static readonly AVATAR_SIZE: number = 40;
+  private static readonly AVATAR_BORDER_RADIUS: number = 4;
   private static readonly HORIZONTAL_PADDING: number = 16;
   private static readonly INDEX_BAR_WIDTH: number = 24;
   private static readonly HEADER_HEIGHT: number = 32;
@@ -172,66 +173,82 @@ export struct AZOrderedList {
     Row() {
       Text(letter)
         .fontSize(14)
-        .fontWeight(600)
+        .fontWeight(FontWeight.Bold)
         .fontColor(this.themeState.colors.textColorPrimary)
         .direction(this.languageState.getLayoutDirection() === LayoutDirection.RTL ? Direction.Rtl : Direction.Ltr)
     }
     .width('100%')
     .height(AZOrderedList.HEADER_HEIGHT)
-    .padding({ left: AZOrderedList.HORIZONTAL_PADDING, right: AZOrderedList.HORIZONTAL_PADDING })
-    .backgroundColor(this.themeState.colors.bgColorDialog)
+    .padding({ left: AZOrderedList.HORIZONTAL_PADDING, right: AZOrderedList.HORIZONTAL_PADDING, top: 8, bottom: 8 })
+    .backgroundColor(this.themeState.colors.bgColorInput)
     .justifyContent(FlexAlign.Start)
     .alignItems(VerticalAlign.Center)
   }
 
   @Builder
   DefaultItemBuilder(item: AZOrderedListItem<ESObject>) {
-    Row({ space: 13 }) {
-      // Avatar
-      Stack() {
-        if (item.avatarUrl && item.avatarUrl.length > 0) {
-          Image(item.avatarUrl)
-            .width(AZOrderedList.AVATAR_SIZE)
-            .height(AZOrderedList.AVATAR_SIZE)
-            .borderRadius(AZOrderedList.AVATAR_SIZE / 2)
-            .objectFit(ImageFit.Cover)
-        } else {
-          Circle()
-            .width(AZOrderedList.AVATAR_SIZE)
-            .height(AZOrderedList.AVATAR_SIZE)
-            .fill(this.themeState.colors.textColorLink)
+    Column() {
+      Row({ space: 13 }) {
+        // Avatar
+        Stack() {
+          if (item.avatarUrl && item.avatarUrl.length > 0) {
+            Image(item.avatarUrl)
+              .width(AZOrderedList.AVATAR_SIZE)
+              .height(AZOrderedList.AVATAR_SIZE)
+              .borderRadius(AZOrderedList.AVATAR_BORDER_RADIUS)
+              .objectFit(ImageFit.Cover)
+          } else {
+            Column()
+              .width(AZOrderedList.AVATAR_SIZE)
+              .height(AZOrderedList.AVATAR_SIZE)
+              .backgroundColor(this.themeState.colors.bgColorAvatar)
+              .borderRadius(AZOrderedList.AVATAR_BORDER_RADIUS)
 
-          Text(TextUtils.getAvatarLetter(item.label))
-            .fontSize(16)
-            .fontWeight(500)
-            .fontColor(this.themeState.colors.textColorButton)
+            Text(TextUtils.getAvatarLetter(item.label))
+              .fontSize(16)
+              .fontWeight(500)
+              .fontColor(this.themeState.colors.textColorPrimary)
+          }
         }
-      }
+        .width(AZOrderedList.AVATAR_SIZE)
+        .height(AZOrderedList.AVATAR_SIZE)
+        .clip(true)
 
-      // Label
-      Text(item.label)
-        .fontSize(14)
-        .fontWeight(400)
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .layoutWeight(1)
-        .direction(this.languageState.getLayoutDirection() === LayoutDirection.RTL ? Direction.Rtl : Direction.Ltr)
+        // Label
+        Text(item.label)
+          .fontSize(14)
+          .fontWeight(400)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(1)
+          .direction(this.languageState.getLayoutDirection() === LayoutDirection.RTL ? Direction.Rtl : Direction.Ltr)
+      }
+      .width('100%')
+      .height(AZOrderedList.ITEM_HEIGHT)
+      .padding({
+        left: AZOrderedList.HORIZONTAL_PADDING,
+        right: AZOrderedList.HORIZONTAL_PADDING
+      })
+      .backgroundColor(this.themeState.colors.bgColorOperate)
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center)
+      .onClick(() => {
+        if (this.onItemClick) {
+          this.onItemClick(item);
+        }
+      })
+
+      Row() {
+        Row()
+          .layoutWeight(1)
+          .height(0.5)
+          .backgroundColor(this.themeState.colors.strokeColorSecondary)
+      }
+      .width('100%')
+      .padding({ left: AZOrderedList.HORIZONTAL_PADDING + AZOrderedList.AVATAR_SIZE + 13 })
     }
     .width('100%')
-    .height(AZOrderedList.ITEM_HEIGHT)
-    .padding({
-      left: AZOrderedList.HORIZONTAL_PADDING,
-      right: AZOrderedList.HORIZONTAL_PADDING
-    })
-    .backgroundColor(this.themeState.colors.bgColorOperate)
-    .justifyContent(FlexAlign.Start)
-    .alignItems(VerticalAlign.Center)
-    .onClick(() => {
-      if (this.onItemClick) {
-        this.onItemClick(item);
-      }
-    })
   }
 
   @Builder

@@ -96,6 +96,7 @@ export struct MessageQuoteBubbleView {
       }
     }
     .alignItems(HorizontalAlign.Start)
+    .constraintSize({ maxWidth: '72%' })
     .padding(8)
     .backgroundColor(this.themeState.colors.bgColorBubbleReciprocal)
     .borderRadius(8)

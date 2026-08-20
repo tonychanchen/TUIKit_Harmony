@@ -19,6 +19,10 @@
     {
       "name": "back_button",
       "value": "Back"
+    },
+    {
+      "name": "emoji_picker_send",
+      "value": "Send"
     }
   ]
 }

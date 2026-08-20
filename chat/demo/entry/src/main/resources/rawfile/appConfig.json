@@ -15,6 +15,7 @@
     "enableCreateConversation": true,
     "conversationActionList": [
       "delete",
+      "mute",
       "pin",
       "markUnread",
       "clearHistory"
@@ -27,6 +28,6 @@
     "hideSearch": false
   },
   "avatar": {
-    "shape": "circular"
+    "shape": "rounded"
   }
 }

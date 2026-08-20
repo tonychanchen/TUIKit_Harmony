@@ -2,7 +2,7 @@
   "string": [
     {
       "name": "input_message_placeholder",
-      "value": "发送消息"
+      "value": "发消息或按住说话..."
     },
     {
       "name": "send_button",
@@ -85,6 +85,10 @@
       "value": "音频大小超过28MB限制"
     },
     {
+      "name": "audio_too_short_error",
+      "value": "语音录制时长太短"
+    },
+    {
       "name": "video_too_large_error",
       "value": "视频大小超过100MB限制"
     },
@@ -130,7 +134,7 @@
     },
     {
       "name": "voice_transcription_send_original_voice",
-      "value": "原语音"
+      "value": "发送原语音"
     },
     {
       "name": "voice_transcription_empty",

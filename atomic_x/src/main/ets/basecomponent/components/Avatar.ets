@@ -155,20 +155,11 @@ export struct Avatar {
   @Builder
   DefaultAvatarBuilder(name?: string) {
     Stack() {
-      // Render different background shapes based on shape
-      if (this.shape === AvatarShape.Round) {
-        Circle()
-          .width(this.avatarSize)
-          .height(this.avatarSize)
-          .fill(this.themeState.colors.bgColorAvatar)
-          .borderRadius(this.computedBorderRadius())
-      } else {
-        Rect()
-          .width(this.avatarSize)
-          .height(this.avatarSize)
-          .fill(this.themeState.colors.bgColorAvatar)
-          .borderRadius(this.computedBorderRadius())
-      }
+      Column()
+        .width(this.avatarSize)
+        .height(this.avatarSize)
+        .backgroundColor(this.themeState.colors.bgColorAvatar)
+        .borderRadius(this.computedBorderRadius())
 
       if (this.hasValidName(name || this.content?.name)) {
         Text(TextUtils.getAvatarLetter(name || this.content?.name))
@@ -188,19 +179,11 @@ export struct Avatar {
   @Builder
   SymbolAvatarBuilder() {
     Stack() {
-      if (this.shape === AvatarShape.Round) {
-        Circle()
-          .width(this.avatarSize)
-          .height(this.avatarSize)
-          .fill(this.themeState.colors.bgColorAvatar)
-          .borderRadius(this.computedBorderRadius())
-      } else {
-        Rect()
-          .width(this.avatarSize)
-          .height(this.avatarSize)
-          .fill(this.themeState.colors.bgColorAvatar)
-          .borderRadius(this.computedBorderRadius())
-      }
+      Column()
+        .width(this.avatarSize)
+        .height(this.avatarSize)
+        .backgroundColor(this.themeState.colors.bgColorAvatar)
+        .borderRadius(this.computedBorderRadius())
 
       Image($rawfile('basecomponent/avatar_person.svg'))
         .width(this.avatarSize * 0.6)
@@ -240,26 +223,38 @@ export struct Avatar {
     if (this.badge && this.badge.type !== AvatarBadge.None) {
       if (this.badge.type === AvatarBadge.Dot) {
         Circle()
-          .width(10)
-          .height(10)
-          .fill(Color.Red)
-          .position({ x: this.badgePositionX(), y: this.badgePositionY() })
+          .width(8)
+          .height(8)
+          .fill(this.themeState.colors.textColorError)
+          .position({ x: this.avatarSize - 4, y: -4 })
       } else if (this.badge.type === AvatarBadge.Text && this.badge.text) {
         Text(this.badge.text)
-          .fontSize(10)
-          .fontColor(Color.White)
-          .padding(4)
-          .backgroundColor(Color.Red)
-          .borderRadius(10)
-          .position({ x: this.badgePositionX(), y: this.badgePositionY() })
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorButton)
+          .textAlign(TextAlign.Center)
+          .maxLines(1)
+          .height(16)
+          .constraintSize({ minWidth: 16 })
+          .padding({ left: 5, right: 5 })
+          .backgroundColor(this.themeState.colors.textColorError)
+          .borderRadius(8)
+          .position({ x: '100%', y: 0 })
+          .translate({ x: '-50%', y: '-50%' })
       } else if (this.badge.type === AvatarBadge.Count && this.badge.count !== undefined) {
         Text(this.badge.count > 99 ? "99+" : this.badge.count.toString())
-          .fontSize(10)
-          .fontColor(Color.White)
-          .padding(4)
-          .backgroundColor(Color.Red)
-          .borderRadius(10)
-          .position({ x: this.badgePositionX(), y: this.badgePositionY() })
+          .fontSize(12)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorButton)
+          .textAlign(TextAlign.Center)
+          .maxLines(1)
+          .height(16)
+          .constraintSize({ minWidth: 16 })
+          .padding({ left: 5, right: 5 })
+          .backgroundColor(this.themeState.colors.textColorError)
+          .borderRadius(8)
+          .position({ x: '100%', y: 0 })
+          .translate({ x: '-50%', y: '-50%' })
       }
     }
   }
@@ -270,22 +265,6 @@ export struct Avatar {
 
   private hasValidName(name?: string): boolean {
     return !!name && name.trim().length > 0;
-  }
-
-  private badgePositionX(): number {
-    return this.avatarSize - 10;
-  }
-
-  private badgePositionY(): number {
-    const position = this.badge?.position || AvatarBadgePosition.Up;
-    switch (position) {
-      case AvatarBadgePosition.Up:
-        return -1;
-      case AvatarBadgePosition.Bottom:
-        return this.avatarSize - 8;
-      default:
-        return -8;
-    }
   }
 
   private computedBorderRadius(): number {
@@ -330,7 +309,7 @@ export struct Avatar {
       case GlobalAvatarShape.ROUNDED:
         return AvatarShape.RoundedRectangle;
       default:
-        return AvatarShape.Round;
+        return AvatarShape.RoundedRectangle;
     }
   }
 } 

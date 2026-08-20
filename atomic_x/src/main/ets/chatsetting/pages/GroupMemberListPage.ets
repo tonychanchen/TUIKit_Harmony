@@ -70,11 +70,6 @@ export struct GroupMemberListPage {
         this.LoadingStateBuilder()
       } else {
         Column() {
-
-
-          this.MemberStatsBuilder()
-
-
           this.MemberListBuilder()
         }
         .width('100%')
@@ -95,29 +90,32 @@ export struct GroupMemberListPage {
 
   @Builder
   NavigationBarBuilder() {
-    Row() {
-      // Back button
+    Stack() {
       Row() {
-        Image($rawfile('basecomponent/common_back_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
-          .scale({
-            x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
-            y: 1
-          })
+        Row() {
+          Image($rawfile('basecomponent/common_back_icon.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .scale({
+              x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
+              y: 1
+            })
+        }
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+        .margin({ left: 16 })
+        .onClick(() => {
+          this.closeDialog();
+        })
       }
-      .width(44)
-      .height(44)
-      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .height(56)
+      .justifyContent(FlexAlign.Start)
       .alignItems(VerticalAlign.Center)
-      .onClick(() => {
-        this.closeDialog();
-      })
 
-      Blank()
-
-      // Title
       Text(this.groupName)
         .fontSize(18)
         .fontWeight(600)
@@ -125,17 +123,12 @@ export struct GroupMemberListPage {
         .fontColor(this.themeState.colors.textColorPrimary)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-      Blank()
+        .align(Alignment.Center)
     }
     .width('100%')
     .height(56)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
 
-    // Divider
     Divider()
       .height(0.5)
       .color(this.themeState.colors.strokeColorSecondary)
@@ -159,27 +152,6 @@ export struct GroupMemberListPage {
     .layoutWeight(1)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
-  }
-
-  @Builder
-  MemberStatsBuilder() {
-    Row() {
-      Text(`${this.filteredMembers.length} Members`)
-        .fontSize(14)
-        .fontWeight(500)
-        .fontFamily('SF Pro Text')
-        .fontColor(this.themeState.colors.textColorSecondary)
-
-      Blank()
-
-    }
-    .width('100%')
-    .padding({
-      left: 16,
-      right: 16,
-      top: 8,
-      bottom: 8
-    })
   }
 
   @Builder
@@ -240,56 +212,45 @@ export struct GroupMemberListPage {
       Column({ space: 2 }) {
         Row() {
           Text((member.nameCard || member.nickname || member.userID).toString())
-            .fontSize(17)
+            .fontSize(14)
             .fontWeight(400)
             .fontFamily('SF Pro Text')
             .fontColor(this.themeState.colors.textColorPrimary)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-
 
           if (member.role === GroupMemberRole.OWNER) {
             Text($r('app.string.chatsetting_owner'))
-              .fontSize(12)
-              .fontWeight(500)
-              .fontFamily('SF Pro Text')
-              .fontColor(this.themeState.colors.textColorTertiary)
-              .padding({
-                left: 6,
-                right: 6,
-                top: 2,
-                bottom: 2
-              })
-              .backgroundColor('rgba(255, 149, 0, 0.1)')
-              .borderRadius(4)
-          } else if (member.role === GroupMemberRole.ADMIN) {
-            Text($r('app.string.chatsetting_admin'))
-              .fontSize(12)
-              .fontWeight(500)
+              .fontSize(10)
+              .fontWeight(400)
               .fontFamily('SF Pro Text')
               .fontColor(this.themeState.colors.textColorLink)
               .padding({
-                left: 6,
-                right: 6,
+                left: 8,
+                right: 8,
                 top: 2,
                 bottom: 2
               })
-              .backgroundColor('rgba(3, 101, 249, 0.1)')
-              .borderRadius(4)
+              .margin({ left: 8 })
+              .backgroundColor(this.themeState.colors.buttonColorPrimaryDisabled)
+              .borderRadius(3)
+          } else if (member.role === GroupMemberRole.ADMIN) {
+            Text($r('app.string.chatsetting_admin'))
+              .fontSize(10)
+              .fontWeight(400)
+              .fontFamily('SF Pro Text')
+              .fontColor(this.themeState.colors.textColorLink)
+              .padding({
+                left: 8,
+                right: 8,
+                top: 2,
+                bottom: 2
+              })
+              .margin({ left: 8 })
+              .backgroundColor(this.themeState.colors.buttonColorPrimaryDisabled)
+              .borderRadius(3)
           }
         }
-
-        if (member.userID !== (member.nameCard || member.nickname) && member.userID) {
-          Text(`@${member.userID.toString()}`)
-            .fontSize(14)
-            .fontWeight(400)
-            .fontFamily('SF Pro Text')
-            .fontColor(this.themeState.colors.textColorSecondary)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-
 
         if (member.muteUntil && member.muteUntil > Date.now() / 1000) {
           Text($r('app.string.chatsetting_muted'))
@@ -311,14 +272,6 @@ export struct GroupMemberListPage {
       .alignItems(HorizontalAlign.Start)
       .margin({ left: 12 })
       .layoutWeight(1)
-
-
-      if (this.canManageMember(member)) {
-        Image($rawfile('search/right_arrow_icon.svg'))
-          .width(20)
-          .height(20)
-          .fillColor(this.themeState.colors.textColorSecondary)
-      }
     }
     .width('100%')
     .height(GroupMemberListPage.CELL_HEIGHT)
@@ -441,24 +394,16 @@ export struct GroupMemberListPage {
   }
 
   private canManageMember(member: GroupMember): boolean {
-
     if (member.userID === LoginStore.shared().state.loginUserInfo?.userID) {
       return false;
     }
 
-
     if (this.groupState?.currentUserRole === GroupMemberRole.OWNER) {
-      return this.hasPermission(GroupPermission.SET_GROUP_MEMBER_ROLE) ||
-      this.hasPermission(GroupPermission.REMOVE_GROUP_MEMBER);
+      return member.role !== GroupMemberRole.OWNER;
     }
 
-
-    if (this.groupState?.currentUserRole === GroupMemberRole.ADMIN &&
-      member.role === GroupMemberRole.MEMBER) {
-      return this.hasPermission(GroupPermission.REMOVE_GROUP_MEMBER);
-    }
-
-    return false;
+    return this.groupState?.currentUserRole === GroupMemberRole.ADMIN &&
+      member.role === GroupMemberRole.MEMBER;
   }
 
   private handleMemberClick(member: GroupMember): void {
@@ -481,47 +426,39 @@ export struct GroupMemberListPage {
       showDivider: true
     });
 
+    if (this.canRemoveMember(member)) {
+      options.push({
+        text: $r('app.string.chatsetting_member_remove'),
+        action: 'removeMember',
+        showDivider: true
+      });
+    }
 
     if (this.groupState?.currentUserRole === GroupMemberRole.OWNER &&
       member.role === GroupMemberRole.MEMBER) {
       options.push({
         text: $r('app.string.chatsetting_member_set_admin'),
         action: 'setAdmin',
-        showDivider: true
+        showDivider: false
       });
-    }
-
-
-    if (this.groupState?.currentUserRole === GroupMemberRole.OWNER &&
+    } else if (this.groupState?.currentUserRole === GroupMemberRole.OWNER &&
       member.role === GroupMemberRole.ADMIN) {
       options.push({
         text: $r('app.string.chatsetting_member_remove_admin'),
         action: 'removeAdmin',
-        showDivider: true
-      });
-    }
-
-
-    if (this.canRemoveMember(member)) {
-      options.push({
-        text: $r('app.string.chatsetting_member_remove'),
-        action: 'removeMember',
-        color: '#FF584C',
         showDivider: false
       });
     }
 
-
     const actionItems: ActionItem[] = options.map((option: ActionButtonConfig): ActionItem => ({
       text: option.text,
       value: option.action,
-      isDestructive: option.color === '#FF584C'
+      isDestructive: false
     }));
 
 
     this.memberOptionsDialogController = new CustomDialogController({
       builder: ActionSheet({
-        title: `管理成员: ${member.nameCard || member.nickname || member.userID}`,
         options: actionItems,
         onActionSelected: (item: ActionItem) => {
           this.handleMemberAction(item.value as string, member);
@@ -540,26 +477,7 @@ export struct GroupMemberListPage {
   }
 
   private canRemoveMember(member: GroupMember): boolean {
-
-    if (member.userID === LoginStore.shared().state.loginUserInfo?.userID) {
-      return false;
-    }
-
-    const currentUserRole = this.groupState?.currentUserRole;
-
-
-    if (currentUserRole === GroupMemberRole.OWNER) {
-      return member.role !== GroupMemberRole.OWNER &&
-      this.hasPermission(GroupPermission.REMOVE_GROUP_MEMBER);
-    }
-
-
-    if (currentUserRole === GroupMemberRole.ADMIN &&
-      member.role === GroupMemberRole.MEMBER) {
-      return this.hasPermission(GroupPermission.REMOVE_GROUP_MEMBER);
-    }
-
-    return false;
+    return this.canManageMember(member);
   }
 
   private handleMemberAction(action: string, member: GroupMember): void {
@@ -630,7 +548,6 @@ export struct GroupMemberListPage {
       Toast.info($r('app.string.chatsetting_group_info_unavailable_toast'), this.getUIContext());
       return;
     }
-
 
     Toast.info($r('app.string.chatsetting_member_removing_admin'), this.getUIContext());
 

@@ -37,7 +37,7 @@ export struct TextMessageViewContent {
           }
         }, (segment: EmojiTextSegment, index: number) => `${segment.type}_${index}_${segment.content}`)
       }
-      .fontSize(15)
+      .fontSize(16)
       .fontColor(this.message?.isSentBySelf ?
         this.themeState.colors.textColorAntiPrimary :
         this.themeState.colors.textColorPrimary)
@@ -48,10 +48,10 @@ export struct TextMessageViewContent {
     }
     .constraintSize({ minWidth: 0, maxWidth: 240 })
     .padding({
-      left: 8,
-      right: 8,
-      top: 8,
-      bottom: 6
+      left: 12,
+      right: 12,
+      top: 10,
+      bottom: 10
     })
   }
 

@@ -254,7 +254,7 @@
     },
     {
       "name": "gender_unknown",
-      "value": "Unknown"
+      "value": "Secret"
     },
     {
       "name": "unsetted",
@@ -289,20 +289,20 @@
       "value": "Chinese"
     },
     {
+      "name": "language_traditional",
+      "value": "Traditional Chinese"
+    },
+    {
       "name": "language_english",
       "value": "English"
     },
     {
       "name": "language_arabic",
-      "value": "Arabic"
+      "value": "العربية"
     },
     {
       "name": "login_success_message",
       "value": "User %s login success"
-    },
-    {
-      "name": "theme_random_color",
-      "value": "Random Color"
     },
     {
       "name": "setting_message_read_receipt",
@@ -319,10 +319,6 @@
     {
       "name": "MeMessageReadStatusCloseDesc",
       "value": "After turning it on, messages in group chats will show read status, so you can see if others have read them. If your friends also enable message read status, one-on-one chats will also show read status."
-    },
-    {
-      "name": "setting_classic_message_action",
-      "value": "Classic UI Style"
     }
   ]
 }

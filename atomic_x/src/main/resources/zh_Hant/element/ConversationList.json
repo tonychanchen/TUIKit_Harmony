@@ -1,0 +1,128 @@
+{
+  "string": [
+    {
+      "name": "no_messages_title",
+      "value": "沒有訊息"
+    },
+    {
+      "name": "no_messages_desc",
+      "value": "点击+圖標開始新的會話"
+    },
+    {
+      "name": "loading_message",
+      "value": "載入會話列表中..."
+    },
+    {
+      "name": "mark_unread",
+      "value": "未讀"
+    },
+    {
+      "name": "more",
+      "value": "更多"
+    },
+    {
+      "name": "more_options",
+      "value": "更多選項"
+    },
+    {
+      "name": "pin_conversation",
+      "value": "置頂"
+    },
+    {
+      "name": "unpin_conversation",
+      "value": "取消置頂"
+    },
+    {
+      "name": "clear_messages",
+      "value": "清空聊天記錄"
+    },
+    {
+      "name": "delete_conversation",
+      "value": "刪除聊天"
+    },
+    {
+      "name": "mute_conversation",
+      "value": "訊息免打扰"
+    },
+    {
+      "name": "unmute_conversation",
+      "value": "取消免打扰"
+    },
+    {
+      "name": "clear_messages_title",
+      "value": "清空訊息"
+    },
+    {
+      "name": "clear_messages_confirm",
+      "value": "確定要清空此會話中的所有訊息吗？"
+    },
+    {
+      "name": "delete_conversation_title",
+      "value": "刪除會話"
+    },
+    {
+      "name": "delete_conversation_confirm",
+      "value": "確定要刪除此會話吗？"
+    },
+    {
+      "name": "confirm",
+      "value": "確定"
+    },
+    {
+      "name": "mark_unread_failed",
+      "value": "標記為未讀失敗"
+    },
+    {
+      "name": "hide_conversation",
+      "value": "不显示"
+    },
+    {
+      "name": "conversation_hide_failed",
+      "value": "隱藏會話失敗"
+    },
+    {
+      "name": "mark_as_read",
+      "value": "標為已讀"
+    },
+    {
+      "name": "mark_as_unread",
+      "value": "標為未讀"
+    },
+    {
+      "name": "theme_select_title",
+      "value": "選擇主題"
+    },
+    {
+      "name": "theme_light",
+      "value": "明亮"
+    },
+    {
+      "name": "theme_dark",
+      "value": "深色"
+    },
+    {
+      "name": "theme_system",
+      "value": "跟随系統"
+    },
+    {
+      "name": "conversationlist_title_placeholder",
+      "value": "會話"
+    },
+    {
+      "name": "conversation_list_message_count_unit",
+      "value": "條"
+    },
+    {
+      "name": "conversation_draft_label",
+      "value": "[草稿]"
+    },
+    {
+      "name": "conversation_at_me_tag",
+      "value": "[有人@我]"
+    },
+    {
+      "name": "conversation_at_all_tag",
+      "value": "[@所有人]"
+    }
+  ]
+}

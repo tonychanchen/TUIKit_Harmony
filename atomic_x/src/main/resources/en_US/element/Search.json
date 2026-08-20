@@ -19,6 +19,9 @@
     { "name": "search_groups_title", "value": "Groups" },
     { "name": "search_messages_title", "value": "Messages" },
     { "name": "search_view_more", "value": "View more" },
+    { "name": "search_view_more_contacts", "value": "View more contacts" },
+    { "name": "search_view_more_groups", "value": "View more groups" },
+    { "name": "search_view_more_messages", "value": "View more messages" },
     { "name": "search_related_messages_count", "value": "%s related messages" }
   ]
 }

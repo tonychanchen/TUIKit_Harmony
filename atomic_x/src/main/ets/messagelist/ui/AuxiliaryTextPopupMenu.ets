@@ -8,6 +8,7 @@ export interface AuxiliaryTextMenuItemConfig {
   icon: Resource;
   onClick: () => void;
   hidden?: boolean;
+  useIntrinsicIconColor?: boolean;
 }
 
 /**
@@ -26,9 +27,9 @@ export struct AuxiliaryTextPopupMenu {
         this.MenuItem(item)
       }, (item: AuxiliaryTextMenuItemConfig, index: number) => `${index}`)
     }
-    .padding({ left: 4, right: 4, top: 4, bottom: 4 })
+    .padding({ left: 7, right: 7, top: 4, bottom: 4 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
-    .borderRadius(8)
+    .borderRadius(5)
     .shadow({
       radius: 8,
       color: this.themeState.colors.shadowColor,
@@ -43,17 +44,27 @@ export struct AuxiliaryTextPopupMenu {
   @Builder
   MenuItem(config: AuxiliaryTextMenuItemConfig) {
     Column() {
-      Image(config.icon)
-        .width(20)
-        .height(20)
-        .fillColor(this.themeState.colors.textColorLink)
+      if (config.useIntrinsicIconColor) {
+        Image(config.icon)
+          .width(16)
+          .height(16)
+          .objectFit(ImageFit.Contain)
+      } else {
+        Image(config.icon)
+          .width(16)
+          .height(16)
+          .objectFit(ImageFit.Contain)
+          .fillColor(this.themeState.colors.textColorPrimary)
+      }
 
       Text(config.text)
         .fontSize(10)
         .fontColor(this.themeState.colors.textColorPrimary)
-        .margin({ top: 4 })
+        .margin({ top: 3 })
     }
-    .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+    .width(42)
+    .height(48)
+    .padding({ left: 3, right: 3, top: 7, bottom: 6 })
     .borderRadius(6)
     .onClick(() => {
       config.onClick();

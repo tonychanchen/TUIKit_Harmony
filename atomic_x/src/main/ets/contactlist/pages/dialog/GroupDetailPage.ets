@@ -13,6 +13,7 @@ export struct GroupDetailPage {
   private static readonly SEND_BUTTON_WIDTH: number = 357;
   private static readonly SEND_BUTTON_HEIGHT: number = 40;
   private static readonly TOP_BORDER_RADIUS: number = 10;
+  private static readonly AVATAR_BORDER_RADIUS: number = 12;
   private static readonly DIVIDER_HEIGHT: number = 0.5;
   private static readonly ANIMATION_DURATION: number = 300;
   private static readonly EASE_OUT_CURVE: Curve = Curve.EaseOut;
@@ -79,14 +80,14 @@ export struct GroupDetailPage {
           Image(this.internalGroupInfo.avatarURL)
             .width(GroupDetailPage.GROUP_AVATAR_SIZE)
             .height(GroupDetailPage.GROUP_AVATAR_SIZE)
-            .borderRadius(GroupDetailPage.GROUP_AVATAR_SIZE / 2)
+            .borderRadius(GroupDetailPage.AVATAR_BORDER_RADIUS)
             .objectFit(ImageFit.Cover)
         } else {
-
-          Circle()
+          Column()
             .width(GroupDetailPage.GROUP_AVATAR_SIZE)
             .height(GroupDetailPage.GROUP_AVATAR_SIZE)
-            .fill(this.themeState.colors.textColorLink)
+            .backgroundColor(this.themeState.colors.textColorLink)
+            .borderRadius(GroupDetailPage.AVATAR_BORDER_RADIUS)
 
           Text(TextUtils.getAvatarLetter(this.internalGroupInfo.nickname || this.internalGroupInfo.userID || ''))
             .fontSize(32)

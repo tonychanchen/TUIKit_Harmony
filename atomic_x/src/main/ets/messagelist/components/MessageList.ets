@@ -3,7 +3,7 @@ import { MessageListStore, MessageInfo, MessageType, MessageLoadDirection, Messa
 import { MessageActionStore } from '@tencentcloud/atomicxcore';
 import { ConversationListStore, ConversationListState, ConversationInfo, ConversationMarkType, ConversationType } from '@tencentcloud/atomicxcore';
 import { MessageInputStore, TextSendMessagePayload, SendMessageOption } from '@tencentcloud/atomicxcore';
-import { AppBuilderConfig, ThemeState, TextUtils, ActionItem, Toast, EventBus } from '../../basecomponent/Index';
+import { AlertDialog, AppBuilderConfig, ThemeState, TextUtils, ActionItem, Toast, EventBus } from '../../basecomponent/Index';
 import { MessageItem } from '../ui/MessageItem';
 import { MessageActionDialog } from '../ui/MessageActionPanel';
 import { MessageQuoteEvent } from '../ui/MessageQuoteEvent';
@@ -20,6 +20,7 @@ import { MessageAlignment } from '../../basecomponent/utils/AppBuilderHelper';
 import { util } from '@kit.ArkTS';
 import { MessageListStyleProtocol, ChatMessageListConfig } from '../config/MessageListConfig';
 import { MessageUtils } from '../utils/MessageUtils';
+import { CallingMessageDataProvider, CallParticipantType } from '../utils/CallingMessageDataProvider';
 import { AsrDisplayManager } from '../utils/AsrDisplayManager';
 import { TranslationDisplayManager } from '../utils/TranslationDisplayManager';
 import { TranslationTextParser } from '../utils/TranslationTextParser';
@@ -36,6 +37,12 @@ import {
 } from '../ui/MessageListFloatingEntryPolicy';
 import { ImmersiveMode, LevelMode } from '@kit.ArkUI';
 import pasteboard from '@ohos.pasteboard';
+import { ChatBackgroundStore } from '../../chatsetting/utils/ChatBackgroundStore';
+
+function isGroupCallingMessage(message: MessageInfo): boolean {
+  const callingProvider = new CallingMessageDataProvider(message);
+  return callingProvider.isCallingSignal && callingProvider.participantType === CallParticipantType.group;
+}
 
 class MessageInfoDataSource implements IDataSource {
   private messages: MessageInfo[] = [];
@@ -95,7 +102,8 @@ export interface MessageCustomAction {
 export interface MultiSelectActions {
   cancel: () => void;
   deleteMessages: () => void;
-  forward: () => void;
+  forwardSeparately: () => void;
+  forwardMerged: () => void;
 }
 
 @Component
@@ -108,7 +116,7 @@ export struct MessageList {
   @State conversationListStore?: ConversationListStore = undefined;
   @State messageListState?: MessageListState = undefined;
   @State messageDataSource: MessageInfoDataSource = new MessageInfoDataSource();
-  @State isLoading: boolean = true;
+  @State private initialMessagesLoaded: boolean = false;
   @State isLoadingMore: boolean = false;
   @State lastFirstIndex: number = -1;
   @State lastLastIndex: number = -1;
@@ -135,14 +143,17 @@ export struct MessageList {
   onMultiSelectModeChange?: (isMultiSelectMode: boolean, selectedCount: number, actions?: MultiSelectActions) => void;
   customActions?: MessageCustomAction[] = [];
   @Prop config?: MessageListStyleProtocol = undefined;
+  @Prop bottomContentInset: number = 0;
   private scrollPositionBeforeLoad: number = -1;
   private messageCountBeforeLoad: number = 0;
   private currentLoadDirection: MessageLoadDirection = MessageLoadDirection.OLDER;
   private isLoadingAroundTargetMessage: boolean = false;
+  private pendingInitialLatestAnchor: boolean = false;
   private lastScrollToBottomTime: number = 0;
   private floatingEntryStateController: MessageListFloatingEntryStateController = new MessageListFloatingEntryStateController();
   @State private effectiveConfig: MessageListStyleProtocol = new ChatMessageListConfig();
   @State private floatingEntry?: MessageListFloatingEntry = undefined;
+  @State private chatBackgroundImageUri: string | null = null;
 
   // ASR Display Manager for voice-to-text feature
   @State private asrDisplayManager: AsrDisplayManager = new AsrDisplayManager();
@@ -174,6 +185,9 @@ export struct MessageList {
 
     EventBus.getInstance().off(MessageQuoteEvent.LOCATE_QUOTED_MESSAGE);
     EventBus.getInstance().off('onInputFocus');
+    if (this.conversationID) {
+      EventBus.getInstance().off(ChatBackgroundStore.eventName(this.conversationID));
+    }
   }
 
   aboutToAppear() {
@@ -184,11 +198,11 @@ export struct MessageList {
       'none'}`);
     
     if (this.conversationID) {
+      this.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID);
       this.loadMessages();
       this.clearMessageUnreadCount();
     } else {
       console.error('[MessageList] No valid conversationID provided');
-      this.isLoading = false;
     }
 
     EventBus.getInstance().on(MessageQuoteEvent.LOCATE_QUOTED_MESSAGE, (eventData: emitter.EventData) => {
@@ -198,10 +212,17 @@ export struct MessageList {
     EventBus.getInstance().on('onInputFocus', (_eventData: emitter.EventData) => {
       this.scrollToBottom();
     });
+
+    if (this.conversationID) {
+      EventBus.getInstance().on(ChatBackgroundStore.eventName(this.conversationID), (_eventData: emitter.EventData) => {
+        this.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID);
+      });
+    }
   }
 
   loadMessages() {
-    this.isLoading = true;
+    this.initialMessagesLoaded = false;
+    this.pendingInitialLatestAnchor = false;
     this.floatingEntryStateController.reset();
     this.floatingEntry = undefined;
     this.messageListStore = MessageListStore.create(this.conversationID);
@@ -378,7 +399,9 @@ export struct MessageList {
   @Builder
   NormalMessageItemBuilder(message: MessageInfo, index: number) {
     Column() {
-      if (this.effectiveConfig.isShowTimeMessage && this.getMessageTimeString(index)) {
+      if (message.messageType !== MessageType.TIPS &&
+        !isGroupCallingMessage(message) &&
+        this.effectiveConfig.isShowTimeMessage && this.getMessageTimeString(index)) {
         Row() {
           Text(this.getMessageTimeString(index))
             .fontSize(12)
@@ -389,8 +412,6 @@ export struct MessageList {
               top: 2,
               bottom: 2
             })
-            .borderRadius(4)
-            .backgroundColor('rgba(0, 0, 0, 0.05)')
             .textAlign(TextAlign.Center)
         }
         .width('100%')
@@ -512,9 +533,14 @@ export struct MessageList {
       })
     }
     .padding({
-      top: this.checkPreviousMessageIsAggregation(index) ? (this.effectiveConfig.cellSpacing ) : (this.effectiveConfig.cellSpacing??2 * 5),
-      bottom: this.checkNextMessageIsAggregation(index) ? (this.effectiveConfig.cellSpacing ) : (this.effectiveConfig.cellSpacing??2 * 5)
+      top: this.getMessageVerticalSpacing(this.checkPreviousMessageIsAggregation(index)),
+      bottom: this.getMessageVerticalSpacing(this.checkNextMessageIsAggregation(index))
     })
+  }
+
+  private getMessageVerticalSpacing(isAggregated: boolean): number {
+    const baseSpacing = this.effectiveConfig.cellSpacing ?? 2;
+    return isAggregated ? baseSpacing : baseSpacing * 5;
   }
 
   /**
@@ -526,48 +552,26 @@ export struct MessageList {
   }
 
   private shouldShowAvatar(message: MessageInfo, index: number): boolean {
-    if (AppBuilderConfig.getInstance().useClassicUI) {
-      return true;
-    }
-    
-    if (message.isSentBySelf) {
-      return this.effectiveConfig.isShowRightAvatar ?? false;
-    } else {
-      const showLeftAvatar = this.effectiveConfig.isShowLeftAvatar ?? true;
-      return showLeftAvatar && !this.checkNextMessageIsAggregation(index);
-    }
-  }
-
-  @Builder
-  LoadingStateBuilder() {
-    Column() {
-      LoadingProgress()
-        .width(50)
-        .height(50)
-        .color(this.themeState.colors.textColorPrimary)
-
-      Text($r('app.string.messagelist_loading'))
-        .fontSize(16)
-        .fontColor(this.themeState.colors.textColorTertiary)
-        .margin({ top: 16 })
-    }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+    return true;
   }
 
   build() {
-    if (this.isLoading) {
-      // Loading
-      this.LoadingStateBuilder()
-    } else {
+    Stack() {
+      if (this.chatBackgroundImageUri) {
+        Image(this.chatBackgroundImageUri)
+          .width('100%')
+          .height('100%')
+          .objectFit(ImageFit.Cover);
+      }
+
       Column() {
         this.NormalListBuilder()
       }
       .width('100%')
-      .height('100%')
+      .height('100%');
     }
+    .width('100%')
+    .height('100%')
   }
 
   /**
@@ -579,17 +583,14 @@ export struct MessageList {
     if (this.isMultiSelectMode) {
       MultiSelectBottomBar({
         selectedCount: this.selectedMessageIDs.size,
-        onCancel: () => {
-          this.exitMultiSelectMode();
-        },
         onDelete: () => {
-          this.deleteSelectedMessages();
+          this.confirmDeleteSelectedMessages();
         },
-        onForward: () => {
-          // Validate messages before forwarding
-          if (this.validateMessagesForForward()) {
-            this.showForwardTargetSelector();
-          }
+        onSeparateForward: () => {
+          this.forwardSelectedMessages(MessageForwardType.SEPARATE);
+        },
+        onMergedForward: () => {
+          this.forwardSelectedMessages(MessageForwardType.MERGED);
         }
       })
     }
@@ -604,7 +605,7 @@ export struct MessageList {
 
   @Builder
   NormalListBuilder() {
-    if (this.messageListStore && this.messageListState) {
+    if (this.messageListStore && this.messageListState && this.initialMessagesLoaded) {
       Stack({ alignContent: Alignment.BottomEnd }) {
         Column() {
 
@@ -639,9 +640,20 @@ export struct MessageList {
             })
           }, (message: MessageInfo, index: number) => this.getMessageKey(message, index))
         }
-        .padding({ left: this.effectiveConfig.horizontalPadding, right: this.effectiveConfig.horizontalPadding })
+        .padding({
+          left: this.effectiveConfig.horizontalPadding,
+          right: this.effectiveConfig.horizontalPadding,
+          bottom: this.bottomContentInset
+        })
         .width('100%')
         .layoutWeight(1)
+        .onAreaChange((_old: Area, area: Area): void => {
+          if (this.pendingInitialLatestAnchor && Number(area.height) > 0) {
+            this.pendingInitialLatestAnchor = false;
+            this.lastScrollToBottomTime = Date.now();
+            this.scroller.scrollEdge(Edge.End);
+          }
+        })
         .onReachStart(() => {
 
           console.info('[MessageList] Reached start of list');
@@ -769,19 +781,22 @@ export struct MessageList {
   @Builder
   private FloatingEntryBuilder(entry: MessageListFloatingEntry) {
     Row({ space: 6 }) {
-      Text(entry.type === MessageListFloatingEntryType.MENTION ? '↑' : '↓')
-        .fontSize(14)
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .fontWeight(FontWeight.Bold)
+      Image($rawfile('messagelist/floating_entry_arrow.svg'))
+        .width(12)
+        .height(11)
+        .fillColor(this.themeState.colors.textColorLink)
+        .rotate({ angle: entry.type === MessageListFloatingEntryType.MENTION ? 180 : 0 })
+        .draggable(false)
 
       Text(this.getFloatingEntryText(entry))
         .fontSize(14)
-        .fontColor(this.themeState.colors.textColorPrimary)
+        .fontColor(this.themeState.colors.textColorLink)
         .maxLines(1)
     }
     .height(35)
+    .constraintSize({ minWidth: 94 })
     .padding({ left: 10, right: 10 })
-    .backgroundColor(this.themeState.colors.bgColorBubbleReciprocal)
+    .backgroundColor(this.themeState.colors.floatingColorDefault)
     .borderRadius(7)
     .shadow({ radius: 8, color: '#33000000', offsetX: 0, offsetY: 2 })
     .margin({ right: 16, bottom: 16 })
@@ -815,6 +830,11 @@ export struct MessageList {
     const msgID = data['msgID'] as string | undefined;
     const sequence = data['sequence'] as number | undefined;
     const timestamp = data['timestamp'] as number | undefined;
+    const returnMsgID = data['returnMsgID'] as string | undefined;
+    if (returnMsgID && returnMsgID.length > 0) {
+      this.floatingEntryStateController.onQuoteNavigated(returnMsgID);
+      this.refreshFloatingEntry();
+    }
     if (!msgID && (!sequence || sequence <= 0)) {
       return;
     }
@@ -846,7 +866,7 @@ export struct MessageList {
     }
   }
 
-  locateToMessage(messageID: string) {
+  locateToMessage(messageID: string, shouldHighlight: boolean = true) {
     if (!this.messageListState || !messageID) {
 
 
@@ -863,7 +883,11 @@ export struct MessageList {
     if (messageIndex !== -1) {
 
 
-      this.highlightedMessageID = messageID;
+      if (shouldHighlight) {
+        this.highlightedMessageID = messageID;
+      } else {
+        this.highlightedMessageID = '';
+      }
 
 
       setTimeout(() => {
@@ -876,9 +900,11 @@ export struct MessageList {
         }
 
 
-        setTimeout(() => {
-          this.highlightedMessageID = '';
-        }, 3000);
+        if (shouldHighlight) {
+          setTimeout(() => {
+            this.highlightedMessageID = '';
+          }, 3000);
+        }
       }, 200);
     } else {
       console.warn(`[MessageList] 未找到消息ID: ${messageID}`);
@@ -907,71 +933,11 @@ export struct MessageList {
   }
 
   private checkPreviousMessageIsAggregation(currentIndex: number): boolean {
-    if (AppBuilderConfig.getInstance().useClassicUI) {
-      return false;
-    }
-    
-    const message = this.messageDataSource.getData(currentIndex);
-    const prevMessage = this.getPreviousMessage(currentIndex);
-
-    if (!message || !prevMessage) {
-      return false;
-    }
-
-
-    if (message.isSentBySelf !== prevMessage.isSentBySelf) {
-      return false;
-    }
-
-
-    if (prevMessage.status === MessageStatus.REVOKED) {
-      return false;
-    }
-
-
-    if (message.timestamp && prevMessage.timestamp &&
-      message.timestamp > 0 && prevMessage.timestamp > 0) {
-      const timeInterval = this.getIntervalSeconds(message.timestamp, prevMessage.timestamp);
-      if (timeInterval > MessageList.TIME_INTERVAL_THRESHOLD) {
-        return false;
-      }
-    }
-
-    return true;
+    return false;
   }
 
   private checkNextMessageIsAggregation(currentIndex: number): boolean {
-    if (AppBuilderConfig.getInstance().useClassicUI) {
-      return false;
-    }
-    
-    const message = this.messageDataSource.getData(currentIndex);
-    const nextMessage = this.getNextMessage(currentIndex);
-
-    if (!message || !nextMessage) {
-      return false;
-    }
-
-
-    if (message.isSentBySelf !== nextMessage.isSentBySelf) {
-      return false;
-    }
-
-
-    if (nextMessage.status === MessageStatus.REVOKED) {
-      return false;
-    }
-
-
-    if (message.timestamp && nextMessage.timestamp &&
-      message.timestamp > 0 && nextMessage.timestamp > 0) {
-      const timeInterval = this.getIntervalSeconds(message.timestamp, nextMessage.timestamp);
-      if (timeInterval > MessageList.TIME_INTERVAL_THRESHOLD) {
-        return false;
-      }
-    }
-
-    return true;
+    return false;
   }
 
   private getMessageTimeString(currentIndex: number): string |null| Resource {
@@ -1006,61 +972,54 @@ export struct MessageList {
     return null;
   }
 
-  private getTimeString(timestamp?: number): string | null | Resource{
+  private getTimeString(timestamp?: number): string | null {
     if (!timestamp || timestamp <= 0 || isNaN(timestamp)) {
       return null;
     }
     const date = new Date(timestamp * 1000);
     const now = new Date();
+    const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 
 
-    const nowYear = now.getFullYear();
-    const nowMonth = now.getMonth();
-    const nowDay = now.getDate();
-
-
-    const dateYear = date.getFullYear();
-    const dateMonth = date.getMonth();
-    const dateDay = date.getDate();
-
-
-    const getWeekOfMonth = (targetDate: Date): number => {
-      const firstDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
-      let firstDayOfWeek = firstDayOfMonth.getDay(); // 0=Sunday, 6=Saturday
-
-
-      firstDayOfWeek = (firstDayOfWeek + 1) % 7;
-
-
-      const dayOfMonth = targetDate.getDate();
-      return Math.ceil((dayOfMonth + firstDayOfWeek) / 7);
-    };
-
-    const nowWeekOfMonth = getWeekOfMonth(now);
-    const dateWeekOfMonth = getWeekOfMonth(date);
-
-    if (nowYear === dateYear) {
-      if (nowMonth === dateMonth) {
-        if (nowWeekOfMonth === dateWeekOfMonth) {
-          if (nowDay === dateDay) {
-
-            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-          } else {
-
-            return this.getLocalizedWeekday(date.getDay());
-          }
-        } else {
-
-          return `${(dateMonth + 1).toString().padStart(2, '0')}/${dateDay.toString().padStart(2, '0')}`;
-        }
-      } else {
-
-        return `${(dateMonth + 1).toString().padStart(2, '0')}/${dateDay.toString().padStart(2, '0')}`;
-      }
-    } else {
-
-      return `${dateYear}/${(dateMonth + 1).toString().padStart(2, '0')}/${dateDay.toString().padStart(2, '0')}`;
+    if (this.isSameDay(now, date)) {
+      return timeString;
     }
+
+    if (this.isYesterday(now, date)) {
+      return `昨天 ${timeString}`;
+    }
+
+    if (now.getFullYear() === date.getFullYear() && this.isSameWeek(now, date)) {
+      return `${this.getLocalizedWeekday(date.getDay())} ${timeString}`;
+    }
+
+    const datePart = now.getFullYear() === date.getFullYear()
+      ? `${date.getMonth() + 1}/${date.getDate()}`
+      : `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+    return `${datePart} ${timeString}`;
+  }
+
+  private isSameDay(first: Date, second: Date): boolean {
+    return first.getFullYear() === second.getFullYear() &&
+      first.getMonth() === second.getMonth() &&
+      first.getDate() === second.getDate();
+  }
+
+  private isYesterday(now: Date, date: Date): boolean {
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    return this.isSameDay(yesterday, date);
+  }
+
+  private isSameWeek(first: Date, second: Date): boolean {
+    return this.getStartOfWeek(first).getTime() === this.getStartOfWeek(second).getTime();
+  }
+
+  private getStartOfWeek(date: Date): Date {
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = start.getDay();
+    const daysSinceMonday = (day + 6) % 7;
+    start.setDate(start.getDate() - daysSinceMonday);
+    return start;
   }
 
   private getIntervalSeconds(timestamp1?: number, timestamp2?: number): number {
@@ -1070,25 +1029,35 @@ export struct MessageList {
     return Math.abs(timestamp2 - timestamp1);
   }
 
-  private getLocalizedWeekday(dayOfWeek: number): string | Resource {
+  private getLocalizedWeekday(dayOfWeek: number): string {
+    let weekdayResource: Resource;
     switch (dayOfWeek) {
       case 0:
-        return $r('app.string.sunday');
+        weekdayResource = $r('app.string.sunday');
+        break;
       case 1:
-        return $r('app.string.monday');
+        weekdayResource = $r('app.string.monday');
+        break;
       case 2:
-        return $r('app.string.tuesday');
+        weekdayResource = $r('app.string.tuesday');
+        break;
       case 3:
-        return $r('app.string.wednesday');
+        weekdayResource = $r('app.string.wednesday');
+        break;
       case 4:
-        return $r('app.string.thursday');
+        weekdayResource = $r('app.string.thursday');
+        break;
       case 5:
-        return $r('app.string.friday');
+        weekdayResource = $r('app.string.friday');
+        break;
       case 6:
-        return $r('app.string.saturday');
+        weekdayResource = $r('app.string.saturday');
+        break;
       default:
-        return $r('app.string.unknown');
+        weekdayResource = $r('app.string.unknown');
+        break;
     }
+    return TextUtils.getResourceString(weekdayResource);
   }
 
   private loadHistoryMessages() {
@@ -1097,13 +1066,14 @@ export struct MessageList {
     option.pageCount = 20;
 
     this.messageListStore!.loadMessages(option, new CompletionHandlerAdapter(() => {
-      this.isLoading = false;
       this.refreshDataSource();
+      this.pendingInitialLatestAnchor = !this.locateMessage;
+      this.initialMessagesLoaded = true;
       if (this.locateMessage?.msgID) {
         this.locateToMessage(this.locateMessage.msgID);
       }
     }, () => {
-      this.isLoading = false;
+      this.initialMessagesLoaded = true;
     }));
   }
 
@@ -1123,19 +1093,17 @@ export struct MessageList {
 
     this.messageListStore!.loadMessages(option, new CompletionHandlerAdapter(() => {
       this.refreshDataSource();
+      this.initialMessagesLoaded = true;
       if (this.locateMessage?.msgID) {
         const targetMessageID = this.locateMessage.msgID;
         setTimeout(() => {
           this.locateToMessage(targetMessageID);
-          this.isLoading = false;
         }, 100);
       } else {
-        this.isLoading = false;
         this.isLoadingAroundTargetMessage = false;
         console.info(`[MessageList] Reset isLoadingAroundTargetMessage = false (no locateMessage)`);
       }
     }, () => {
-      this.isLoading = false;
       this.isLoadingAroundTargetMessage = false;
       console.info(`[MessageList] Reset isLoadingAroundTargetMessage = false (error case)`);
       this.loadHistoryMessages();
@@ -1274,6 +1242,7 @@ export struct MessageList {
 
   private updateFloatingEntryForScroll(): void {
     this.floatingEntryStateController.onMentionTargetVisibilityChanged(this.currentMentionTargetVisibility());
+    this.floatingEntryStateController.onReturnMessageVisibilityChanged(this.isReturnMessageVisible());
     this.floatingEntryStateController.onScroll(
       this.distanceFromLatestItems(),
       this.visibleItemCount(),
@@ -1284,6 +1253,15 @@ export struct MessageList {
 
   private refreshFloatingEntry(): void {
     this.floatingEntry = this.floatingEntryStateController.currentEntry();
+  }
+
+  private isReturnMessageVisible(): boolean {
+    const returnMessageId = this.floatingEntryStateController.currentBackToQuoteReturnMessageId();
+    if (!returnMessageId) {
+      return false;
+    }
+    const index = this.messageDataSource.getIndex(returnMessageId);
+    return index >= 0 && this.isIndexVisible(index);
   }
 
   private handleFloatingEntryClick(entry: MessageListFloatingEntry): void {
@@ -1297,12 +1275,19 @@ export struct MessageList {
       this.locateToSequence(entry.target.sequence);
       return;
     }
+    if (entry.type === MessageListFloatingEntryType.BACK_TO_QUOTE && entry.returnMessageId.length > 0) {
+      this.locateToMessage(entry.returnMessageId, false);
+      return;
+    }
     this.scrollToBottom();
   }
 
   private getFloatingEntryText(entry: MessageListFloatingEntry): Resource | string {
     if (entry.type === MessageListFloatingEntryType.NEW_MESSAGES) {
       return `${entry.count}${this.getString($r('app.string.messagelist_floating_new_messages'))}`;
+    }
+    if (entry.type === MessageListFloatingEntryType.BACK_TO_QUOTE) {
+      return $r('app.string.messagelist_floating_back_to_quote');
     }
     if (entry.type === MessageListFloatingEntryType.MENTION) {
       if (entry.target?.kind === MessageListMentionKind.AT_ALL) {
@@ -1584,13 +1569,13 @@ export struct MessageList {
           this.exitMultiSelectMode();
         },
         deleteMessages: () => {
-          this.deleteSelectedMessages();
+          this.confirmDeleteSelectedMessages();
         },
-        forward: () => {
-          // Validate messages before forwarding
-          if (this.validateMessagesForForward()) {
-            this.showForwardTypeSelector();
-          }
+        forwardSeparately: () => {
+          this.forwardSelectedMessages(MessageForwardType.SEPARATE);
+        },
+        forwardMerged: () => {
+          this.forwardSelectedMessages(MessageForwardType.MERGED);
         }
       } : undefined;
       this.onMultiSelectModeChange(this.isMultiSelectMode, this.selectedMessageIDs.size, actions);
@@ -1682,9 +1667,6 @@ export struct MessageList {
     if (message.messageType === MessageType.TIPS) {
       return false;
     }
-    if (message.messageType === MessageType.CUSTOM) {
-      return false;
-    }
     return true;
   }
 
@@ -1733,6 +1715,37 @@ export struct MessageList {
     });
     
     return selectedMessages.sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0));
+  }
+
+  private confirmDeleteSelectedMessages(): void {
+    if (this.selectedMessageIDs.size === 0) {
+      return;
+    }
+    AlertDialog.show(
+      undefined,
+      $r('app.string.multiselect_delete_confirm'),
+      $r('app.string.cancel'),
+      $r('app.string.confirm'),
+      undefined,
+      undefined,
+      (): void => {
+        this.deleteSelectedMessages();
+      },
+      this.getUIContext(),
+      true
+    );
+  }
+
+  private forwardSelectedMessages(type: MessageForwardType): void {
+    if (!this.validateMessagesForForward()) {
+      return;
+    }
+    if (type === MessageForwardType.SEPARATE && this.selectedMessageIDs.size > MessageList.MAX_SEPARATE_FORWARD_COUNT) {
+      Toast.info($r('app.string.forward_limit_tip'), this.getUIContext());
+      return;
+    }
+    this.forwardType = type;
+    this.showForwardTargetSelector();
   }
 
   deleteSelectedMessages() {
@@ -1812,8 +1825,12 @@ export struct MessageList {
           }
         }
       }),
-      alignment: DialogAlignment.Bottom,
-      customStyle: true
+      alignment: DialogAlignment.Default,
+      autoCancel: false,
+      customStyle: true,
+      levelMode: LevelMode.EMBEDDED,
+      immersiveMode: ImmersiveMode.EXTEND,
+      maskColor: Color.Transparent
     });
     
     this.forwardDialogController.open();
@@ -1824,19 +1841,11 @@ export struct MessageList {
     if (selectedMessages.length === 0 || targetConversationIDs.length === 0) {
       if (!this.isMultiSelectMode) {
         this.selectedMessageIDs.clear();
-      } else {
-        this.exitMultiSelectMode();
       }
       return;
     }
     
     console.info(`[MessageList] Forwarding ${selectedMessages.length} messages to ${targetConversationIDs.length} conversations, type: ${this.forwardType}`);
-    
-    if (this.isMultiSelectMode) {
-      this.exitMultiSelectMode();
-    } else {
-      this.selectedMessageIDs.clear();
-    }
     
     let successCount = 0;
     let failureCount = 0;
@@ -1846,6 +1855,11 @@ export struct MessageList {
       if (successCount + failureCount >= totalCount) {
         if (failureCount === 0) {
           Toast.success($r('app.string.forward_success'), this.getUIContext());
+          if (this.isMultiSelectMode) {
+            this.exitMultiSelectMode();
+          } else {
+            this.selectedMessageIDs.clear();
+          }
         } else {
           console.error(`[MessageList] ${failureCount}/${totalCount} forwards failed`);
           Toast.info($r('app.string.forward_failed'), this.getUIContext());
@@ -1985,8 +1999,12 @@ export struct MessageList {
           console.info('[MessageList] ASR text forward cancelled');
         }
       }),
-      alignment: DialogAlignment.Bottom,
-      customStyle: true
+      alignment: DialogAlignment.Default,
+      autoCancel: false,
+      customStyle: true,
+      levelMode: LevelMode.EMBEDDED,
+      immersiveMode: ImmersiveMode.EXTEND,
+      maskColor: Color.Transparent
     });
 
     this.forwardDialogController.open();
@@ -2225,8 +2243,12 @@ export struct MessageList {
           console.info('[MessageList] Translated text forward cancelled');
         }
       }),
-      alignment: DialogAlignment.Bottom,
-      customStyle: true
+      alignment: DialogAlignment.Default,
+      autoCancel: false,
+      customStyle: true,
+      levelMode: LevelMode.EMBEDDED,
+      immersiveMode: ImmersiveMode.EXTEND,
+      maskColor: Color.Transparent
     });
 
     this.forwardDialogController.open();

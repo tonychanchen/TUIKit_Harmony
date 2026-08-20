@@ -330,11 +330,11 @@
     },
     {
       "name": "create_group_chat_title",
-      "value": "Create Group Chat"
+      "value": "New Group"
     },
     {
       "name": "select_contacts_title",
-      "value": "Select Contacts"
+      "value": "New Chat"
     },
     {
       "name": "next_step_button",

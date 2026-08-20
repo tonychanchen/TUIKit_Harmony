@@ -283,11 +283,11 @@ export struct MessageItem {
             name: sideName ?? (this.message.from?.userID || ''),
             url: url || '',
           },
-          avatarSize: AvatarSize.S
+          avatarSize: AvatarSize.M
         })
       }
-      .width(32)
-      .height(32)
+      .width(40)
+      .height(40)
       .gesture(
         GestureGroup(GestureMode.Exclusive,
           LongPressGesture({ repeat: false, duration: 300 })
@@ -376,10 +376,19 @@ export struct MessageItem {
   }
 
   /**
-   * Get bubble border radius
+   * Get bubble corner radiuses based on the side where the avatar is shown.
    */
-  private getBubbleBorderRadius(): number {
-    return this.shouldHideBubbleBackground() ? 0 : 16;
+  private getBubbleBorderRadiuses(isRightSide: boolean): LocalizedBorderRadiuses {
+    const radius = this.shouldHideBubbleBackground() ? 0 : 10;
+    const roundedRadius = LengthMetrics.vp(radius);
+    const pointedRadius = LengthMetrics.vp(2);
+
+    return {
+      topStart: isRightSide ? roundedRadius : pointedRadius,
+      topEnd: isRightSide ? pointedRadius : roundedRadius,
+      bottomStart: roundedRadius,
+      bottomEnd: roundedRadius
+    } as LocalizedBorderRadiuses;
   }
 
   /**
@@ -547,23 +556,37 @@ export struct MessageItem {
       Column() {
         GetMessageView(this.createRenderContext(message));
         this.TimeInBubbleView();
+        if (this.effectiveConfig.isSupportReaction && message.reactionList && message.reactionList.length > 0) {
+          MessageReactionBar({
+            reactionList: message.reactionList,
+            isSentBySelf: this.getMessageEffectiveIsSelf(message),
+            onClickCallback: () => {
+              this.showReactionDetail();
+            }
+          })
+        }
       }
       .padding({ bottom: this.shouldShowTimeInBubble(message) ? 4 : 0 })
     } else if (this.getMessageEffectiveIsSelf(message)) {
       Column() {
         GetMessageView(this.createRenderContext(message));
         this.TimeInBubbleView();
+        if (this.effectiveConfig.isSupportReaction && message.reactionList && message.reactionList.length > 0) {
+          MessageReactionBar({
+            reactionList: message.reactionList,
+            isSentBySelf: this.getMessageEffectiveIsSelf(message),
+            onClickCallback: () => {
+              this.showReactionDetail();
+            }
+          })
+        }
       }
       .flexShrink(1)
-      .borderRadius({
-        topStart: LengthMetrics.vp(16),
-        topEnd: LengthMetrics.vp(16),
-        bottomStart: LengthMetrics.vp(16),
-        bottomEnd: LengthMetrics.vp(0)
-      } as LocalizedBorderRadiuses)
+      .borderRadius(this.getBubbleBorderRadiuses(true))
       .backgroundColor(this.isHighlighted ? 'rgba(0, 122, 255, 0.55)' : this.themeState.colors.bgColorBubbleOwn)
       .borderColor(this.themeState.colors.bgColorBubbleOwn)
       .padding({ bottom: this.shouldShowTimeInBubble(message) ? 4 : 0 })
+      .alignItems(HorizontalAlign.End)
       .animation({
         duration: 300,
         curve: Curve.EaseInOut
@@ -572,16 +595,21 @@ export struct MessageItem {
       Column() {
         GetMessageView(this.createRenderContext(message));
         this.TimeInBubbleView();
+        if (this.effectiveConfig.isSupportReaction && message.reactionList && message.reactionList.length > 0) {
+          MessageReactionBar({
+            reactionList: message.reactionList,
+            isSentBySelf: this.getMessageEffectiveIsSelf(message),
+            onClickCallback: () => {
+              this.showReactionDetail();
+            }
+          })
+        }
       }
       .backgroundColor(this.isHighlighted ? 'rgba(0, 122, 255, 0.55)' : this.themeState.colors.bgColorBubbleReciprocal)
-      .borderRadius({
-        topStart: LengthMetrics.vp(16),
-        topEnd: LengthMetrics.vp(16),
-        bottomStart: LengthMetrics.vp(0),
-        bottomEnd: LengthMetrics.vp(16)
-      } as LocalizedBorderRadiuses)
+      .borderRadius(this.getBubbleBorderRadiuses(false))
       .flexShrink(1)
       .padding({ bottom: this.shouldShowTimeInBubble(message) ? 4 : 0 })
+      .alignItems(HorizontalAlign.Start)
       .animation({
         duration: 300,
         curve: Curve.EaseInOut
@@ -599,7 +627,8 @@ export struct MessageItem {
             EventBus.getInstance().post(MessageQuoteEvent.LOCATE_QUOTED_MESSAGE, {
               'msgID': message.quoteInfo!.msgID,
               'sequence': message.quoteInfo!.sequence,
-              'timestamp': message.quoteInfo!.timestamp
+              'timestamp': message.quoteInfo!.timestamp,
+              'returnMsgID': message.msgID
             });
           }
         })
@@ -721,6 +750,10 @@ export struct MessageItem {
       builder: this.AsrTextMenuBuilder,
       placement: message.isSentBySelf ? Placement.TopRight : Placement.TopLeft,
       enableArrow: false,
+      radius: 5,
+      popupColor: Color.Transparent,
+      backgroundBlurStyle: BlurStyle.NONE,
+      shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
       onStateChange: (e) => {
         if (!e.isVisible) {
           this.showAsrMenu = false;
@@ -804,6 +837,10 @@ export struct MessageItem {
       builder: this.TranslationTextMenuBuilder,
       placement: message.isSentBySelf ? Placement.TopRight : Placement.TopLeft,
       enableArrow: false,
+      radius: 5,
+      popupColor: Color.Transparent,
+      backgroundBlurStyle: BlurStyle.NONE,
+      shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
       onStateChange: (e) => {
         if (!e.isVisible) {
           this.showTranslationMenu = false;
@@ -846,6 +883,7 @@ export struct MessageItem {
         {
           text: $r('app.string.action_forward'),
           icon: $rawfile('messagelist/icon_extion_forward.svg'),
+          useIntrinsicIconColor: true,
           onClick: () => {
             if (this.asrMenuMessage && this.onAsrBubbleLongPress) {
               this.onAsrBubbleLongPress(this.asrMenuMessage);
@@ -919,6 +957,7 @@ export struct MessageItem {
         {
           text: $r('app.string.action_forward'),
           icon: $rawfile('messagelist/icon_extion_forward.svg'),
+          useIntrinsicIconColor: true,
           onClick: () => {
             if (this.translationMenuMessage && this.onTranslationBubbleLongPress) {
               // Forward translated text - need to call MessageList method
@@ -1077,7 +1116,7 @@ export struct MessageItem {
             Stack() {
               this.AvatarView(this.getSideFaceURL(this.getEffectiveIsSelf()), this.getSideUserID(this.getEffectiveIsSelf()))
             }
-            .margin({ right: this.effectiveConfig.avatarSpacing ?? 6 })
+            .margin({ right: this.effectiveConfig.avatarSpacing ?? 8 })
           }
 
           Column() {
@@ -1097,8 +1136,17 @@ export struct MessageItem {
             
             Column() {
               GetMessageView(this.createRenderContext());
+              if (this.effectiveConfig.isSupportReaction && this.message.reactionList && this.message.reactionList.length > 0) {
+                MessageReactionBar({
+                  reactionList: this.message.reactionList,
+                  isSentBySelf: this.getEffectiveIsSelf(),
+                  onClickCallback: () => {
+                    this.showReactionDetail();
+                  }
+                })
+              }
             }
-            .borderRadius(this.getBubbleBorderRadius())
+            .borderRadius(this.getBubbleBorderRadiuses(false))
             .backgroundColor(this.isHighlighted ? 'rgba(0, 122, 255, 0.55)' : this.getBubbleBackgroundColor())
             .borderWidth(this.getBubbleBorderWidth())
             .borderColor(this.getBubbleBorderColor())
@@ -1118,16 +1166,6 @@ export struct MessageItem {
             // Translation text bubble (separate from text bubble)
             if (this.shouldShowTranslationBubble(this.message)) {
               this.TranslationTextBubble(this.message)
-            }
-            
-            // Show reaction bar
-            if (this.effectiveConfig.isSupportReaction && this.message.reactionList && this.message.reactionList.length > 0) {
-              MessageReactionBar({
-                reactionList: this.message.reactionList,
-                onClickCallback: () => {
-                  this.showReactionDetail();
-                }
-              })
             }
             
             // Show violation warning for sensitive content
@@ -1173,7 +1211,8 @@ export struct MessageItem {
             this.ReadReceiptLabel()
           }
         }
-        .width('90%')
+        .alignItems(VerticalAlign.Top)
+        .width('100%')
         .justifyContent(FlexAlign.Start)
         .onClick(() => {
           this.handleItemTapForDismiss();
@@ -1195,6 +1234,10 @@ export struct MessageItem {
           placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
           enableArrow: false,
           mask: false,
+          radius: 7,
+          popupColor: Color.Transparent,
+          backgroundBlurStyle: BlurStyle.NONE,
+          shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
           onStateChange: (e) => {
             if (!e.isVisible) {
               this.showClassicActionPopup = false;
@@ -1268,8 +1311,17 @@ export struct MessageItem {
             
             Column() {
               GetMessageView(this.createRenderContext());
+              if (this.effectiveConfig.isSupportReaction && this.message.reactionList && this.message.reactionList.length > 0) {
+                MessageReactionBar({
+                  reactionList: this.message.reactionList,
+                  isSentBySelf: this.getEffectiveIsSelf(),
+                  onClickCallback: () => {
+                    this.showReactionDetail();
+                  }
+                })
+              }
             }
-            .borderRadius(this.getBubbleBorderRadius())
+            .borderRadius(this.getBubbleBorderRadiuses(true))
             .backgroundColor(this.isHighlighted ? 'rgba(0, 122, 255, 0.55)' : this.getBubbleBackgroundColor())
             .borderWidth(this.getBubbleBorderWidth())
             .borderColor(this.getBubbleBorderColor())
@@ -1291,16 +1343,6 @@ export struct MessageItem {
               this.TranslationTextBubble(this.message)
             }
             
-            // Show reaction bar
-            if (this.effectiveConfig.isSupportReaction && this.message.reactionList && this.message.reactionList.length > 0) {
-              MessageReactionBar({
-                reactionList: this.message.reactionList,
-                onClickCallback: () => {
-                  this.showReactionDetail();
-                }
-              })
-            }
-            
             // Show nickname for right messages (self)
             if (this.getEffectiveIsSelf() && this.effectiveConfig.isShowRightNickname) {
               this.NicknameView()
@@ -1313,10 +1355,11 @@ export struct MessageItem {
             Stack() {
               this.AvatarView(this.getSideFaceURL(this.getEffectiveIsSelf()), this.getSideUserID(this.getEffectiveIsSelf()))
             }
-            .margin({ left: this.effectiveConfig.avatarSpacing ?? 6 })
+            .margin({ left: this.effectiveConfig.avatarSpacing ?? 8, top: -1 })
           }
         }
-        .width('90%')
+        .alignItems(VerticalAlign.Top)
+        .width('100%')
         .justifyContent(FlexAlign.End)
         .onClick(() => {
           this.handleItemTapForDismiss();
@@ -1338,6 +1381,10 @@ export struct MessageItem {
           placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
           enableArrow: false,
           mask: false,
+          radius: 7,
+          popupColor: Color.Transparent,
+          backgroundBlurStyle: BlurStyle.NONE,
+          shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
           onStateChange: (e) => {
             if (!e.isVisible) {
               this.showClassicActionPopup = false;
@@ -1431,16 +1478,6 @@ export struct MessageItem {
                   this.TranslationTextBubble(this.message)
                 }
                 
-                // Show reaction bar
-                if (this.effectiveConfig.isSupportReaction && this.message.reactionList && this.message.reactionList.length > 0) {
-                  MessageReactionBar({
-                    reactionList: this.message.reactionList,
-                    onClickCallback: () => {
-                      this.showReactionDetail();
-                    }
-                  })
-                }
-                
                 // Show violation warning for sensitive content
       if (this.message.status === MessageStatus.VIOLATION) {
                   Text($r('app.string.messagelist_violation_warning'))
@@ -1457,10 +1494,11 @@ export struct MessageItem {
                 Stack() {
                   this.AvatarView(this.getSideFaceURL(true), this.getSideUserID(true))
                 }
-                .margin({ left: this.effectiveConfig.avatarSpacing ?? 6 })
+                .margin({ left: this.effectiveConfig.avatarSpacing ?? 8, top: -1 })
               }
             }
-            .width('90%')
+            .alignItems(VerticalAlign.Top)
+            .width('100%')
             .justifyContent(FlexAlign.End)
           } else {
             Row() {
@@ -1469,14 +1507,14 @@ export struct MessageItem {
                 Stack() {
                   this.AvatarView(this.getSideFaceURL(false), this.getSideUserID(false))
                 }
-                .margin({ right: this.effectiveConfig.avatarSpacing ?? 6 })
+                .margin({ right: this.effectiveConfig.avatarSpacing ?? 8 })
               } else if (this.effectiveConfig.isShowLeftAvatar ?? true) {
                 // When avatar should not be shown but left avatar is enabled,
                 // render empty space with same dimensions for alignment
                 Stack() {}
-                  .width(32)
-                  .height(32)
-                  .margin({ right: this.effectiveConfig.avatarSpacing ?? 6 })
+                  .width(40)
+                  .height(40)
+                  .margin({ right: this.effectiveConfig.avatarSpacing ?? 8 })
               }
 
               Column() {
@@ -1498,19 +1536,11 @@ export struct MessageItem {
                   this.TranslationTextBubble(this.message)
                 }
                 
-            // Show reaction bar
-            if (this.effectiveConfig.isSupportReaction && this.message.reactionList && this.message.reactionList.length > 0) {
-              MessageReactionBar({
-                reactionList: this.message.reactionList,
-                onClickCallback: () => {
-                  this.showReactionDetail();
-                }
-              })
-            }
           }
           .alignItems(HorizontalAlign.Start)
             }
-            .width('80%')
+            .alignItems(VerticalAlign.Top)
+            .width('100%')
             .justifyContent(FlexAlign.Start)
           }
         }
@@ -1536,6 +1566,10 @@ export struct MessageItem {
           placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
           enableArrow: false,
           mask: false,
+          radius: 7,
+          popupColor: Color.Transparent,
+          backgroundBlurStyle: BlurStyle.NONE,
+          shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
           onStateChange: (e) => {
             if (!e.isVisible) {
               this.showClassicActionPopup = false;
@@ -1552,28 +1586,7 @@ export struct MessageItem {
   }
 
   private shouldShowAvatar(alignment: MessageAlignment): boolean {
-    // In classic UI mode, always show avatars for both sender and receiver
-    if (AppBuilderConfig.getInstance().useClassicUI) {
-      return true;
-    }
-    
-    switch (alignment) {
-      case MessageAlignment.LEFT:
-        // In LEFT mode, always show avatar based on style configuration
-          return true;
-      case MessageAlignment.RIGHT:
-        // In RIGHT mode, always show avatar based on style configuration
-          return  true
-      case MessageAlignment.TWO_SIDED:
-      default:
-        // In TWO_SIDED mode, respect both showAvatar flag and style configuration
-        if (this.getEffectiveIsSelf()) {
-          const showRight = this.effectiveConfig.isShowRightAvatar ?? false;
-          return showRight;
-        } else {
-          return this.showAvatar && (this.effectiveConfig.isShowLeftAvatar ?? true);
-        }
-    }
+    return true;
   }
 
   private showResendConfirmDialog(): void {

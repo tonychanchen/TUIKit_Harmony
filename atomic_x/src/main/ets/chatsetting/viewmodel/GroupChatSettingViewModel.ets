@@ -6,6 +6,7 @@ import { LoginStore } from '@tencentcloud/atomicxcore'
 import { CompletionHandler } from '@tencentcloud/atomicxcore'
 import { GroupInfo } from '@tencentcloud/atomicxcore'
 import { PublishParams, TUIEventBus } from '../../basecomponent/utils/TUIEventBus'
+import { ChatBackgroundStore } from '../utils/ChatBackgroundStore'
 import {
   CompletionHandlerAdapter,
   GetConversationInfoCompletionHandlerAdapter,
@@ -44,6 +45,7 @@ export class GroupChatSettingViewModel {
   constructor(groupID: string) {
     this.groupID = groupID
     this.conversationID = `group_${groupID}`
+    this.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID)
     this._groupMemberStore = GroupMemberStore.create(groupID)
 
     this._contactStore.loadFriends()
@@ -302,13 +304,12 @@ export class GroupChatSettingViewModel {
   }
 
   setChatBackground(imageUri: string | null): void {
-    // TODO(harmony): MmkvChatBackgroundStore / ChatEventBus not implemented on Harmony yet
-    this.chatBackgroundImageUri = imageUri
+    ChatBackgroundStore.setImageUri(this.conversationID, imageUri)
+    this.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID)
   }
 
   clearChatBackground(): void {
-    // TODO(harmony): MmkvChatBackgroundStore / ChatEventBus not implemented on Harmony yet
-    this.chatBackgroundImageUri = null
+    this.setChatBackground(null)
   }
 
   changeOwner(newOwnerID: string): void {
@@ -358,6 +359,7 @@ export class GroupSettingState {
   memberCount: number = 0;
   joinGroupApprovalType: GroupJoinOption = GroupJoinOption.ANY;
   inviteToGroupApprovalType: GroupJoinOption = GroupJoinOption.ANY;
+  chatBackgroundImageUri: string | null = null;
 }
 
 @Observed
@@ -373,10 +375,20 @@ export class GroupSettingStore {
     this.groupID = groupID;
     this.conversationID = `group_${groupID}`;
     this.memberStore = GroupMemberStore.create(groupID);
+    this.state.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID);
   }
 
   static create(groupID: string): GroupSettingStore {
     return new GroupSettingStore(groupID);
+  }
+
+  setChatBackground(imageUri: string | null): void {
+    ChatBackgroundStore.setImageUri(this.conversationID, imageUri);
+    this.state.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID);
+  }
+
+  clearChatBackground(): void {
+    this.setChatBackground(null);
   }
 
   fetchGroupInfo(): Promise<void> {

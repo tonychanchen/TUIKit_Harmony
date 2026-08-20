@@ -34,11 +34,19 @@
     },
     {
       "name": "clear_messages",
-      "value": "مسح الرسائل"
+      "value": "مسح سجل الدردشة"
     },
     {
       "name": "delete_conversation",
-      "value": "حذف المحادثة"
+      "value": "حذف الدردشة"
+    },
+    {
+      "name": "mute_conversation",
+      "value": "كتم الإشعارات"
+    },
+    {
+      "name": "unmute_conversation",
+      "value": "إلغاء كتم الإشعارات"
     },
     {
       "name": "clear_messages_title",

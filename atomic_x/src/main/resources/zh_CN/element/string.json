@@ -19,6 +19,10 @@
     {
       "name": "back_button",
       "value": "返回"
+    },
+    {
+      "name": "emoji_picker_send",
+      "value": "发送"
     }
   ]
 }

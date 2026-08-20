@@ -24,6 +24,7 @@ import {
 import { MessageInfo } from '@tencentcloud/atomicxcore'
 import { ImmersiveMode, LevelMode } from '@kit.ArkUI'
 import { promptAction, router } from '@kit.ArkUI'
+import { common, Want } from '@kit.AbilityKit'
 import { setNotificationClickCallback, clearNotificationClickCallback } from '../push/TIMPushInterfaces';
 import { TUICallKit, CallMediaType as CallKitMediaType, CallParams as CallKitParams } from '@tencentcloud/tuicallkit';
 import { TUIEventBus, TUIObserver, NotifyParams } from '@tencentcloud/atomicx/src/main/ets/basecomponent/Index'
@@ -273,26 +274,6 @@ struct HomePage {
         this.themeState.colors.textColorLink :
         this.themeState.colors.textColorSecondary)
         .fontWeight(this.currentIndex === index ? FontWeight.Medium : FontWeight.Normal)
-
-
-      if (this.currentIndex === index) {
-        Row() {
-          Row()
-            .width(HomePage.INDICATOR_WIDTH)
-            .height(HomePage.INDICATOR_HEIGHT)
-            .borderRadius(HomePage.INDICATOR_HEIGHT / 2)
-            .backgroundColor(this.themeState.colors.textColorLink)
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .margin({ top: 2 })
-      } else {
-
-        Row()
-          .width('100%')
-          .height(HomePage.INDICATOR_HEIGHT)
-          .margin({ top: 2 })
-      }
     }
     .width('100%')
     .height(HomePage.TAB_BAR_HEIGHT)
@@ -429,6 +410,16 @@ struct HomePage {
           onChatHeaderClick: (clickedConversationID: string) => {
             console.log('[HomePage] Chat header clicked:', clickedConversationID);
             this.handleChatHeaderClick(clickedConversationID);
+          },
+          onSecurityReportClick: () => {
+            console.log('[HomePage] Security report clicked');
+            const context = getContext(this) as common.UIAbilityContext;
+            const wantInfo: Want = {
+              action: 'ohos.want.action.viewData',
+              entities: ['entity.system.browsable'],
+              uri: 'https://cloud.tencent.com/act/event/report-platform'
+            };
+            context.startAbility(wantInfo);
           },
 
         }),

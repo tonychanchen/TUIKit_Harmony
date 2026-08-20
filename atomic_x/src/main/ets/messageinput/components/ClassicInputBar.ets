@@ -4,16 +4,19 @@ import { EmojiItem, EmojiPicker, EmojiDataManager } from '../../emojipicker/Inde
 import { MessageInputConfigProtocol, ExpandPanelType } from '../config/MessageInputConfig';
 import { MenuItem } from './MessageInputMoreDialog';
 
-type VoiceRecordReleaseAction = 'send' | 'cancel' | 'transcribe';
+interface VoiceTouchPoint {
+  x: number;
+  y: number;
+}
 
 /**
  * Callbacks interface for ClassicInputBar
  */
 export interface ClassicInputBarCallbacks {
   onSend?: () => void;
-  onVoiceRecordStart?: () => void;
-  onVoiceRecordEnd?: (action: VoiceRecordReleaseAction) => void;
-  onVoiceRecordDragUpdate?: (dragOffset: number, shouldCancel: boolean, shouldTranscribe?: boolean) => void;
+  onVoiceRecordStart?: (fromTextInput?: boolean) => void;
+  onVoiceRecordEnd?: (x: number, y: number, forceCancel?: boolean) => void;
+  onVoiceRecordPointerUpdate?: (x: number, y: number) => void;
   onEmojiSelected?: (emoji: EmojiItem) => void;
   onDeleteClick?: () => void;
   onInputFocusChange?: (focused: boolean) => void;
@@ -47,7 +50,7 @@ export struct ClassicInputBar {
   
   // RichEditor controller passed from parent
   richEditorController: RichEditorController = new RichEditorController();
-  
+
   // Callbacks
   callbacks: ClassicInputBarCallbacks = {};
   
@@ -58,20 +61,19 @@ export struct ClassicInputBar {
   @State private isVoiceMode: boolean = false; // Voice input mode vs text input mode
   @State private expandPanelType: ExpandPanelType = 'none';
   @State private hasInputContent: boolean = false;
-  @State private shouldCancelRecording: boolean = false;
-  @State private dragOffset: number = 0;
+  @State private textInputFocusEnabled: boolean = true;
   
   private hiddenButtonId: string = 'classicHiddenFocusButton';
   private richEditorId: string = 'classic_rich_editor';
-  private initialTouchX: number = 0;
-  private initialTouchY: number = 0;
-  private shouldTranscribeRecording: boolean = false;
-  private readonly cancelThreshold: number = -50;
+  private textInputLongPressTimer?: number;
+  private isTextInputRecording: boolean = false;
+  private suppressNextTextClick: boolean = false;
+  private readonly longPressDuration: number = 300;
   
-  // Classic style dimensions (based on Figma: 750px design width)
-  private readonly buttonSize: number = 40; // 56/750 * 375 ≈ 28, but 40 for touch area
-  private readonly inputHeight: number = 40;
-  private readonly inputBorderRadius: number = 8;
+  // Classic style dimensions aligned with the Android message input toolbar.
+  private readonly buttonSize: number = 28;
+  private readonly inputHeight: number = 32;
+  private readonly inputBorderRadius: number = 4;
   private readonly panelHeight: number = 280; // Original height for panels (used by keyboard placeholder)
   private readonly emojiPanelHeight: number = 240; // Height for emoji panel (more compact)
   private readonly actionPanelHeight: number = 240; // Height for action panel (more compact)
@@ -89,6 +91,7 @@ export struct ClassicInputBar {
   }
 
   aboutToDisappear() {
+    this.cancelTextInputLongPress();
     // Unsubscribe from EventBus
     EventBus.getInstance().off('onBlankAreaClick');
   }
@@ -103,9 +106,8 @@ export struct ClassicInputBar {
             Image(this.isVoiceMode ? 
               $rawfile('messageinput/classic/keyboard_icon.svg') : 
               $rawfile('messageinput/classic/microphone_icon.svg'))
-              .width(24)
-              .height(24)
-              .fillColor(this.themeState.colors.textColorSecondary)
+              .width(this.buttonSize)
+              .height(this.buttonSize)
           }
           .width(this.buttonSize)
           .height(this.buttonSize)
@@ -127,12 +129,11 @@ export struct ClassicInputBar {
 
         // Emoji button
         Button() {
-          Image(this.expandPanelType === 'emoji' ? 
-            $rawfile('messageinput/classic/keyboard_icon.svg') : 
-            $rawfile('messageinput/classic/emoji_icon.svg'))
-            .width(24)
-            .height(24)
-            .fillColor(this.themeState.colors.textColorSecondary)
+            Image(this.expandPanelType === 'emoji' ?
+              $rawfile('messageinput/classic/keyboard_icon.svg') :
+              $rawfile('messageinput/classic/emoji_icon.svg'))
+            .width(this.buttonSize)
+            .height(this.buttonSize)
         }
         .width(this.buttonSize)
         .height(this.buttonSize)
@@ -145,9 +146,8 @@ export struct ClassicInputBar {
         // Plus button (always shows +, send via keyboard)
         Button() {
           Image($rawfile('messageinput/classic/plus_icon.svg'))
-            .width(24)
-            .height(24)
-            .fillColor(this.themeState.colors.textColorSecondary)
+            .width(this.buttonSize)
+            .height(this.buttonSize)
         }
         .width(this.buttonSize)
         .height(this.buttonSize)
@@ -159,8 +159,8 @@ export struct ClassicInputBar {
         })
       }
       .width('100%')
-      .height(56)
-      .padding({ left: 12, right: 12 })
+      .constraintSize({ minHeight: 56 })
+      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
       .backgroundColor(this.themeState.colors.bgColorOperate)
 
       // Hidden button for keyboard dismiss
@@ -198,6 +198,7 @@ export struct ClassicInputBar {
     }
     .width('100%')
     .backgroundColor(this.themeState.colors.bgColorOperate)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
   }
 
   @Builder
@@ -219,10 +220,13 @@ export struct ClassicInputBar {
           top: 8,
           bottom: 8
         })
-        .focusable(true)
-        .defaultFocus(this.inputFocused && this.expandPanelType === 'none')
+        .focusable(this.textInputFocusEnabled && !this.isTextInputRecording)
+        .defaultFocus(this.inputFocused && this.expandPanelType === 'none' &&
+          this.textInputFocusEnabled && !this.isTextInputRecording)
         .enterKeyType(EnterKeyType.Send)
-        .placeholder($r('app.string.input_message_placeholder'), {
+        .placeholder(this.inputFocused || this.hasInputContent || this.expandPanelType !== 'none'
+          ? ''
+          : $r('app.string.input_message_placeholder'), {
           fontColor: this.themeState.colors.textColorTertiary,
           font: {
             size: 16,
@@ -233,6 +237,11 @@ export struct ClassicInputBar {
         })
         .onFocus(() => {
           console.log('[ClassicInputBar] RichEditor onFocus triggered');
+          if (!this.textInputFocusEnabled || this.isTextInputRecording) {
+            this.inputFocused = false;
+            this.hideKeyboard();
+            return;
+          }
           this.inputFocused = true;
           // Close expand panels when focusing on input
           if (this.expandPanelType !== 'none') {
@@ -254,6 +263,7 @@ export struct ClassicInputBar {
         })
         .onBlur(() => {
           console.log('[ClassicInputBar] RichEditor onBlur triggered');
+          this.cancelTextInputLongPress();
           this.inputFocused = false;
           this.showKeyboardPlaceholder = false;
           if (this.callbacks.onInputFocusChange) {
@@ -262,9 +272,45 @@ export struct ClassicInputBar {
         })
         .onClick(() => {
           console.log('[ClassicInputBar] RichEditor onClick triggered');
+          if (this.suppressNextTextClick) {
+            this.suppressNextTextClick = false;
+            this.textInputFocusEnabled = false;
+            this.hideKeyboard();
+            return;
+          }
+          this.textInputFocusEnabled = true;
           this.inputFocused = true;
           if (this.expandPanelType !== 'none') {
             this.expandPanelType = 'none';
+          }
+          setTimeout(() => {
+            if (this.inputFocused && this.textInputFocusEnabled && !this.isTextInputRecording) {
+              focusControl.requestFocus(this.richEditorId);
+            }
+          }, 50);
+        })
+        .onTouch((event: TouchEvent) => {
+          if (event.type === TouchType.Down) {
+            this.scheduleTextInputRecording(event);
+          } else if (event.type === TouchType.Move) {
+            const point = this.getWindowTouchPoint(event);
+            if (this.isTextInputRecording && point) {
+              this.callbacks.onVoiceRecordPointerUpdate?.(point.x, point.y);
+            }
+          } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
+            this.cancelTextInputLongPress();
+            if (this.isTextInputRecording) {
+              const point = this.getWindowTouchPoint(event, true);
+              this.suppressNextTextClick = true;
+              this.isTextInputRecording = false;
+              this.textInputFocusEnabled = false;
+              this.hideKeyboard();
+              if (point) {
+                this.callbacks.onVoiceRecordEnd?.(point.x, point.y, event.type === TouchType.Cancel);
+              } else if (event.type === TouchType.Cancel) {
+                this.callbacks.onVoiceRecordEnd?.(0, 0, true);
+              }
+            }
           }
         })
         .onSubmit((enterKey: EnterKeyType, event: SubmitEvent) => {
@@ -336,55 +382,34 @@ export struct ClassicInputBar {
         $r('app.string.voice_release_to_send') : 
         $r('app.string.voice_press_to_speak'))
         .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(this.shouldCancelRecording ? 
-          '#FF3B30' : 
-          this.themeState.colors.textColorPrimary)
+        .fontWeight(FontWeight.Normal)
+        .fontColor(this.themeState.colors.textColorPrimary)
     }
     .layoutWeight(1)
     .height(this.inputHeight)
-    .backgroundColor(this.isVoiceRecording ? 
-      (this.shouldCancelRecording ? '#FFEBEE' : '#E8F5E9') : 
-      this.themeState.colors.bgColorInput)
+    .backgroundColor(this.isVoiceRecording ? '#E8F5E9' : this.themeState.colors.bgColorInput)
     .borderRadius(this.inputBorderRadius)
     .justifyContent(FlexAlign.Center)
     .alignItems(VerticalAlign.Center)
     .onTouch((event: TouchEvent) => {
       if (event.type === TouchType.Down) {
         console.log('[ClassicInputBar] Press to speak - touch down');
-        this.initialTouchX = event.touches[0].x;
-        this.initialTouchY = event.touches[0].y;
         this.startVoiceRecording();
       } else if (event.type === TouchType.Move) {
-        if (this.isVoiceRecording) {
-          this.dragOffset = event.touches[0].y - this.initialTouchY;
-          const dragOffsetX = event.touches[0].x - this.initialTouchX;
-          this.shouldCancelRecording = this.dragOffset < this.cancelThreshold && dragOffsetX < -72;
-          this.shouldTranscribeRecording = this.dragOffset < this.cancelThreshold && dragOffsetX > 72;
-          if (this.callbacks.onVoiceRecordDragUpdate) {
-            this.callbacks.onVoiceRecordDragUpdate(this.dragOffset, this.shouldCancelRecording, this.shouldTranscribeRecording);
-          }
+        const point = this.getWindowTouchPoint(event);
+        if (this.isVoiceRecording && point) {
+          this.callbacks.onVoiceRecordPointerUpdate?.(point.x, point.y);
         }
       } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
         console.log('[ClassicInputBar] Press to speak - touch up');
-        if (this.isVoiceRecording) {
-          this.finishVoiceRecording();
+        const point = this.getWindowTouchPoint(event, true);
+        if (this.isVoiceRecording && point) {
+          this.callbacks.onVoiceRecordEnd?.(point.x, point.y, event.type === TouchType.Cancel);
+        } else if (this.isVoiceRecording && event.type === TouchType.Cancel) {
+          this.callbacks.onVoiceRecordEnd?.(0, 0, true);
         }
       }
     })
-    .gesture(
-      PanGesture({ fingers: 1, direction: PanDirection.All, distance: 1 })
-        .onActionUpdate((event: GestureEvent) => {
-          if (this.isVoiceRecording) {
-            this.dragOffset = event.offsetY;
-            this.shouldCancelRecording = this.dragOffset < this.cancelThreshold && event.offsetX < -72;
-            this.shouldTranscribeRecording = this.dragOffset < this.cancelThreshold && event.offsetX > 72;
-            if (this.callbacks.onVoiceRecordDragUpdate) {
-              this.callbacks.onVoiceRecordDragUpdate(this.dragOffset, this.shouldCancelRecording, this.shouldTranscribeRecording);
-            }
-          }
-        })
-    )
   }
 
   @Builder
@@ -441,18 +466,19 @@ export struct ClassicInputBar {
                   Column({ space: 4 }) {
                     Row() {
                       Image(item.icon)
-                        .width(21)
-                        .height(16)
+                        .width(28)
+                        .height(28)
+                        .fillColor(this.themeState.colors.textColorPrimary)
                     }
-                    .width(52)
-                    .height(52)
+                    .width(56)
+                    .height(56)
                     .backgroundColor(this.themeState.colors.bgColorInput)
                     .borderRadius(12)
                     .justifyContent(FlexAlign.Center)
                     .alignItems(VerticalAlign.Center)
 
                     Text(item.text)
-                      .fontSize(11)
+                      .fontSize(12)
                       .fontColor(this.themeState.colors.textColorSecondary)
                       .maxLines(1)
                       .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -466,7 +492,7 @@ export struct ClassicInputBar {
                     this.expandPanelType = 'none';
                   })
                 }
-                .height(80)
+                .height(84)
               })
             }
           .columnsTemplate('1fr 1fr 1fr 1fr')
@@ -474,7 +500,7 @@ export struct ClassicInputBar {
             .rowsGap(12)
             .columnsGap(8)
             .width('100%')
-            .height(80 * 2 + 12)
+            .height(84 * 2 + 12)
             .padding({ left: 12, right: 12 })
           }
           .width('100%')
@@ -484,13 +510,21 @@ export struct ClassicInputBar {
         })
       }
       .indicator(
-        new DotIndicator()
-          .itemWidth(6)
-          .itemHeight(6)
-          .selectedItemWidth(6)
-          .selectedItemHeight(6)
-          .color(this.themeState.colors.strokeColorPrimary)
-          .selectedColor(this.themeState.colors.textColorSecondary)
+        this.getActionPages().length > 1
+          ? new DotIndicator()
+            .itemWidth(6)
+            .itemHeight(6)
+            .selectedItemWidth(6)
+            .selectedItemHeight(6)
+            .color(this.themeState.colors.strokeColorPrimary)
+            .selectedColor(this.themeState.colors.textColorSecondary)
+          : new DotIndicator()
+            .itemWidth(0)
+            .itemHeight(0)
+            .selectedItemWidth(0)
+            .selectedItemHeight(0)
+            .color(Color.Transparent)
+            .selectedColor(Color.Transparent)
       )
       .loop(false)
       .width('100%')
@@ -515,11 +549,9 @@ export struct ClassicInputBar {
   private toggleVoiceMode(): void {
     this.isVoiceMode = !this.isVoiceMode;
     if (this.isVoiceMode) {
-      // Switch to voice mode - hide keyboard and panels
       this.hideKeyboard();
       this.expandPanelType = 'none';
     } else {
-      // Switch to text mode - focus input
       this.inputFocused = true;
     }
   }
@@ -570,27 +602,50 @@ export struct ClassicInputBar {
     focusControl.requestFocus(this.hiddenButtonId);
   }
 
-  private startVoiceRecording(): void {
-    // Don't set isVoiceRecording here - let MessageInput manage it through AudioRecorder callbacks
-    this.shouldCancelRecording = false;
-    this.shouldTranscribeRecording = false;
-    this.dragOffset = 0;
-    if (this.callbacks.onVoiceRecordStart) {
-      this.callbacks.onVoiceRecordStart();
+  private scheduleTextInputRecording(event: TouchEvent): void {
+    if (this.inputFocused || this.hasInputContent || this.expandPanelType !== 'none' ||
+        this.isVoiceMode || this.isVoiceRecording) {
+      return;
+    }
+
+    this.cancelTextInputLongPress();
+    this.textInputLongPressTimer = setTimeout(() => {
+      this.textInputLongPressTimer = undefined;
+      if (this.inputFocused || this.hasInputContent || this.expandPanelType !== 'none' ||
+          this.isVoiceMode || this.isVoiceRecording) {
+        return;
+      }
+      this.suppressNextTextClick = true;
+      this.textInputFocusEnabled = false;
+      this.hideKeyboard();
+      this.isTextInputRecording = true;
+      this.showKeyboardPlaceholder = false;
+      this.startVoiceRecording(true);
+    }, this.longPressDuration);
+  }
+
+  private cancelTextInputLongPress(): void {
+    if (this.textInputLongPressTimer !== undefined) {
+      clearTimeout(this.textInputLongPressTimer);
+      this.textInputLongPressTimer = undefined;
     }
   }
 
-  private finishVoiceRecording(): void {
-    // Only proceed if we're actually recording (managed by MessageInput)
-    if (this.isVoiceRecording) {
-      const action: VoiceRecordReleaseAction = this.shouldCancelRecording ? 'cancel' : (this.shouldTranscribeRecording ? 'transcribe' : 'send');
-      // Don't set isVoiceRecording here - let MessageInput manage it through AudioRecorder callbacks
-      this.shouldCancelRecording = false;
-      this.shouldTranscribeRecording = false;
-      this.dragOffset = 0;
-      if (this.callbacks.onVoiceRecordEnd) {
-        this.callbacks.onVoiceRecordEnd(action);
-      }
+  private getWindowTouchPoint(event: TouchEvent, useChangedTouch: boolean = false): VoiceTouchPoint | undefined {
+    const touches = useChangedTouch ? event.changedTouches : event.touches;
+    const touch = touches?.[0];
+    if (!touch) {
+      return undefined;
+    }
+    return {
+      x: Number(touch.windowX),
+      y: Number(touch.windowY)
+    };
+  }
+
+  private startVoiceRecording(fromTextInput: boolean = false): void {
+    if (this.callbacks.onVoiceRecordStart) {
+      this.callbacks.onVoiceRecordStart(fromTextInput);
     }
   }
 

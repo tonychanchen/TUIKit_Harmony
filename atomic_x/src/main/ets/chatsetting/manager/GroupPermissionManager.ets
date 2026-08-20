@@ -173,7 +173,7 @@ export class GroupPermissionManager {
       setGroupNotice: false,
       setGroupManagement: false,
       getGroupType: true,
-      setJoinGroupApprovalType: false,
+      setJoinGroupApprovalType: true,
       setInviteToGroupApprovalType: false,
       setGroupRemark: true,
       setBackground: true,

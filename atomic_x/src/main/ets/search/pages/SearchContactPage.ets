@@ -41,8 +41,10 @@ export struct SearchContactPage {
         this.LoadingStateBuilder()
       } else if (this.searchStore.state.friendList.totalCount() > 0) {
         this.ContactListWithTitleBuilder()
-      } else {
+      } else if (this.searchKeyword.trim().length > 0) {
         this.EmptyStateBuilder()
+      } else {
+        Blank()
       }
     }
     .width('100%')

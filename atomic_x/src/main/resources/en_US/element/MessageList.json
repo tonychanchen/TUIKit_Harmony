@@ -205,6 +205,10 @@
       "value": "Select Conversation"
     },
     {
+      "name": "forward_select_from_contacts",
+      "value": "Select from Contacts"
+    },
+    {
       "name": "forward_recent_chats",
       "value": "Recent Chats"
     },
@@ -214,7 +218,7 @@
     },
     {
       "name": "forward_send",
-      "value": "Send"
+      "value": "Forward"
     },
     {
       "name": "forward_success",
@@ -239,6 +243,14 @@
     {
       "name": "forward_merged",
       "value": "Forward as Merged"
+    },
+    {
+      "name": "multiselect_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "multiselect_delete_confirm",
+      "value": "Delete selected messages?"
     },
     {
       "name": "forward_limit_tip",
@@ -291,6 +303,10 @@
     {
       "name": "messagelist_floating_back_to_latest",
       "value": "Latest"
+    },
+    {
+      "name": "messagelist_floating_back_to_quote",
+      "value": "Back to quoted message"
     },
     {
       "name": "messagelist_violation_warning",

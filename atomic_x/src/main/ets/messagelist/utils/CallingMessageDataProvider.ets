@@ -108,7 +108,7 @@ export class CallingMessageDataProvider {
         return;
       }
 
-      this._actionType = (outerData['actionType'] as number) ?? 0;
+      this._actionType = this.toNumber(outerData['actionType']);
       this._groupID = (outerData['groupID'] as string) ?? '';
       const inviteeList = outerData['inviteeList'] as string[];
       if (inviteeList) {
@@ -143,8 +143,8 @@ export class CallingMessageDataProvider {
   }
 
   private setIsCallingSignal(): void {
-    const businessID = this._jsonData?.['businessID'] as string;
-    this._isCallingSignal = businessID === 'av_call' || businessID === 'rtc_call';
+    const businessID = this._jsonData?.['businessID'] as string | number | undefined;
+    this._isCallingSignal = businessID === 'av_call' || businessID === 'rtc_call' || businessID === 1;
   }
 
   private setProtocolType(): void {
@@ -213,7 +213,7 @@ export class CallingMessageDataProvider {
       return;
     }
 
-    const callType = this._jsonData?.['call_type'] as number;
+    const callType = this.toNumber(this._jsonData?.['call_type']);
     if (callType === 1) {
       this._streamMediaType = CallStreamMediaType.audio;
     } else if (callType === 2) {
@@ -297,9 +297,9 @@ export class CallingMessageDataProvider {
       } else if (this._protocolType === CallProtocolType.cancel) {
         this._content = this.getStr(ctx, isCaller ? $r('app.string.call_cancel_caller') : $r('app.string.call_cancel_callee'));
       } else if (this._protocolType === CallProtocolType.hangup) {
-        const callEnd = this._jsonData?.['call_end'] as number;
-        const time = this.getShowTime(callEnd ?? 0);
-        this._content = `${this.getStr(ctx, $r('app.string.call_stop_tip'))}${time}`;
+        const callEnd = this.toNumber(this._jsonData?.['call_end']);
+        const time = this.getShowTime(callEnd);
+        this._content = `${time} ${this.getStr(ctx, $r('app.string.call_stop_tip'))}`;
       } else if (this._protocolType === CallProtocolType.timeout) {
         this._content = this.getStr(ctx, isCaller ? $r('app.string.call_timeout_caller') : $r('app.string.call_timeout_callee'));
       } else if (this._protocolType === CallProtocolType.lineBusy) {
@@ -323,14 +323,11 @@ export class CallingMessageDataProvider {
       } else if (this._protocolType === CallProtocolType.hangup) {
         this._content = this.getStr(ctx, $r('app.string.call_group_end'));
       } else if (this._protocolType === CallProtocolType.timeout || this._protocolType === CallProtocolType.lineBusy) {
-        let inviteeNames = '';
-        for (const invitee of this._inviteeList) {
-          inviteeNames = `${inviteeNames}${invitee}、`;
-        }
-        if (inviteeNames.length > 0) {
-          inviteeNames = inviteeNames.substring(0, inviteeNames.length - 1);
-        }
-        this._content = inviteeNames + this.getStr(ctx, $r('app.string.call_group_no_answer'));
+        const inviteeNames = this._inviteeList.map((invitee: string): string => `"${invitee}"`).join('、');
+        const statusText = this._protocolType === CallProtocolType.lineBusy
+          ? this.getStr(ctx, $r('app.string.call_line_busy_callee'))
+          : this.getStr(ctx, $r('app.string.call_group_no_answer'));
+        this._content = inviteeNames.length > 0 ? `${inviteeNames} ${statusText}` : statusText;
       } else if (this._protocolType === CallProtocolType.reject) {
         this._content = `"${showName}" ${this.getStr(ctx, $r('app.string.call_group_reject'))}`;
       } else if (this._protocolType === CallProtocolType.accept) {
@@ -355,13 +352,25 @@ export class CallingMessageDataProvider {
     }
   }
 
+  private toNumber(value: Object | undefined): number {
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsedValue = Number(value);
+      return Number.isFinite(parsedValue) ? parsedValue : 0;
+    }
+    return 0;
+  }
+
   private twoDigits(n: number): string {
     return n >= 10 ? `${n}` : `0${n}`;
   }
 
   private getShowTime(seconds: number): string {
-    const secondsShow = seconds % 60;
-    const minutesShow = Math.floor(seconds / 60);
+    const safeSeconds = Math.max(0, seconds);
+    const secondsShow = safeSeconds % 60;
+    const minutesShow = Math.floor(safeSeconds / 60);
     return `${this.twoDigits(minutesShow)}:${this.twoDigits(secondsShow)}`;
   }
 

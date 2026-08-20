@@ -14,15 +14,15 @@ class SoundMessageAudioListener implements AudioPlayerListener {
   }
 
   onPlay(): void {
-    this.component.isPlaying = true;
+    this.component.startVoiceAnimation();
   }
 
   onPause(): void {
-    this.component.isPlaying = false;
+    this.component.stopVoiceAnimation();
   }
 
   onResume(): void {
-    this.component.isPlaying = true;
+    this.component.startVoiceAnimation();
   }
 
   onProgressUpdate(currentPosition: number, duration: number): void {
@@ -31,14 +31,14 @@ class SoundMessageAudioListener implements AudioPlayerListener {
   }
 
   onCompletion(): void {
-    this.component.isPlaying = false;
+    this.component.stopVoiceAnimation();
     this.component.progress = 0;
     this.component.currentPosition = 0;
   }
 
   onError(errorMessage: string): void {
     console.error('[SoundMessageView] Audio player error:', errorMessage);
-    this.component.isPlaying = false;
+    this.component.stopVoiceAnimation();
     this.component.progress = 0;
     this.component.currentPosition = 0;
   }
@@ -49,6 +49,7 @@ export struct SoundMessageViewContent {
   @ObjectLink message: MessageInfo;
   @ObjectLink messagePayload: AudioMessagePayload;
   @State isPlaying: boolean = false;
+  @State animationStep: number = -1;
   @State progress: number = 0;
   @State currentPosition: number = 0;
   @ObjectLink messageListStore: MessageListStore;
@@ -59,6 +60,7 @@ export struct SoundMessageViewContent {
   onAsrBubbleLongPress?: (message: MessageInfo) => void;
   private audioPlayer: AudioPlayer = AudioPlayer.create();
   private stateChangeListener?: () => void;
+  private voiceAnimationTimer?: number;
 
   aboutToAppear() {
     const listener = new SoundMessageAudioListener(this);
@@ -79,6 +81,7 @@ export struct SoundMessageViewContent {
   }
 
   aboutToDisappear() {
+    this.stopVoiceAnimation();
     this.audioPlayer.stop();
 
     if (this.asrDisplayManager && this.stateChangeListener) {
@@ -87,54 +90,53 @@ export struct SoundMessageViewContent {
   }
 
   build() {
-    Stack({ alignContent: Alignment.BottomEnd }) {
-      Row() {
-        Image(this.isPlaying ? $rawfile('messagelist/voice_pause.png') : $rawfile('messagelist/voice_play.svg'))
-          .width(12)
-          .height(12)
-          .fillColor(this.message.isSentBySelf ? this.themeState.colors.textColorAntiSecondary :
-          this.themeState.colors.textColorPrimary)
-          .margin({ left: 16 })
-          .draggable(false)
-
-        Row() {
-          ForEach([0, 1, 2], (item: number) => {
-            Image($rawfile('messagelist/voice_play_animation.svg'))
-              .width(21)
-              .height(21)
-              .margin({ left: 4 })
-              .fillColor(this.message.isSentBySelf ? this.themeState.colors.textColorAntiSecondary :
-              this.themeState.colors.textColorPrimary)
-              .opacity(this.progress > (item * 33.33) ? 1 : 0.3)
-              .draggable(false)
-          })
-        }
-        .margin({ left: 8, bottom: 4 })
-
-        Text(this.formatDuration(this.messagePayload?.audioDuration || 0))
-          .fontSize(12)
-          .fontColor(this.message.isSentBySelf ? this.themeState.colors.textColorAntiSecondary :
-          this.themeState.colors.textColorPrimary)
-          .margin({
-            left: 8,
-            right: 16
-          })
+    Row({ space: 8 }) {
+      if (!this.message.isSentBySelf) {
+        this.VoiceIcon()
       }
-      .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.Start)
-      .onClick(() => {
-        this.togglePlay();
-      })
+
+      Text(this.formatDuration(this.messagePayload?.audioDuration || 0))
+        .fontSize(14)
+        .fontColor(this.message.isSentBySelf ? this.themeState.colors.textColorAntiPrimary :
+        this.themeState.colors.textColorPrimary)
+        .fontWeight(FontWeight.Normal)
+        .maxLines(1)
+
+      if (this.message.isSentBySelf) {
+        this.VoiceIcon()
+      }
     }
-    .margin({
-      top: 8,
-      bottom: 8,
+    .width(this.getBubbleWidth())
+    .height(44)
+    .padding({ left: 16, right: 16 })
+    .alignItems(VerticalAlign.Center)
+    .justifyContent(this.message.isSentBySelf ? FlexAlign.End : FlexAlign.Start)
+    .onClick(() => {
+      this.togglePlay();
     })
-    .borderRadius(8)
-    .constraintSize({
-      minWidth: 120,
-      maxWidth: 200
-    })
+  }
+
+  @Builder
+  VoiceIcon() {
+    Stack() {
+      Image($rawfile('messagelist/voice_icon_dot.svg'))
+        .width(16)
+        .height(16)
+        .opacity(this.getLayerOpacity(0))
+        .fillColor(this.getContentColor())
+      Image($rawfile('messagelist/voice_icon_arc_inner.svg'))
+        .width(16)
+        .height(16)
+        .opacity(this.getLayerOpacity(1))
+        .fillColor(this.getContentColor())
+      Image($rawfile('messagelist/voice_icon_arc_outer.svg'))
+        .width(16)
+        .height(16)
+        .opacity(this.getLayerOpacity(2))
+        .fillColor(this.getContentColor())
+    }
+    .width(16)
+    .height(16)
   }
 
   convertVoiceToText(): void {
@@ -198,17 +200,51 @@ export struct SoundMessageViewContent {
       }
     } catch (error) {
       console.error('[SoundMessageView] Toggle play error:', error);
-      this.isPlaying = false;
+      this.stopVoiceAnimation();
       this.progress = 0;
       this.currentPosition = 0;
     }
   }
 
-  private formatDuration(milliseconds: number): string {
-    const seconds = Math.floor(milliseconds);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  private getBubbleWidth(): number {
+    const duration = Math.max(0, Math.floor(this.messagePayload?.audioDuration ?? 0));
+    return Math.min(240, Math.max(120, 76 + duration * 2.8));
+  }
+
+  startVoiceAnimation(): void {
+    this.stopVoiceAnimation();
+    this.isPlaying = true;
+    this.animationStep = 0;
+    this.voiceAnimationTimer = setInterval(() => {
+      this.animationStep = (this.animationStep + 1) % 3;
+    }, 300);
+  }
+
+  stopVoiceAnimation(): void {
+    if (this.voiceAnimationTimer !== undefined) {
+      clearInterval(this.voiceAnimationTimer);
+      this.voiceAnimationTimer = undefined;
+    }
+    this.isPlaying = false;
+    this.animationStep = -1;
+  }
+
+  private getLayerOpacity(layer: number): number {
+    if (!this.isPlaying || this.animationStep < 0) {
+      return 1;
+    }
+    return layer === this.animationStep ? 1 : 0.3;
+  }
+
+  private getContentColor(): string {
+    return this.message.isSentBySelf
+      ? this.themeState.colors.textColorAntiPrimary
+      : this.themeState.colors.textColorPrimary;
+  }
+
+  private formatDuration(seconds: number): string {
+    const safeSeconds = Math.max(0, Math.floor(seconds));
+    return `${safeSeconds}"`;
   }
 }
 

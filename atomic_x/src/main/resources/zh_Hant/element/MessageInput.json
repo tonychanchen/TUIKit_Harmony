@@ -1,0 +1,160 @@
+{
+  "string": [
+    {
+      "name": "input_message_placeholder",
+      "value": "發訊息或按住說話..."
+    },
+    {
+      "name": "send_button",
+      "value": "發送"
+    },
+    {
+      "name": "send_button_text",
+      "value": "發送"
+    },
+    {
+      "name": "permission_read_media",
+      "value": "讀取媒体檔案"
+    },
+    {
+      "name": "permission_write_media",
+      "value": "寫入媒体檔案"
+    },
+    {
+      "name": "permission_media_location",
+      "value": "本地媒体权限"
+    },
+    {
+      "name": "permission_camera",
+      "value": "使用相機权限"
+    },
+    {
+      "name": "permission_read_imagevideo",
+      "value": "需要讀取圖片和影片檔案以選擇和發送媒体訊息"
+    },
+    {
+      "name": "permission_write_imagevideo",
+      "value": "需要保存接收的圖片和影片檔案"
+    },
+    {
+      "name": "permission_read_audio",
+      "value": "需要讀取音訊檔案以選擇和發送語音訊息"
+    },
+    {
+      "name": "permission_read_storage",
+      "value": "讀取用戶存储"
+    },
+    {
+      "name": "permission_write_storage",
+      "value": "寫入用戶存储"
+    },
+    {
+      "name": "menu_image",
+      "value": "圖片"
+    },
+    {
+      "name": "menu_photo",
+      "value": "拍照"
+    },
+    {
+      "name": "menu_video",
+      "value": "影片"
+    },
+    {
+      "name": "menu_file",
+      "value": "檔案"
+    },
+    {
+      "name": "menu_custom",
+      "value": "自訂訊息"
+    },
+    {
+      "name": "cancel",
+      "value": "取消"
+    },
+    {
+      "name": "file_too_large_error",
+      "value": "檔案大小超出了限制"
+    },
+    {
+      "name": "image_too_large_error",
+      "value": "圖片大小超過28MB限制"
+    },
+    {
+      "name": "audio_too_large_error",
+      "value": "音訊大小超過28MB限制"
+    },
+    {
+      "name": "audio_too_short_error",
+      "value": "語音錄制時長太短"
+    },
+    {
+      "name": "video_too_large_error",
+      "value": "影片大小超過100MB限制"
+    },
+    {
+      "name": "file_size_too_large_error",
+      "value": "檔案大小超過100MB限制"
+    },
+    {
+      "name": "empty_file_error",
+      "value": "不能發送空檔案"
+    },
+    {
+      "name": "voice_release_to_cancel",
+      "value": "松開取消錄制"
+    },
+    {
+      "name": "voice_release_to_send_slide_to_cancel",
+      "value": "松開發送，上滑取消"
+    },
+    {
+      "name": "voice_press_to_speak",
+      "value": "按住說話"
+    },
+    {
+      "name": "voice_release_to_send",
+      "value": "松開發送"
+    },
+    {
+      "name": "voice_release_to_end",
+      "value": "松開 結束"
+    },
+    {
+      "name": "voice_release_to_cancel_short",
+      "value": "松開 取消"
+    },
+    {
+      "name": "voice_release_to_transcribe",
+      "value": "松開 轉文字"
+    },
+    {
+      "name": "voice_transcription_action",
+      "value": "轉文字"
+    },
+    {
+      "name": "voice_transcription_send_original_voice",
+      "value": "發送原語音"
+    },
+    {
+      "name": "voice_transcription_empty",
+      "value": "未識別到文字"
+    },
+    {
+      "name": "mention_all",
+      "value": "所有人"
+    },
+    {
+      "name": "mention_select_member",
+      "value": "選擇提醒的人"
+    },
+    {
+      "name": "menu_voice_call",
+      "value": "語音通話"
+    },
+    {
+      "name": "menu_video_call",
+      "value": "影片通話"
+    }
+  ]
+}

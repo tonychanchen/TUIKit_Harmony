@@ -133,11 +133,7 @@ export class ChatMessageListConfig implements MessageListStyleProtocol {
   }
 
   get isShowRightAvatar(): boolean {
-    const useClassicUI = AppBuilderConfig.getInstance().useClassicUI;
-    if (useClassicUI) {
-      return true;
-    }
-    return this.userIsShowRightAvatar ?? false;
+    return true;
   }
 
   get isShowRightNickname(): boolean {
@@ -197,11 +193,11 @@ export class ChatMessageListConfig implements MessageListStyleProtocol {
   }
 
   get horizontalPadding(): number {
-    return this.userHorizontalPadding ?? 15.0;
+    return this.userHorizontalPadding ?? 16.0;
   }
 
   get avatarSpacing(): number {
-    return this.userAvatarSpacing ?? 6.0;
+    return this.userAvatarSpacing ?? 8.0;
   }
 
   get enableReadReceipt(): boolean {
@@ -243,8 +239,7 @@ export class ChatMessageListConfig implements MessageListStyleProtocol {
     if (this.userMessageActionStyle !== undefined) {
       return this.userMessageActionStyle;
     }
-    // Read from AppBuilderConfig - useClassicUI controls all classic style components
-    return AppBuilderConfig.getInstance().useClassicUI ? 'popup' : 'dialog';
+    return 'popup';
   }
 }
 

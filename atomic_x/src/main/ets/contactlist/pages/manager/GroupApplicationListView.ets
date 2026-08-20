@@ -2,7 +2,6 @@ import { GroupApplicationHandledResult, GroupApplicationHandledStatus, GroupAppl
 import {
   Avatar,
   AvatarContentType,
-  AvatarShape,
   AvatarSize,
   TextUtils,
   ThemeState
@@ -24,44 +23,29 @@ struct GroupRequestInfoDialog {
   build() {
     Column() {
 
-      Row() {
+      Stack({ alignContent: Alignment.Center }) {
+
+        Text($r('app.string.group_request_info'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .textAlign(TextAlign.Center)
 
         Row() {
           Image($rawfile('contactlist/back_arrow.svg'))
             .width(24)
             .height(24)
             .fillColor(this.themeState.colors.textColorLink)
-
-          Text($r('app.string.back_button'))
-            .fontSize(14)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.themeState.colors.textColorLink)// Figma: #1C66E5
-            .margin({ left: 8 })
         }
         .onClick(() => {
           this.handleClose();
         })
-
-
-        Text($r('app.string.group_request_info'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-
-
-        Text($r('app.string.done_button'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorLink)
-          .opacity(0)
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .padding({ left: 10, right: 10 })
       }
       .width('100%')
       .height(56)
-      .padding({ left: 10, right: 10 })
-      .justifyContent(FlexAlign.SpaceBetween)
-      .alignItems(VerticalAlign.Center)
 
 
       // Divider
@@ -289,44 +273,29 @@ export struct GroupApplicationListView {
   build() {
     Column() {
 
-      Row() {
+      Stack({ alignContent: Alignment.Center }) {
+
+        Text($r('app.string.new_group_request_title'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .textAlign(TextAlign.Center)
 
         Row() {
           Image($rawfile('contactlist/back_arrow.svg'))
             .width(24)
             .height(24)
             .fillColor(this.themeState.colors.textColorLink)
-
-          Text($r('app.string.back_button'))
-            .fontSize(14)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.themeState.colors.textColorLink)
-            .margin({ left: 8 })
         }
         .onClick(() => {
           this.handleBack();
         })
-
-
-        Text($r('app.string.new_group_request_title'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-
-
-        Text($r('app.string.done_button'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorLink)
-          .opacity(0)
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .padding({ left: 10, right: 10 })
       }
       .width('100%')
       .height(56)
-      .padding({ left: 10, right: 10 })
-      .justifyContent(FlexAlign.SpaceBetween)
-      .alignItems(VerticalAlign.Center)
 
 
       if (this.isLoading) {
@@ -375,7 +344,6 @@ export struct GroupApplicationListView {
                       name: application.fromUserNickname || application.fromUser || '',
                     },
                     avatarSize: AvatarSize.M,
-                    shape: AvatarShape.Round,
                   }).onClick(() => this.navigateToGroupRequestInfo(application))
 
                   Row() {

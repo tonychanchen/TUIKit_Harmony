@@ -40,6 +40,7 @@ struct UserPickerDialogInManagement {
         showNavigationBar: true,
         title: this.title,
         confirmButtonText: this.confirmButtonText,
+        allowEmptyConfirm: true,
         onCancel: () => {
           this.controller.close();
         },
@@ -114,45 +115,43 @@ export struct GroupManagementView {
 
   @Builder
   NavigationBarBuilder() {
-    Row() {
-      // Back button
+    Stack() {
       Row() {
-        Image($rawfile('basecomponent/common_back_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
-          .scale({
-            x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
-            y: 1
-          })
+        Row() {
+          Image($rawfile('basecomponent/common_back_icon.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .scale({
+              x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
+              y: 1
+            })
+        }
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+        .margin({ left: 16 })
+        .onClick(() => {
+          this.closeDialog();
+        })
       }
-      .width(44)
-      .height(44)
-      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .height(56)
+      .justifyContent(FlexAlign.Start)
       .alignItems(VerticalAlign.Center)
-      .onClick(() => {
-        this.closeDialog();
-      })
 
-      Blank()
-
-      // Title
       Text($r('app.string.chatsetting_group_management_title'))
         .fontSize(18)
         .fontWeight(600)
         .fontFamily('SF Pro Display')
         .fontColor(this.themeState.colors.textColorPrimary)
-
-      Blank()
+        .align(Alignment.Center)
     }
     .width('100%')
     .height(56)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
 
-    // Divider
     Divider()
       .height(0.5)
       .color(this.themeState.colors.strokeColorSecondary)
@@ -187,6 +186,8 @@ export struct GroupManagementView {
     Column({ space: 0 }) {
 
       this.MuteAllMembersRowBuilder()
+
+      this.MuteAllTipsBuilder()
 
       this.DividerBuilder()
 
@@ -354,40 +355,44 @@ export struct GroupManagementView {
   }
 
   @Builder
+  MuteAllTipsBuilder() {
+    Text($r('app.string.chatsetting_mute_all_tips'))
+      .fontSize(12)
+      .fontWeight(400)
+      .fontFamily('SF Pro Text')
+      .fontColor(this.themeState.colors.textColorPrimary)
+      .padding({
+        left: GroupManagementView.HORIZONTAL_PADDING,
+        right: GroupManagementView.HORIZONTAL_PADDING,
+        top: 16,
+        bottom: 16
+      })
+      .width('100%')
+      .alignSelf(ItemAlign.Start)
+  }
+
+  @Builder
   AddMutedMemberRowBuilder() {
     Row() {
-      Column({ space: 4 }) {
-        Text($r('app.string.chatsetting_add_muted_members'))
-          .fontSize(17)
-          .fontWeight(400)
-          .fontFamily('SF Pro Text')
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .alignSelf(ItemAlign.Start)
+      Text('+')
+        .fontSize(20)
+        .fontWeight(400)
+        .fontFamily('SF Pro Text')
+        .fontColor(this.themeState.colors.textColorLink)
 
-        Text($r('app.string.chatsetting_add_muted_members_description'))
-          .fontSize(13)
-          .fontWeight(400)
-          .fontFamily('SF Pro Text')
-          .fontColor(this.themeState.colors.textColorSecondary)
-          .alignSelf(ItemAlign.Start)
-      }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-
-      Blank()
-
-      Image($rawfile('search/right_arrow_icon.svg'))
-        .width(12)
-        .height(24)
-        .fillColor(this.themeState.colors.textColorSecondary)
+      Text($r('app.string.chatsetting_add_muted_members'))
+        .fontSize(12)
+        .fontWeight(400)
+        .fontFamily('SF Pro Text')
+        .fontColor(this.themeState.colors.textColorLink)
+        .margin({ left: 8 })
     }
     .width('100%')
-    .height(GroupManagementView.CELL_HEIGHT + 16)
     .padding({
       left: GroupManagementView.HORIZONTAL_PADDING,
       right: GroupManagementView.HORIZONTAL_PADDING,
-      top: 8,
-      bottom: 8
+      top: 16,
+      bottom: 16
     })
     .alignItems(VerticalAlign.Center)
     .onClick(() => {

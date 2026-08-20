@@ -1,0 +1,944 @@
+{
+  "string": [
+    {
+      "name": "chatsetting_select_user",
+      "value": "選擇用戶"
+    },
+    {
+      "name": "chatsetting_complete",
+      "value": "完成"
+    },
+    {
+      "name": "chatsetting_cancel_button",
+      "value": "取消"
+    },
+    {
+      "name": "chatsetting_user_picker_selected",
+      "value": "已選擇 {count} 人"
+    },
+    {
+      "name": "chatsetting_people_count",
+      "value": "%s 人"
+    },
+    {
+      "name": "chatsetting_user_picker_selected_tag",
+      "value": "已選擇"
+    },
+    {
+      "name": "chatsetting_max_select_tip",
+      "value": "最多只能選擇 %s 個用戶"
+    },
+    {
+      "name": "chatsetting_select_avatar",
+      "value": "選擇頭像"
+    },
+    {
+      "name": "chatsetting_confirm_select",
+      "value": "確定"
+    },
+    {
+      "name": "chatsetting_no_avatar_available",
+      "value": "暫無頭像可選擇"
+    },
+    {
+      "name": "chatsetting_please_select_image_first",
+      "value": "請先選擇一张圖片"
+    },
+    {
+      "name": "chatsetting_member_detail",
+      "value": "成員信息"
+    },
+    {
+      "name": "chatsetting_member_set_admin",
+      "value": "設為管理員"
+    },
+    {
+      "name": "chatsetting_member_remove",
+      "value": "移除成員"
+    },
+    {
+      "name": "chatsetting_navigate_to_single_chat_fail",
+      "value": "跳轉单聊資料頁失敗"
+    },
+    {
+      "name": "chatsetting_group_info_unavailable_toast",
+      "value": "群組信息不可用"
+    },
+    {
+      "name": "chatsetting_member_setting_admin",
+      "value": "正在設定管理員..."
+    },
+    {
+      "name": "chatsetting_member_setting_admin_fail",
+      "value": "設定管理員失敗"
+    },
+    {
+      "name": "chatsetting_member_remove_admin",
+      "value": "撤销管理員"
+    },
+    {
+      "name": "chatsetting_member_removing_admin",
+      "value": "正在撤销管理員..."
+    },
+    {
+      "name": "chatsetting_member_remove_admin_fail",
+      "value": "撤销管理員失敗"
+    },
+    {
+      "name": "chatsetting_member_removing",
+      "value": "正在刪除群成員..."
+    },
+    {
+      "name": "chatsetting_member_remove_fail",
+      "value": "刪除群成員失敗"
+    },
+    {
+      "name": "chatsetting_load_group_info_fail_toast",
+      "value": "載入群組信息失敗"
+    },
+    {
+      "name": "chatsetting_unmute",
+      "value": "解除禁言"
+    },
+    {
+      "name": "chatsetting_group_info_unavailable",
+      "value": "群組信息不可用"
+    },
+    {
+      "name": "chatsetting_muting_all_members_start",
+      "value": "正在開啟全員禁言..."
+    },
+    {
+      "name": "chatsetting_unmuting_all_members_start",
+      "value": "正在關閉全員禁言..."
+    },
+    {
+      "name": "chatsetting_mute_all_members_success",
+      "value": "全員禁言已開啟"
+    },
+    {
+      "name": "chatsetting_unmute_all_members_success",
+      "value": "全員禁言已關閉"
+    },
+    {
+      "name": "chatsetting_enable_mute_all_members_fail",
+      "value": "開啟全員禁言失敗"
+    },
+    {
+      "name": "chatsetting_disable_mute_all_members_fail",
+      "value": "關閉全員禁言失敗"
+    },
+    {
+      "name": "chatsetting_work_group_mute_members_unsupported",
+      "value": "Work群類型不支援禁言指定群成員"
+    },
+    {
+      "name": "chatsetting_no_members_to_mute",
+      "value": "沒有可禁言的成員"
+    },
+    {
+      "name": "chatsetting_no_members_to_set_admin",
+      "value": "沒有可設為管理員的成員"
+    },
+    {
+      "name": "chatsetting_select_members_to_mute",
+      "value": "選擇禁言成員"
+    },
+    {
+      "name": "chatsetting_mute",
+      "value": "禁言"
+    },
+    {
+      "name": "chatsetting_mute_title",
+      "value": "已禁言成員(%s)"
+    },
+    {
+      "name": "chatsetting_open_member_picker_fail",
+      "value": "打開成員選擇失敗"
+    },
+    {
+      "name": "chatsetting_mute_confirm",
+      "value": "確定禁言"
+    },
+    {
+      "name": "chatsetting_mute_confirm_message",
+      "value": "確定要禁言 %s 個成員吗？"
+    },
+    {
+      "name": "chatsetting_confirm",
+      "value": "確定"
+    },
+    {
+      "name": "chatsetting_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "chatsetting_muting_members",
+      "value": "正在禁言成員..."
+    },
+    {
+      "name": "chatsetting_mute_success",
+      "value": "成功禁言 %s 個成員"
+    },
+    {
+      "name": "chatsetting_mute_fail",
+      "value": "禁言操作失敗"
+    },
+    {
+      "name": "chatsetting_mute_time_text_unmuted",
+      "value": "已解除禁言"
+    },
+    {
+      "name": "chatsetting_mute_time_text_remaining",
+      "value": "剩餘 %s 天 %s 小時"
+    },
+    {
+      "name": "chatsetting_mute_time_text_remaining2",
+      "value": "剩餘 %s 時 %s 分"
+    },
+    {
+      "name": "chatsetting_mute_time_text_remaining3",
+      "value": "剩餘 %s 分"
+    },
+    {
+      "name": "chatsetting_unmute_confirm",
+      "value": "解除禁言"
+    },
+    {
+      "name": "chatsetting_unmute_confirm_message",
+      "value": "確定要解除 %s 的禁言吗？"
+    },
+    {
+      "name": "chatsetting_unmuting_member",
+      "value": "正在解除禁言..."
+    },
+    {
+      "name": "chatsetting_unmute_success",
+      "value": "成功解除 %s 的禁言"
+    },
+    {
+      "name": "chatsetting_unmute_fail",
+      "value": "解除禁言失敗"
+    },
+    {
+      "name": "chatsetting_load_group_info_fail",
+      "value": "載入群組信息失敗"
+    },
+    {
+      "name": "chatsetting_set_remark",
+      "value": "設定備註"
+    },
+    {
+      "name": "chatsetting_input_remark_name",
+      "value": "請輸入備註名稱"
+    },
+    {
+      "name": "chatsetting_remark_help_text",
+      "value": "僅限中文、字母、數字和底線"
+    },
+    {
+      "name": "chatsetting_added_to_blacklist",
+      "value": "已添加到黑名單"
+    },
+    {
+      "name": "chatsetting_add_blacklist_fail",
+      "value": "添加黑名單失敗"
+    },
+    {
+      "name": "chatsetting_removed_from_blacklist",
+      "value": "已從黑名單移除"
+    },
+    {
+      "name": "chatsetting_remove_blacklist_fail",
+      "value": "移除黑名單失敗"
+    },
+    {
+      "name": "chatsetting_clear_chat_success",
+      "value": "清空聊天成功"
+    },
+    {
+      "name": "chatsetting_clear_chat_fail",
+      "value": "清空聊天失敗"
+    },
+    {
+      "name": "chatsetting_delete_friend",
+      "value": "刪除好友"
+    },
+    {
+      "name": "chatsetting_delete_friend_success",
+      "value": "刪除好友成功"
+    },
+    {
+      "name": "chatsetting_delete_friend_fail",
+      "value": "刪除好友失敗"
+    },
+    {
+      "name": "chatsetting_user_status_error",
+      "value": "用戶狀態異常"
+    },
+    {
+      "name": "chatsetting_remark_set_success",
+      "value": "備註設定成功"
+    },
+    {
+      "name": "chatsetting_remark_set_fail",
+      "value": "備註設定失敗: %s"
+    },
+    {
+      "name": "chatsetting_unknown_error",
+      "value": "未知錯误"
+    },
+    {
+      "name": "chatsetting_forbid_add_group",
+      "value": "禁止加入"
+    },
+    {
+      "name": "chatsetting_require_admin_approval",
+      "value": "需要管理員审批"
+    },
+    {
+      "name": "chatsetting_auto_approve",
+      "value": "自動审批"
+    },
+    {
+      "name": "chatsetting_forbid_invite",
+      "value": "禁止邀請"
+    },
+    {
+      "name": "chatsetting_edit_group_name",
+      "value": "修改群名稱"
+    },
+    {
+      "name": "chatsetting_input_group_name",
+      "value": "請輸入群名稱"
+    },
+    {
+      "name": "chatsetting_group_name_help_text",
+      "value": "僅限中文、字母、數字和底線"
+    },
+    {
+      "name": "chatsetting_group_announcement_loading",
+      "value": "正在載入群公告..."
+    },
+    {
+      "name": "chatsetting_group_announcement_title",
+      "value": "群公告"
+    },
+    {
+      "name": "chatsetting_save",
+      "value": "保存"
+    },
+    {
+      "name": "chatsetting_edit",
+      "value": "編輯"
+    },
+    {
+      "name": "chatsetting_announcement_content",
+      "value": "公告內容"
+    },
+    {
+      "name": "chatsetting_input_announcement_placeholder",
+      "value": "請輸入群公告內容..."
+    },
+    {
+      "name": "chatsetting_group_announcement_empty",
+      "value": "沒有群公告"
+    },
+    {
+      "name": "chatsetting_not_set",
+      "value": "未設定"
+    },
+    {
+      "name": "chatsetting_group_announcement_add_tip",
+      "value": "点击右上角編輯按钮添加群公告"
+    },
+    {
+      "name": "chatsetting_edit_help",
+      "value": "編輯說明"
+    },
+    {
+      "name": "chatsetting_announcement_notify_all",
+      "value": "• 群公告會通知所有群成員"
+    },
+    {
+      "name": "chatsetting_announcement_max_length",
+      "value": "• 支援最多300個字符"
+    },
+    {
+      "name": "chatsetting_announcement_edit_permission",
+      "value": "• 僅群主和管理員可以編輯群公告"
+    },
+    {
+      "name": "chatsetting_leave_confirm",
+      "value": "確定离開"
+    },
+    {
+      "name": "chatsetting_unsaved_changes_leave",
+      "value": "您有未保存的更改，確定要离開吗？"
+    },
+    {
+      "name": "chatsetting_dont_save",
+      "value": "不保存"
+    },
+    {
+      "name": "chatsetting_group_announcement_save_success",
+      "value": "群公告保存成功"
+    },
+    {
+      "name": "chatsetting_group_announcement_save_fail",
+      "value": "群公告保存失敗"
+    },
+    {
+      "name": "chatsetting_open_group_member_list_fail",
+      "value": "打開群成員列表失敗"
+    },
+    {
+      "name": "chatsetting_open_group_management_fail",
+      "value": "打開群管理頁面失敗"
+    },
+    {
+      "name": "chatsetting_open_group_announcement_fail",
+      "value": "打開群公告頁面失敗"
+    },
+    {
+      "name": "chatsetting_open_avatar_picker_fail",
+      "value": "打開頭像選擇頁面失敗"
+    },
+    {
+      "name": "chatsetting_select_group_avatar",
+      "value": "選擇群頭像"
+    },
+    {
+      "name": "chatsetting_group_name_update_success",
+      "value": "群名稱修改成功"
+    },
+    {
+      "name": "chatsetting_group_name_update_fail",
+      "value": "群名稱修改失敗"
+    },
+    {
+      "name": "chatsetting_edit_my_group_nickname",
+      "value": "修改群名片"
+    },
+    {
+      "name": "chatsetting_input_group_nickname_placeholder",
+      "value": "請輸入群名片"
+    },
+    {
+      "name": "chatsetting_group_nickname_help_text",
+      "value": "僅限中文、字母、數字和底線"
+    },
+    {
+      "name": "chatsetting_group_nickname_update_success",
+      "value": "群名片修改成功"
+    },
+    {
+      "name": "chatsetting_group_nickname_update_fail",
+      "value": "群名片修改失敗"
+    },
+    {
+      "name": "chatsetting_no_transferable_member",
+      "value": "沒有可轉讓的成員"
+    },
+    {
+      "name": "chatsetting_select_new_owner",
+      "value": "選擇新群主"
+    },
+    {
+      "name": "chatsetting_transfer_ownership_button",
+      "value": "轉讓群主"
+    },
+    {
+      "name": "chatsetting_open_friend_picker_fail",
+      "value": "打開好友選擇失敗"
+    },
+    {
+      "name": "chatsetting_getting_friend_list",
+      "value": "正在獲取好友列表..."
+    },
+    {
+      "name": "chatsetting_no_friends_to_add",
+      "value": "沒有可添加的好友"
+    },
+    {
+      "name": "chatsetting_select_friends_to_add",
+      "value": "選擇要添加的好友"
+    },
+    {
+      "name": "chatsetting_invite_to_group_button",
+      "value": "邀請加群"
+    },
+    {
+      "name": "chatsetting_online",
+      "value": "在線"
+    },
+    {
+      "name": "chatsetting_offline",
+      "value": "离線"
+    },
+    {
+      "name": "chatsetting_get_friend_list_fail_log",
+      "value": "獲取好友列表失敗"
+    },
+    {
+      "name": "chatsetting_get_friend_list_fail",
+      "value": "獲取好友列表失敗"
+    },
+    {
+      "name": "chatsetting_invite_friends_to_group",
+      "value": "邀請好友加群"
+    },
+    {
+      "name": "chatsetting_confirm_add_members_dialog",
+      "value": "確定要邀請選中的"
+    },
+    {
+      "name": "chatsetting_confirm_add_members_dialog_unit",
+      "value": "個好友加入群組吗？"
+    },
+    {
+      "name": "chatsetting_inviting_friends_to_group",
+      "value": "正在邀請好友加群..."
+    },
+    {
+      "name": "chatsetting_success_invite_friends",
+      "value": "成功邀請"
+    },
+    {
+      "name": "chatsetting_success_invite_friends_unit",
+      "value": "個好友加入群組"
+    },
+    {
+      "name": "chatsetting_invite_friends_to_group_fail",
+      "value": "邀請好友加群失敗"
+    },
+    {
+      "name": "chatsetting_transfer_ownership_title",
+      "value": "轉讓群主"
+    },
+    {
+      "name": "chatsetting_confirm_transfer_ownership_dialog",
+      "value": "確定要轉讓群主给"
+    },
+    {
+      "name": "chatsetting_confirm_transfer_ownership_dialog_note",
+      "value": "轉讓後您將成為普通成員，此操作不可撤销"
+    },
+    {
+      "name": "chatsetting_cancel_transfer",
+      "value": "取消"
+    },
+    {
+      "name": "chatsetting_confirm_transfer",
+      "value": "確定轉讓"
+    },
+    {
+      "name": "chatsetting_transferring_ownership",
+      "value": "正在轉讓群主..."
+    },
+    {
+      "name": "chatsetting_transfer_ownership_failed",
+      "value": "轉讓群主失敗"
+    },
+    {
+      "name": "chatsetting_owner_role",
+      "value": "群主"
+    },
+    {
+      "name": "chatsetting_admin_role",
+      "value": "管理員"
+    },
+    {
+      "name": "chatsetting_regular_member_role",
+      "value": "普通成員"
+    },
+    {
+      "name": "chatsetting_member_role",
+      "value": "成員"
+    },
+    {
+      "name": "chatsetting_updating_group_avatar",
+      "value": "正在更新群頭像..."
+    },
+    {
+      "name": "chatsetting_group_avatar_update_successful",
+      "value": "群頭像更新成功"
+    },
+    {
+      "name": "chatsetting_group_avatar_update_failed",
+      "value": "群頭像更新失敗"
+    },
+    {
+      "name": "chatsetting_avatar_processing_failed",
+      "value": "頭像處理失敗"
+    },
+    {
+      "name": "chatsetting_group_default",
+      "value": "群組"
+    },
+    {
+      "name": "chatsetting_dismiss_group_title",
+      "value": "解散群組"
+    },
+    {
+      "name": "chatsetting_cancel_dismiss",
+      "value": "取消"
+    },
+    {
+      "name": "chatsetting_confirm_dismiss",
+      "value": "確定"
+    },
+    {
+      "name": "chatsetting_dismissing_group_progress",
+      "value": "正在解散群組..."
+    },
+    {
+      "name": "chatsetting_dismiss_group_successful",
+      "value": "解散群組成功"
+    },
+    {
+      "name": "chatsetting_dismiss_group_failed",
+      "value": "解散群組失敗"
+    },
+    {
+      "name": "chatsetting_clear_chat_history_title",
+      "value": "清空聊天記錄"
+    },
+    {
+      "name": "chatsetting_clear_contact_history_confirm",
+      "value": "確定刪除與該聯絡人的聊天記錄"
+    },
+    {
+      "name": "chatsetting_cancel_clear",
+      "value": "取消"
+    },
+    {
+      "name": "chatsetting_confirm_clear",
+      "value": "確定"
+    },
+    {
+      "name": "chatsetting_clearing_chat_history",
+      "value": "正在清空聊天記錄..."
+    },
+    {
+      "name": "chatsetting_clear_chat_history_successful",
+      "value": "清空聊天記錄成功"
+    },
+    {
+      "name": "chatsetting_clear_chat_history_failed",
+      "value": "清空聊天記錄失敗"
+    },
+    {
+      "name": "chatsetting_leave_group_title",
+      "value": "退出群組"
+    },
+    {
+      "name": "chatsetting_cancel_leave",
+      "value": "取消"
+    },
+    {
+      "name": "chatsetting_confirm_leave",
+      "value": "確定退出"
+    },
+    {
+      "name": "chatsetting_leaving_group_progress",
+      "value": "正在退出群組..."
+    },
+    {
+      "name": "chatsetting_leave_group_successful",
+      "value": "退出群組成功"
+    },
+    {
+      "name": "chatsetting_leave_group_failed",
+      "value": "退出群組失敗"
+    },
+    {
+      "name": "chatsetting_report_group",
+      "value": "举报"
+    },
+    {
+      "name": "chatsetting_report_group_toast",
+      "value": "举报群組"
+    },
+    {
+      "name": "chatsetting_report_contact_toast",
+      "value": "举报聯絡人"
+    },
+    {
+      "name": "chatsetting_audio",
+      "value": "音訊"
+    },
+    {
+      "name": "chatsetting_video",
+      "value": "影片"
+    },
+    {
+      "name": "chatsetting_search",
+      "value": "搜尋"
+    },
+    {
+      "name": "chatsetting_clear_chat_history",
+      "value": "清空聊天記錄"
+    },
+    {
+      "name": "chatsetting_transfer_ownership",
+      "value": "轉讓群主"
+    },
+    {
+      "name": "chatsetting_dismiss_group",
+      "value": "解散該群聊"
+    },
+    {
+      "name": "chatsetting_leave_group",
+      "value": "退出群組"
+    },
+    {
+      "name": "chatsetting_loading_group_information",
+      "value": "正在載入群組信息..."
+    },
+    {
+      "name": "chatsetting_group_info",
+      "value": "群組信息"
+    },
+    {
+      "name": "chatsetting_conversation_settings",
+      "value": "會話設定"
+    },
+    {
+      "name": "chatsetting_group_members",
+      "value": "群成員"
+    },
+    {
+      "name": "chatsetting_member_settings",
+      "value": "成員設定"
+    },
+    {
+      "name": "chatsetting_mute_notifications",
+      "value": "訊息免打扰"
+    },
+    {
+      "name": "chatsetting_pin_conversation",
+      "value": "置頂聊天"
+    },
+    {
+      "name": "chatsetting_group_announcement",
+      "value": "群公告"
+    },
+    {
+      "name": "chatsetting_chat_background",
+      "value": "聊天背景"
+    },
+    {
+      "name": "chatsetting_blacklist",
+      "value": "加入黑名單"
+    },
+    {
+      "name": "chatsetting_group_management",
+      "value": "群管理"
+    },
+    {
+      "name": "chatsetting_group_type",
+      "value": "群類型"
+    },
+    {
+      "name": "chatsetting_join_group_method",
+      "value": "主動加群方式"
+    },
+    {
+      "name": "chatsetting_invite_method",
+      "value": "邀請進群方式"
+    },
+    {
+      "name": "chatsetting_mygroup_nickname",
+      "value": "我的群名片"
+    },
+    {
+      "name": "chatsetting_background",
+      "value": "群背景設定"
+    },
+    {
+      "name": "chatsetting_members",
+      "value": "群成員"
+    },
+    {
+      "name": "chatsetting_default_group_name",
+      "value": "群組"
+    },
+    {
+      "name": "chatsetting_group_management_title",
+      "value": "群管理"
+    },
+    {
+      "name": "chatsetting_loading_group_management",
+      "value": "正在載入群管理設定..."
+    },
+    {
+      "name": "chatsetting_mute_all_members",
+      "value": "全員禁言"
+    },
+    {
+      "name": "chatsetting_mute_all_members_description",
+      "value": "禁止所有成員發送訊息"
+    },
+    {
+      "name": "chatsetting_mute_all_tips",
+      "value": "全員禁言開啟後，只允許群主和管理員發言。"
+    },
+    {
+      "name": "chatsetting_add_muted_members",
+      "value": "選擇禁言成員"
+    },
+    {
+      "name": "chatsetting_group_members_title",
+      "value": "群成員"
+    },
+    {
+      "name": "chatsetting_loading_group_members",
+      "value": "正在載入群成員..."
+    },
+    {
+      "name": "chatsetting_owner",
+      "value": "群主"
+    },
+    {
+      "name": "chatsetting_admin",
+      "value": "管理員"
+    },
+    {
+      "name": "chatsetting_muted",
+      "value": "已禁言"
+    },
+    {
+      "name": "chatsetting_contact_info",
+      "value": "聯絡人信息"
+    },
+    {
+      "name": "chatsetting_loading_contact_information",
+      "value": "正在載入聯絡人信息..."
+    },
+    {
+      "name": "chatsetting_contact_info_title",
+      "value": "聯絡人信息"
+    },
+    {
+      "name": "chatsetting_default_contact_name",
+      "value": "聯絡人"
+    },
+    {
+      "name": "chatsetting_unknown_user",
+      "value": "未知"
+    },
+    {
+      "name": "chatsetting_message",
+      "value": "發送訊息"
+    },
+    {
+      "name": "chatsetting_set_remark_title",
+      "value": "備註名"
+    },
+    {
+      "name": "chatsetting_add_member",
+      "value": "添加成員"
+    },
+    {
+      "name": "chatsetting_default",
+      "value": "默認"
+    },
+    {
+      "name": "chatsetting_custom",
+      "value": "已設定"
+    },
+    {
+      "name": "chatsetting_select_chat_background",
+      "value": "選擇聊天背景"
+    },
+    {
+      "name": "chatsetting_confirm_add_members_dialog_format",
+      "value": "你想要邀請 %s 個人加入此群聊吗?"
+    },
+    {
+      "name": "chatsetting_success_invite_friends_format",
+      "value": "成功邀請好友加入群聊"
+    },
+    {
+      "name": "chatsetting_confirm_transfer_ownership_dialog_format",
+      "value": "你想轉移群主给 \"%s\"?."
+    },
+    {
+      "name": "chatsetting_transfer_ownership_success_format",
+      "value": "群主已成功轉移给 %s"
+    },
+    {
+      "name": "chatsetting_dismiss_group_confirm",
+      "value": "確定解散該群聊"
+    },
+    {
+      "name": "chatsetting_clear_group_history_confirm",
+      "value": "確定刪除該群的聊天記錄"
+    },
+    {
+      "name": "chatsetting_leave_group_confirm_format",
+      "value": "你想离開此群聊吗 \"%s\"?"
+    },
+    {
+      "name": "chatsetting_group_type_work_group",
+      "value": "工作群"
+    },
+    {
+      "name": "chatsetting_group_type_work",
+      "value": "工作群"
+    },
+    {
+      "name": "chatsetting_group_type_public_group",
+      "value": "公開群"
+    },
+    {
+      "name": "chatsetting_group_type_meeting",
+      "value": "會议群"
+    },
+    {
+      "name": "chatsetting_group_type_chat_room",
+      "value": "聊天室"
+    },
+    {
+      "name": "chatsetting_group_type_community",
+      "value": "社群"
+    },
+    {
+      "name": "chatsetting_join_method_need_approval",
+      "value": "需要审批"
+    },
+    {
+      "name": "chatsetting_join_method_need_admin_approval",
+      "value": "管理員审批"
+    },
+    {
+      "name": "chatsetting_join_method_anyone_can_join",
+      "value": "任何人都可以加入"
+    },
+    {
+      "name": "chatsetting_join_method_forbidden",
+      "value": "禁止加入"
+    },
+    {
+      "name": "chatsetting_invite_method_anyone_can_invite",
+      "value": "自動审批"
+    },
+    {
+      "name": "chatsetting_group_admins",
+      "value": "群管理員"
+    },
+    {
+      "name": "chatsetting_set_admin",
+      "value": "設為管理員"
+    },
+    {
+      "name": "chatsetting_remove_admin",
+      "value": "撤销管理員"
+    },
+    {
+      "name": "chatsetting_admin_operation_failed",
+      "value": "管理員變更失敗：%s"
+    }
+  ]
+}

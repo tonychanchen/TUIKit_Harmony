@@ -1,85 +1,71 @@
 import { ThemeState } from '../../basecomponent/Index';
 
-/**
- * MultiSelectBottomBar component for multi-select mode
- * Displays forward, delete buttons on the left, selected count in center, and cancel button on the right
- */
 @Component
 export struct MultiSelectBottomBar {
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @Prop selectedCount: number = 0;
-  onCancel?: () => void;
+  onSeparateForward?: () => void;
+  onMergedForward?: () => void;
   onDelete?: () => void;
-  onForward?: () => void;
 
-  private readonly BAR_HEIGHT: number = 56;
-  private readonly ICON_SIZE: number = 16;
-  private readonly HORIZONTAL_PADDING: number = 16;
-  private readonly BUTTON_SPACING: number = 24;
+  private readonly ICON_SIZE: number = 40;
+  private readonly ITEM_TEXT_SIZE: number = 12;
 
   build() {
     Row() {
-      // Left side: Forward and Delete buttons
-      Row() {
-        // Forward button
-        Column() {
-          Image($rawfile('messagelist/icon_extion_forward.svg'))
-            .width(this.ICON_SIZE)
-            .height(this.ICON_SIZE)
-            .fillColor(this.selectedCount > 0 ? 
-              this.themeState.colors.textColorLink : 
-              this.themeState.colors.textColorDisable)
-        }
-        .onClick(() => {
-          if (this.selectedCount > 0 && this.onForward) {
-            this.onForward();
-          }
-        })
-        .enabled(this.selectedCount > 0)
-
-        // Delete button
-        Column() {
-          Image($rawfile('messagelist/icon_extion_delete.svg'))
-            .width(this.ICON_SIZE)
-            .height(this.ICON_SIZE)
-            .fillColor(this.selectedCount > 0 ? 
-              this.themeState.colors.textColorLink : 
-              this.themeState.colors.textColorDisable)
-        }
-        .margin({ left: this.BUTTON_SPACING })
-        .onClick(() => {
-          if (this.selectedCount > 0 && this.onDelete) {
-            this.onDelete();
-          }
-        })
-        .enabled(this.selectedCount > 0)
-      }
-      .padding({ left: this.HORIZONTAL_PADDING })
-
-      // Center: Selected count
-      Text() {
-        Span(`${this.selectedCount} `)
-        Span($r('app.string.multiselect_selected'))
-      }
-      .fontSize(14)
-      .fontColor(this.themeState.colors.textColorPrimary)
-      .layoutWeight(1)
-      .textAlign(TextAlign.Center)
-
-      // Right side: Cancel button
-      Text($r('app.string.cancel'))
-        .fontSize(14)
-        .fontColor(this.themeState.colors.textColorLink)
-        .padding({ right: this.HORIZONTAL_PADDING })
-        .onClick(() => {
-          if (this.onCancel) {
-            this.onCancel();
-          }
-        })
+      this.ActionItemBuilder(
+        $r('app.string.forward_separately'),
+        'messagelist/icon_multiselect_forward_separate.svg',
+        this.onSeparateForward,
+        true
+      )
+      this.ActionItemBuilder(
+        $r('app.string.forward_merged'),
+        'messagelist/icon_multiselect_forward_merged.svg',
+        this.onMergedForward,
+        true
+      )
+      this.ActionItemBuilder(
+        $r('app.string.multiselect_delete'),
+        'messagelist/icon_multiselect_delete.svg',
+        this.onDelete
+      )
     }
     .width('100%')
-    .height(this.BAR_HEIGHT)
-    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+    .backgroundColor(this.themeState.colors.bgColorBottomBar)
     .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private ActionItemBuilder(title: string | Resource, icon: string, action?: () => void,
+    useIntrinsicIconColor: boolean = false) {
+    Column({ space: 6 }) {
+      if (useIntrinsicIconColor) {
+        Image($rawfile(icon))
+          .width(this.ICON_SIZE)
+          .height(this.ICON_SIZE)
+      } else {
+        Image($rawfile(icon))
+          .width(this.ICON_SIZE)
+          .height(this.ICON_SIZE)
+          .fillColor(this.themeState.colors.textColorSecondary)
+      }
+
+      Text(title)
+        .fontSize(this.ITEM_TEXT_SIZE)
+        .fontColor(this.themeState.colors.textColorSecondary)
+        .maxLines(1)
+        .textAlign(TextAlign.Center)
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Center)
+    .opacity(this.selectedCount > 0 ? 1 : 0.4)
+    .enabled(this.selectedCount > 0)
+    .onClick(() => {
+      if (this.selectedCount > 0) {
+        action?.();
+      }
+    })
   }
 }

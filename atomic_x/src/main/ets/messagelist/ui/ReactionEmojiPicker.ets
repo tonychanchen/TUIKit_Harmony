@@ -177,7 +177,7 @@ export struct ReactionEmojiPicker {
 
       // Expand button
       Row() {
-        Image($rawfile('messagelist/icon_extion_more.png'))
+        Image($rawfile('messagelist/icon_extion_reaction_expand.svg'))
           .width(20)
           .height(20)
           .objectFit(ImageFit.Contain)

@@ -10,9 +10,6 @@ import {
   Toast
 } from '../../basecomponent/Index';
 import { CompletionHandlerAdapter } from '../../basecomponent/utils/CompletionHandlers';
-import { GetMessageView } from './MessageItem';
-import { ChatMessageListConfig, MessageListStyleProtocol } from '../config/MessageListConfig';
-import { MessageRenderContext } from '../context/MessageRenderContext';
 
 @CustomDialog
 export struct MessageReadReceiptDetailPage {
@@ -23,8 +20,7 @@ export struct MessageReadReceiptDetailPage {
   messageListStore!: MessageListStore;
 
   private messageActionStore?: MessageActionStore = undefined;
-  @State private isReadSectionExpanded: boolean = true;
-  @State private isUnReadSectionExpanded: boolean = true;
+  @State private selectedReadTab: boolean = true;
 
   @State private readMemberList: GroupMember[] = [];
   @State private unReadMemberList: GroupMember[] = [];
@@ -32,19 +28,11 @@ export struct MessageReadReceiptDetailPage {
   @State private hasMoreUnReadMembers: boolean = true;
 
   private readonly HEADER_HEIGHT: number = 56;
-  private readonly MEMBER_CELL_HEIGHT: number = 56;
-  private readonly SECTION_RADIUS: number = 30;
-  private readonly previewConfig: MessageListStyleProtocol = new ChatMessageListConfig({
-    enableReadReceipt: false,
-    isSupportCopy: false,
-    isSupportDelete: false,
-    isSupportRecall: false,
-    isSupportForward: false,
-    isSupportMultiSelect: false,
-  });
+  private readonly MEMBER_CELL_HEIGHT: number = 52;
 
   aboutToAppear() {
     this.messageActionStore = MessageActionStore.create(this.message);
+    this.selectedReadTab = (this.message.readReceiptInfo?.readCount ?? 0) > 0;
     this.loadInitialData();
   }
 
@@ -52,42 +40,66 @@ export struct MessageReadReceiptDetailPage {
     Column() {
       this.buildHeader();
 
-      Scroll() {
-        Column({ space: 12 }) {
-          Text(this.formatTimestampToMMDDHHmm(this.message.timestamp))
-            .fontSize(14)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(this.themeState.colors.textColorSecondary)
-            .margin({ top: 16, bottom: 4 })
+      Divider()
+        .width('100%')
+        .height(1)
+        .color(this.themeState.colors.strokeColorSecondary);
 
-          this.buildMessageBubble();
-
-          this.buildMemberSection(true);
-          this.buildMemberSection(false);
+      Column() {
+        Row({ space: 12 }) {
+          this.buildReceiptTab(true);
+          this.buildReceiptTab(false);
         }
         .width('100%')
-        .padding({ left: 16, right: 16, bottom: 24 })
+        .height(40)
+
+        Scroll() {
+          Column() {
+            ForEach(this.getMembers(this.selectedReadTab), (member: GroupMember) => {
+              this.buildMemberRow(member);
+            }, (member: GroupMember) => member.userID)
+
+            if (this.hasMoreMembers(this.selectedReadTab)) {
+              this.buildLoadMoreButton(this.selectedReadTab);
+            }
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Start)
+          .alignItems(HorizontalAlign.Start)
+        }
+        .layoutWeight(1)
+        .width('100%')
+        .margin({ top: 12 })
+        .scrollBar(BarState.Off)
+        .edgeEffect(EdgeEffect.None)
+        .align(Alignment.Top)
       }
+      .layoutWeight(1)
       .width('100%')
-      .scrollBar(BarState.Off)
-      .edgeEffect(EdgeEffect.None)
+      .padding({ left: 20, right: 20, top: 16, bottom: 16 })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.themeState.colors.bgColorDefault)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 
   @Builder
   private buildHeader() {
     Row() {
-      Image($rawfile('messagelist/back_icon.svg'))
-        .width(12)
-        .height(20)
-        .fillColor(this.themeState.colors.textColorLink)
-        .onClick(() => {
-          this.controller.close();
-        })
+      Row() {
+        Image($rawfile('basecomponent/common_back_icon.svg'))
+          .width(16)
+          .height(16)
+          .fillColor(this.themeState.colors.textColorSecondary)
+      }
+      .width(44)
+      .height(44)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+      .onClick(() => {
+        this.controller.close();
+      })
 
       Text($r('app.string.read_receipt_detail_title'))
         .fontSize(17)
@@ -99,42 +111,13 @@ export struct MessageReadReceiptDetailPage {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
 
       Row()
-        .width(24)
-        .height(24)
+        .width(44)
+        .height(44)
     }
     .width('100%')
     .height(this.HEADER_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 0, right: 0 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
-  }
-
-  @Builder
-  private buildMessageBubble() {
-    Row() {
-      Blank();
-
-      Column() {
-        GetMessageView({
-          message: this.message,
-          messageListStore: this.messageListStore,
-          config: this.previewConfig,
-          isInMergedDetailView: true
-        });
-      }
-      .borderRadius({
-        topLeft: 16,
-        topRight: 16,
-        bottomLeft: 16,
-        bottomRight: 0
-      })
-      .backgroundColor(this.themeState.colors.bgColorBubbleOwn)
-      .borderWidth(1)
-      .borderColor(this.themeState.colors.bgColorBubbleOwn)
-      .justifyContent(FlexAlign.End)
-    }
-    .width('100%')
-    .justifyContent(FlexAlign.End)
-    .margin({ bottom: 12 })
   }
 
   private getMembers(isRead: boolean): Array<GroupMember> {
@@ -145,64 +128,37 @@ export struct MessageReadReceiptDetailPage {
     return isRead ? this.hasMoreReadMembers : this.hasMoreUnReadMembers;
   }
 
-  private isSectionExpanded(isRead: boolean): boolean {
-    return isRead ? this.isReadSectionExpanded : this.isUnReadSectionExpanded;
-  }
-
-  private toggleSectionExpanded(isRead: boolean) {
-    if (isRead) {
-      this.isReadSectionExpanded = !this.isReadSectionExpanded;
-    } else {
-      this.isUnReadSectionExpanded = !this.isUnReadSectionExpanded;
-    }
-  }
-
   private getSectionTitle(isRead: boolean): Resource {
     return isRead ? $r('app.string.read_receipt_read_by') : $r('app.string.read_receipt_delivered_to');
   }
 
   @Builder
-  private buildMemberSection(isRead: boolean) {
-    Column() {
-      Row() {
-        Text(this.getSectionTitle(isRead))
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.themeState.colors.textColorPrimary)
+  private buildReceiptTab(isRead: boolean) {
+    Row({ space: 4 }) {
+      Text(this.getSectionTitle(isRead))
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(this.selectedReadTab === isRead
+          ? this.themeState.colors.textColorPrimary
+          : this.themeState.colors.textColorSecondary)
 
-        Text(` (${this.getMembers(isRead).length})`)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.themeState.colors.textColorSecondary)
-
-        Blank();
-
-        Text(this.isSectionExpanded(isRead) ? '▲' : '▼')
-          .fontSize(12)
-          .fontColor(this.themeState.colors.textColorSecondary)
-      }
-      .width('100%')
-      .padding({ left: 20, right: 20, top: 18, bottom: 18 })
-      .backgroundColor(this.themeState.colors.bgColorOperate)
-      .borderRadius(this.isSectionExpanded(isRead) ? 40 : this.SECTION_RADIUS)
-      .onClick(() => {
-        this.toggleSectionExpanded(isRead);
-      })
-
-      if (this.isSectionExpanded(isRead)) {
-        Column() {
-          ForEach(this.getMembers(isRead), (member: GroupMember) => {
-            this.buildMemberRow(member);
-          }, (member: GroupMember) => member.userID)
-
-          if (this.hasMoreMembers(isRead)) {
-            this.buildLoadMoreButton(isRead);
-          }
-        }
-        .width('100%')
-        .padding({ top: 8 })
-      }
+      Text(` (${this.getMembers(isRead).length})`)
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(this.selectedReadTab === isRead
+          ? this.themeState.colors.textColorPrimary
+          : this.themeState.colors.textColorSecondary)
     }
+    .layoutWeight(1)
+    .height(40)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(this.selectedReadTab === isRead
+      ? this.themeState.colors.tabColorSelected
+      : this.themeState.colors.tabColorUnselected)
+    .borderRadius(20)
+    .onClick(() => {
+      this.selectedReadTab = isRead;
+    })
   }
 
   @Builder
@@ -214,7 +170,7 @@ export struct MessageReadReceiptDetailPage {
           url: member.avatarURL,
           name: TextUtils.getAvatarLetter(member.nameCard || member.nickname || member.userID) || '',
         },
-        avatarSize: AvatarSize.M,
+        avatarSize: AvatarSize.S,
       })
 
       Text((member.nameCard || member.nickname || member.userID).toString())
@@ -229,10 +185,7 @@ export struct MessageReadReceiptDetailPage {
     }
     .width('100%')
     .height(this.MEMBER_CELL_HEIGHT)
-    .padding({ left: 8, right: 8 })
-    .backgroundColor(this.themeState.colors.bgColorOperate)
-    .borderRadius(8)
-    .margin({ top: 8 })
+    .padding({ left: 4, right: 4, top: 8, bottom: 8 })
   }
 
   @Builder
@@ -295,17 +248,4 @@ export struct MessageReadReceiptDetailPage {
     this.hasMoreUnReadMembers = state.hasMoreUnreadMembers;
   }
 
-  private formatTimestampToMMDDHHmm(timestamp?: number): string {
-    if (!timestamp) {
-      return '';
-    }
-
-    const ms = timestamp > 1000000000000 ? timestamp : timestamp * 1000;
-    const date = new Date(ms);
-    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
-    const dd = date.getDate().toString().padStart(2, '0');
-    const hh = date.getHours().toString().padStart(2, '0');
-    const min = date.getMinutes().toString().padStart(2, '0');
-    return `${mm}-${dd} ${hh}:${min}`;
-  }
 }

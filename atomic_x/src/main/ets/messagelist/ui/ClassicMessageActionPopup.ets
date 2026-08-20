@@ -16,6 +16,8 @@ export interface ClassicMessageActionItem {
   icon: Resource;
   action: string;
   color?: string | ResourceColor;
+  iconColor?: string | ResourceColor;
+  useIntrinsicIconColor?: boolean;
 }
 
 /**
@@ -70,13 +72,12 @@ export struct ClassicMessageActionPopup {
   private initializeActions() {
     const items: ClassicMessageActionItem[] = [];
 
-    // Copy action - only for text messages
-    if (this.effectiveConfig.isSupportCopy  &&
-        this.shouldShowCopy()) {
+    // Multi-select action (order aligned with Android View: multiSelect, forward, quote, copy, recall, delete, ...)
+    if (this.effectiveConfig.isSupportMultiSelect) {
       items.push({
-        text: $r('app.string.action_copy'),
-        icon: $rawfile('messagelist/icon_extion_copy.svg'),
-        action: 'copy'
+        text: $r('app.string.action_multiselect'),
+        icon: $rawfile('messagelist/icon_extion_multi.svg'),
+        action: 'multiselect'
       });
     }
 
@@ -87,61 +88,8 @@ export struct ClassicMessageActionPopup {
       items.push({
         text: $r('app.string.action_forward'),
         icon: $rawfile('messagelist/icon_extion_forward.svg'),
-        action: 'forward'
-      });
-    }
-
-    // Multi-select action
-    if (this.effectiveConfig.isSupportMultiSelect) {
-      items.push({
-        text: $r('app.string.action_multiselect'),
-        icon: $rawfile('messagelist/icon_extion_multi.svg'),
-        action: 'multiselect'
-      });
-    }
-
-    // Recall action - only for own messages within time limit
-    if (this.shouldShowRecall()) {
-      items.push({
-        text: $r('app.string.action_recall'),
-        icon: $rawfile('messagelist/icon_extion_recall.svg'),
-        action: 'recall'
-      });
-    }
-
-    // Delete action
-    if (this.effectiveConfig.isSupportDelete) {
-      items.push({
-        text: $r('app.string.action_delete'),
-        icon: $rawfile('messagelist/icon_extion_delete.svg'),
-        action: 'delete',
-      });
-    }
-
-    // Read receipt detail action
-    if (this.shouldShowReadReceiptDetail()) {
-      items.push({
-        text: $r('app.string.action_detail'),
-        icon: $rawfile('messagelist/icon_extion_info.svg'),
-        action: 'detail'
-      });
-    }
-
-    // Convert to text action - only for sound messages
-    if (this.shouldShowConvertToText()) {
-      items.push({
-        text: $r('app.string.action_convert_to_text'),
-        icon: $rawfile('messagelist/icon_extion_convert_to_text.svg'),
-        action: 'convertToText'
-      });
-    }
-
-    // Translate action - only for text messages
-    if (this.shouldShowTranslate()) {
-      items.push({
-        text: $r('app.string.action_translate'),
-        icon: $rawfile('messagelist/icon_extion_translate.svg'),
-        action: 'translate'
+        action: 'forward',
+        useIntrinsicIconColor: true
       });
     }
 
@@ -151,6 +99,56 @@ export struct ClassicMessageActionPopup {
         text: $r('app.string.action_quote'),
         icon: $rawfile('messagelist/icon_extion_quote.svg'),
         action: 'quote'
+      });
+    }
+
+    // Copy action - only for text messages
+    if (this.effectiveConfig.isSupportCopy  &&
+        this.shouldShowCopy()) {
+      items.push({
+        text: $r('app.string.action_copy'),
+        icon: $rawfile('messagelist/icon_extion_copy.svg'),
+        action: 'copy'
+      });
+    }
+
+    // Recall action - only for own messages within time limit
+    if (this.shouldShowRecall()) {
+      items.push({
+        text: $r('app.string.action_recall'),
+        icon: $rawfile('messagelist/icon_extion_recall.svg'),
+        action: 'recall',
+        useIntrinsicIconColor: true
+      });
+    }
+
+    // Delete action
+    if (this.effectiveConfig.isSupportDelete) {
+      items.push({
+        text: $r('app.string.action_delete'),
+        icon: $rawfile('messagelist/icon_extion_delete.svg'),
+        action: 'delete',
+        color: this.themeState.colors.textColorError,
+        iconColor: this.themeState.colors.textColorError,
+      });
+    }
+
+    // Convert to text action - only for sound messages
+    if (this.shouldShowConvertToText()) {
+      items.push({
+        text: $r('app.string.action_convert_to_text'),
+        icon: $rawfile('messagelist/icon_extion_convert_to_text.svg'),
+        action: 'convertToText',
+        useIntrinsicIconColor: true
+      });
+    }
+
+    // Translate action - only for text messages
+    if (this.shouldShowTranslate()) {
+      items.push({
+        text: $r('app.string.action_translate'),
+        icon: $rawfile('messagelist/icon_extion_translate.svg'),
+        action: 'translate'
       });
     }
 
@@ -235,7 +233,28 @@ export struct ClassicMessageActionPopup {
     if (this.message.status !== MessageStatus.SEND_SUCCESS) {
       return false;
     }
-    return true;
+    if (this.translationDisplayManager?.isTranslating(this.message.msgID) ?? false) {
+      return false;
+    }
+    const hasTranslation = this.hasTranslationResult();
+    const isExpanded = this.translationDisplayManager?.isExpanded(this.message.msgID) ?? true;
+    return !hasTranslation || !isExpanded;
+  }
+
+  private hasTranslationResult(): boolean {
+    const textPayload = this.message.messagePayload as TextMessagePayload | undefined;
+    const translatedTextMap = textPayload?.translatedText;
+    if (!translatedTextMap) {
+      return false;
+    }
+
+    let hasTranslation = false;
+    translatedTextMap.forEach((value: string) => {
+      if (value && value.length > 0) {
+        hasTranslation = true;
+      }
+    });
+    return hasTranslation;
   }
 
   private shouldShowQuote(): boolean {
@@ -332,14 +351,22 @@ export struct ClassicMessageActionPopup {
         Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
           ForEach(this.actionItems, (item: ClassicMessageActionItem) => {
             Column() {
-              Image(item.icon)
-                .width(16)
-                .height(16)
-                .fillColor(this.themeState.colors.textColorSecondary)
+              if (item.useIntrinsicIconColor) {
+                Image(item.icon)
+                  .width(18)
+                  .height(18)
+                  .objectFit(ImageFit.Contain)
+              } else {
+                Image(item.icon)
+                  .width(18)
+                  .height(18)
+                  .objectFit(ImageFit.Contain)
+                  .fillColor(item.iconColor ?? this.themeState.colors.textColorPrimary)
+              }
 
               Text(item.text)
                 .fontSize(11)
-                .fontColor(item.color ?? this.themeState.colors.textColorPrimary)
+                .fontColor(item.color ?? this.themeState.colors.textColorSecondary)
                 .margin({ top: 6 })
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -358,7 +385,7 @@ export struct ClassicMessageActionPopup {
     }
     .width(280)
     .backgroundColor(this.themeState.colors.dropdownColorDefault)
-    .borderRadius(14)
+    .borderRadius(7)
     .shadow({
       radius: 26,
       color: 'rgba(0, 0, 0, 0.06)',

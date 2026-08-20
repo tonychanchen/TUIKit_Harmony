@@ -10,7 +10,7 @@
     },
     {
       "name": "my_group",
-      "value": "我的群组"
+      "value": "我的群聊"
     },
     {
       "name": "the_blacklist",
@@ -330,11 +330,11 @@
     },
     {
       "name": "create_group_chat_title",
-      "value": "创建群聊"
+      "value": "创建群组"
     },
     {
       "name": "select_contacts_title",
-      "value": "选择联系人"
+      "value": "创建聊天"
     },
     {
       "name": "next_step_button",
@@ -430,7 +430,7 @@
     },
     {
       "name": "new_group_requests",
-      "value": "新的群组申请"
+      "value": "群聊通知"
     },
     {
       "name": "group_application_refused",

@@ -1,5 +1,5 @@
 import { Avatar, AvatarContentType, AvatarSize, TextUtils, ThemeState, Toast } from '../../basecomponent/Index';
-import { AZOrderedList, AZOrderedListItem, AZOrderedListConfig } from '../../basecomponent/components/AZOrderedList';
+import { PinyinUtils } from '../../basecomponent/utils/PinyinUtils';
 
 export interface UserPickerData<T> {
   key: string;
@@ -29,11 +29,15 @@ export struct UserPicker {
   onSelectedChanged?: (selectedItems: UserPickerData<ESObject>[]) => void = undefined;
   onReachEnd?: () => void = undefined;
   
-  // UI customization (Harmony-specific)
   showNavigationBar?: boolean = false;
+  showBackButton?: boolean = false;
+  showSearchBar?: boolean = false;
   showSelectedTags?: boolean = false;
   title: string | Resource = '';
   confirmButtonText: string | Resource = 'Next';
+  showHeaderConfirm?: boolean = true;
+  showBottomConfirm?: boolean = false;
+  allowEmptyConfirm?: boolean = false;
   onCancel?: () => void = undefined;
   
   // Internal state
@@ -41,8 +45,8 @@ export struct UserPicker {
   @State private selectedKeys: Set<string> = new Set();
   @State private selectedKeysOrder: string[] = [];
   @State private searchKeyword: string = '';
-  @State private showSearchResults: boolean = false;
-  @State private searchResults: AZOrderedListItem<UserPickerData<ESObject>>[] = [];
+  @State private showCenterLetter: string = '';
+  private listScroller: Scroller = new Scroller();
   private reachEndTimer: number | null = null;
 
   aboutToAppear(): void {
@@ -81,6 +85,10 @@ export struct UserPicker {
           .color(this.themeState.colors.strokeColorSecondary)
       }
 
+      if (this.showSearchBar) {
+        this.SearchBarBuilder()
+      }
+
       if (this.showSelectedTags && this.selectedKeysOrder.length > 0 && (this.maxCount === undefined || this.maxCount > 1)) {
         this.SelectedTagsBuilder()
         Divider()
@@ -88,8 +96,11 @@ export struct UserPicker {
           .color(this.themeState.colors.strokeColorSecondary)
       }
 
-      // Main content with AZOrderedList
       this.buildUserList()
+
+      if (this.showBottomConfirm) {
+        this.BottomConfirmBuilder()
+      }
     }
     .width('100%')
     .height('100%')
@@ -97,84 +108,175 @@ export struct UserPicker {
   }
   
   @Builder
-  buildUserList() {
-    if (this.showSearchResults) {
-      if (this.searchResults.length > 0) {
-        List() {
-          ForEach(this.searchResults, (item: AZOrderedListItem<UserPickerData<ESObject>>) => {
-            ListItem() {
-              this.CustomUserItemBuilder(item.extraData)
-            }
-          })
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .backgroundColor(this.themeState.colors.bgColorOperate)
-        .onReachEnd(() => {
-          console.log('[UserPicker] Search results reached end');
-          this.handleReachEnd();
-        })
-      } else {
-        Column() {
-          Text($r('app.string.no_results_found'))
+  BottomConfirmBuilder() {
+    Row() {
+      Blank()
+
+      Button() {
+        Row({ space: 2 }) {
+          Text(this.confirmButtonText)
             .fontSize(16)
-            .fontColor(this.themeState.colors.textColorSecondary)
-            .margin({ top: 50 })
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.themeState.colors.textColorButton)
+
+          Text(`(${this.selectedKeysOrder.length})`)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.themeState.colors.textColorButton)
         }
-        .width('100%')
-        .height('100%')
-        .justifyContent(FlexAlign.Center)
       }
+      .height(36)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(this.selectedKeysOrder.length > 0
+        ? this.themeState.colors.buttonColorPrimaryDefault
+        : this.themeState.colors.buttonColorPrimaryDisabled)
+      .borderRadius(18)
+      .enabled(this.selectedKeysOrder.length > 0 || this.allowEmptyConfirm)
+      .onClick(() => {
+        if ((this.selectedKeysOrder.length > 0 || this.allowEmptyConfirm) && this.onSelectedChanged) {
+          this.onSelectedChanged(this.getSelectedItems());
+        }
+      })
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+    .border({ width: { top: 1 }, color: this.themeState.colors.strokeColorSecondary })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  SearchBarBuilder() {
+    Row() {
+      Row() {
+        Image($rawfile('search/search_icon.svg'))
+          .width(20)
+          .height(20)
+          .fillColor(this.themeState.colors.textColorTertiary)
+          .margin({ right: 8 })
+
+        TextInput({
+          text: $$this.searchKeyword,
+          placeholder: $r('app.string.search_placeholder')
+        })
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .placeholderColor(this.themeState.colors.textColorTertiary)
+          .backgroundColor(Color.Transparent)
+          .border({ width: 0 })
+          .layoutWeight(1)
+          .onChange((value: string) => {
+            this.updateSearchResults(value);
+          })
+
+        if (this.searchKeyword.length > 0) {
+          Image($rawfile('contactlist/contact_del.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .onClick(() => {
+              this.updateSearchResults('');
+            })
+        }
+      }
+      .width('100%')
+      .height(36)
+      .backgroundColor(this.themeState.colors.bgColorInput)
+      .borderRadius(10)
+      .padding({ left: 12, right: 12 })
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .margin({ top: 8, bottom: 8 })
+  }
+
+  @Builder
+  buildUserList() {
+    if (this.searchKeyword.trim().length > 0 && this.getFilteredDataSource().length === 0) {
+      Column() {
+        Text($r('app.string.no_results_found'))
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorSecondary)
+          .margin({ top: 50 })
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
     } else {
-      // Use custom grouped list with checkboxes support
       this.GroupedUserListBuilder()
     }
   }
   
   @Builder
   GroupedUserListBuilder() {
-    List() {
-      ForEach(this.getGroupedDataSource(), (group: UserPickerGroup) => {
-        ListItemGroup() {
-          // Group header
-          ListItem() {
-            Row() {
-              Text(group.letter)
-                .fontSize(14)
-                .fontWeight(600)
-                .fontColor(this.themeState.colors.textColorPrimary)
-            }
-            .width('100%')
-            .height(32)
-            .padding({ left: 16, right: 16 })
-            .backgroundColor(this.themeState.colors.bgColorDialog)
-            .justifyContent(FlexAlign.Start)
-            .alignItems(VerticalAlign.Center)
-          }
-          
-          // Group items
-          ForEach(group.items, (userData: UserPickerData<ESObject>) => {
+    Stack() {
+      List({ scroller: this.listScroller }) {
+        ForEach(this.getGroupedDataSource(), (group: UserPickerGroup) => {
+          ListItemGroup() {
             ListItem() {
-              this.CustomUserItemBuilder(userData)
+              Row() {
+                Text(group.letter)
+                  .fontSize(14)
+                  .fontWeight(600)
+                  .fontColor(this.themeState.colors.textColorPrimary)
+              }
+              .width('100%')
+              .height(32)
+              .padding({ left: 16, right: 16 })
+              .backgroundColor(this.themeState.colors.bgColorDialog)
+              .justifyContent(FlexAlign.Start)
+              .alignItems(VerticalAlign.Center)
             }
-          })
-        }
+
+            ForEach(group.items, (userData: UserPickerData<ESObject>) => {
+              ListItem() {
+                this.CustomUserItemBuilder(userData)
+              }
+            })
+          }
+        })
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor(this.themeState.colors.bgColorOperate)
+      .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring)
+      .onReachEnd(() => {
+        console.log('[UserPicker] Main list reached end');
+        this.handleReachEnd();
       })
+
+      if (this.getGroupedDataSource().length > 1) {
+        this.IndexBarBuilder()
+      }
+
+      if (this.showCenterLetter.length > 0) {
+        this.CenterLetterBuilder()
+      }
     }
     .width('100%')
     .layoutWeight(1)
-    .backgroundColor(this.themeState.colors.bgColorOperate)
-    .scrollBar(BarState.Auto)
-    .edgeEffect(EdgeEffect.Spring)
-    .onReachEnd(() => {
-      console.log('[UserPicker] Main list reached end');
-      this.handleReachEnd();
-    })
   }
   
   @Builder
   CustomUserItemBuilder(userData: UserPickerData<ESObject>) {
-    Row({ space: 13 }) {
+    Row() {
+      if (this.maxCount !== 1) {
+        Checkbox({
+          name: `checkbox_${userData.key}`,
+          group: 'userSelection'
+        })
+          .select(this.selectedKeys.has(userData.key))
+          .selectedColor(this.themeState.colors.textColorLink)
+          .unselectedColor(this.themeState.colors.strokeColorSecondary)
+          .width(16)
+          .height(16)
+          .margin({ right: 10 })
+          .enabled(!this.lockedItems.includes(userData.key))
+          .hitTestBehavior(HitTestMode.None)
+      }
+
       Avatar({
         content: {
           type: AvatarContentType.Image,
@@ -194,20 +296,7 @@ export struct UserPicker {
         .layoutWeight(1)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-      
-      if (this.maxCount !== 1) {
-        Checkbox({
-          name: `checkbox_${userData.key}`,
-          group: 'userSelection'
-        })
-          .select(this.selectedKeys.has(userData.key))
-          .selectedColor(this.themeState.colors.textColorLink)
-          .unselectedColor(this.themeState.colors.strokeColorSecondary)
-          .width(20)
-          .height(20)
-          .enabled(!this.lockedItems.includes(userData.key))
-          .hitTestBehavior(HitTestMode.None) // Ignore touch events, let them pass through to Row
-      }
+        .margin({ left: 13 })
     }
     .width('100%')
     .height(56)
@@ -297,11 +386,25 @@ export struct UserPicker {
     return items;
   }
   
+  private updateSearchResults(keyword: string): void {
+    this.searchKeyword = keyword;
+  }
+
+  private getFilteredDataSource(): UserPickerData<ESObject>[] {
+    const keyword = this.searchKeyword.trim().toLowerCase();
+    if (!keyword) {
+      return this.dataSource;
+    }
+    return this.dataSource.filter((item: UserPickerData<ESObject>) => {
+      return item.label.toLowerCase().includes(keyword) || item.key.toLowerCase().includes(keyword);
+    });
+  }
+
   private getGroupedDataSource(): UserPickerGroup[] {
     // Group items by first letter
     const grouped: Map<string, UserPickerData<ESObject>[]> = new Map<string, UserPickerData<ESObject>[]>();
     
-    this.dataSource.forEach((item: UserPickerData<ESObject>) => {
+    this.getFilteredDataSource().forEach((item: UserPickerData<ESObject>) => {
       const firstLetter = this.getFirstLetter(item.label);
       if (!grouped.has(firstLetter)) {
         grouped.set(firstLetter, []);
@@ -325,9 +428,71 @@ export struct UserPicker {
   }
   
   private getFirstLetter(name: string): string {
-    if (!name || name.length === 0) return '#';
-    const firstChar = name[0].toUpperCase();
-    return /^[A-Z]$/.test(firstChar) ? firstChar : '#';
+    return PinyinUtils.getSortLetter(name);
+  }
+
+  @Builder
+  IndexBarBuilder() {
+    Column() {
+      ForEach(this.getGroupedDataSource(), (group: UserPickerGroup) => {
+        Text(group.letter)
+          .fontSize(10)
+          .fontColor(this.themeState.colors.textColorLink)
+          .fontFamily('SF Pro Text')
+          .margin({ bottom: 2 })
+          .onClick(() => {
+            this.scrollToSection(group.letter);
+            this.showCenterLetter = group.letter;
+            setTimeout(() => {
+              this.showCenterLetter = '';
+            }, 1000);
+          })
+      }, (group: UserPickerGroup) => group.letter)
+    }
+    .width(24)
+    .justifyContent(FlexAlign.Center)
+    .position({ x: '100%', y: '50%' })
+    .translate({ x: -32, y: '-50%' })
+  }
+
+  @Builder
+  CenterLetterBuilder() {
+    Row() {
+      Text(this.showCenterLetter)
+        .fontSize(28)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(Color.White)
+    }
+    .width(80)
+    .height(80)
+    .backgroundColor(Color.Black)
+    .opacity(0.8)
+    .borderRadius(40)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .position({ x: '50%', y: '50%' })
+    .translate({ x: '-50%', y: '-50%' })
+  }
+
+  private scrollToSection(letter: string): void {
+    const groups = this.getGroupedDataSource();
+    const groupIndex = groups.findIndex((group: UserPickerGroup) => group.letter === letter);
+    if (groupIndex < 0) {
+      return;
+    }
+
+    let scrollPosition = 0;
+    for (let index = 0; index < groupIndex; index++) {
+      scrollPosition += 32 + groups[index].items.length * 56;
+    }
+    this.listScroller.scrollTo({
+      xOffset: 0,
+      yOffset: scrollPosition,
+      animation: {
+        duration: 300,
+        curve: Curve.EaseInOut
+      }
+    });
   }
   
   private handleReachEnd(): void {
@@ -346,54 +511,68 @@ export struct UserPicker {
 
   @Builder
   TitleBarBuilder() {
-    Column() {
+    Stack() {
       Row() {
-        Text($r('app.string.cancel_button'))
-          .fontSize(16)
-          .fontWeight(400)
-          .fontColor(this.themeState.colors.textColorLink)
+        if (this.showBackButton) {
+          Button() {
+            Image($rawfile('basecomponent/common_back_icon.svg'))
+              .width(16)
+              .height(16)
+              .fillColor(this.themeState.colors.textColorSecondary)
+          }
+          .type(ButtonType.Normal)
+          .backgroundColor(Color.Transparent)
+          .width(44)
+          .height(44)
           .onClick(() => {
             if (this.onCancel) {
               this.onCancel();
             }
           })
+        } else {
+          Text($r('app.string.cancel_button'))
+            .fontSize(16)
+            .fontWeight(400)
+            .fontColor(this.themeState.colors.textColorLink)
+            .onClick(() => {
+              if (this.onCancel) {
+                this.onCancel();
+              }
+            })
+        }
 
         Blank()
 
-        Text(this.title)
-          .fontSize(20)
-          .fontWeight(600)
-          .fontColor(this.themeState.colors.textColorPrimary)
-
-        Blank()
-
-        if (this.maxCount !== 1) {
+        if (this.maxCount !== 1 && this.showHeaderConfirm) {
           Text(this.confirmButtonText)
             .fontSize(16)
             .fontWeight(400)
-            .fontColor(this.selectedKeysOrder.length > 0 ? 
-              this.themeState.colors.textColorLink : 
-            this.themeState.colors.textColorSecondary)
-            .enabled(this.selectedKeysOrder.length > 0)
+            .fontColor(this.themeState.colors.textColorLink)
             .onClick(() => {
-              if (this.selectedKeysOrder.length > 0 && this.onSelectedChanged) {
+              if ((this.selectedKeysOrder.length > 0 || this.allowEmptyConfirm) && this.onSelectedChanged) {
                 const selectedItems: UserPickerData<ESObject>[] = this.getSelectedItems();
                 this.onSelectedChanged(selectedItems);
               }
             })
         } else {
-          Text('')
-            .width(60)
+          Blank()
+            .width(44)
         }
       }
       .width('100%')
-      .height(44)
+      .height(56)
       .justifyContent(FlexAlign.SpaceBetween)
+      .alignItems(VerticalAlign.Center)
 
+      Text(this.title)
+        .fontSize(16)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(this.themeState.colors.textColorPrimary)
+        .align(Alignment.Center)
     }
     .width('100%')
-    .height(44)
-    .margin({ top: 22 })
+    .height(56)
+    .margin({ top: 24 })
     .padding({ left: 16, right: 16 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
   }

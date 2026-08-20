@@ -34,11 +34,19 @@
     },
     {
       "name": "clear_messages",
-      "value": "清空消息"
+      "value": "清空聊天记录"
     },
     {
       "name": "delete_conversation",
-      "value": "删除会话"
+      "value": "删除聊天"
+    },
+    {
+      "name": "mute_conversation",
+      "value": "消息免打扰"
+    },
+    {
+      "name": "unmute_conversation",
+      "value": "取消免打扰"
     },
     {
       "name": "clear_messages_title",
@@ -74,11 +82,11 @@
     },
     {
       "name": "mark_as_read",
-      "value": "标记已读"
+      "value": "标为已读"
     },
     {
       "name": "mark_as_unread",
-      "value": "标记未读"
+      "value": "标为未读"
     },
     {
       "name": "theme_select_title",

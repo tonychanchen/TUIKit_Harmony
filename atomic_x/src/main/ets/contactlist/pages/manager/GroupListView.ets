@@ -37,15 +37,15 @@ export struct GroupListView {
 
   build() {
     Column() {
-      // Navigation bar
       this.buildNavigationBar()
+      this.buildSearchBar()
       Stack() {
         if (this.isLoading) {
           this.buildLoadingState()
-        } else if (this.groupState.joinedGroupList.length === 0) {
-          this.buildEmptyState()
-        } else {
+        } else if (this.showSearchResults || this.groupState.joinedGroupList.length > 0) {
           this.buildGroupContent()
+        } else {
+          this.buildEmptyState()
         }
       }
       .layoutWeight(1)
@@ -59,42 +59,27 @@ export struct GroupListView {
   @Builder
   buildNavigationBar() {
     Column() {
-      Row() {
+      Stack({ alignContent: Alignment.Center }) {
+
+        Text($r('app.string.my_group'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .textAlign(TextAlign.Center)
 
         Row() {
           Image($rawfile('contactlist/back_arrow.svg'))
             .width(24)
             .height(24)
             .fillColor(this.themeState.colors.textColorLink)
-
-          Text($r('app.string.back_button'))
-            .fontSize(14)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.themeState.colors.textColorLink)
-            .margin({ left: 8 })
         }
         .onClick(() => this.handleBack())
-
-
-        Text($r('app.string.my_group'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-
-
-        Text($r('app.string.done_button'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorLink)
-          .opacity(0)
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .padding({ left: 10, right: 10 })
       }
       .width('100%')
       .height(56)
-      .padding({ left: 10, right: 10 })
-      .justifyContent(FlexAlign.SpaceBetween)
-      .alignItems(VerticalAlign.Center)
 
       // Divider
       Divider()
@@ -107,14 +92,19 @@ export struct GroupListView {
   buildSearchBar() {
     Row() {
       Row() {
-        Image($rawfile('contactlist/search_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorSecondary) // Figma: #DADADA
+        Image($rawfile('search/search_icon.svg'))
+          .width(20)
+          .height(20)
+          .fillColor(this.themeState.colors.textColorTertiary)
+          .margin({ right: 8 })
 
-        TextInput({ placeholder: $r('app.string.search_placeholder') })
-          .fontSize(17)
-          .fontColor(this.themeState.colors.textColorPrimary)// Figma: rgba(0, 0, 0, 0.9)
+        TextInput({
+          placeholder: $r('app.string.search_placeholder'),
+          text: $$this.searchKeyword
+        })
+          .placeholderColor(this.themeState.colors.textColorTertiary)
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorPrimary)
           .backgroundColor(Color.Transparent)
           .border({ width: 0 })
           .layoutWeight(1)
@@ -122,18 +112,27 @@ export struct GroupListView {
             this.searchKeyword = value;
             this.performSearch();
           })
+
+        if (this.searchKeyword.length > 0) {
+          Image($rawfile('contactlist/contact_del.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .onClick(() => {
+              this.searchKeyword = '';
+              this.clearSearch();
+            })
+        }
       }
       .width('100%')
       .height(36)
-      .backgroundColor(this.themeState.colors.bgColorInput) // Figma: rgba(249, 249, 249, 0.94)
+      .backgroundColor(this.themeState.colors.bgColorInput)
       .borderRadius(10)
-      .padding({ left: 16, right: 16 })
-      .alignItems(VerticalAlign.Center)
+      .padding({ left: 12, right: 12 })
     }
-    .width(358)
-    .justifyContent(FlexAlign.Center)
-    .alignSelf(ItemAlign.Center)
-    .margin({ top: 16, bottom: 16 })
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .margin({ top: 8, bottom: 8 })
   }
 
   @Builder
@@ -281,7 +280,9 @@ export struct GroupListView {
     const lowerKeyword = keyword.toLowerCase();
 
     this.groupListItems.forEach(item => {
-      if (item.label.toLowerCase().includes(lowerKeyword)) {
+      const group = item.extraData;
+      if ([group.nickname, group.userID]
+        .some((value?: string) => value?.toLowerCase().includes(lowerKeyword) ?? false)) {
         result.push(item);
       }
     });

@@ -53,10 +53,6 @@
       "value": "تعيين كمدير"
     },
     {
-      "name": "chatsetting_member_remove_admin",
-      "value": "إزالة المدير"
-    },
-    {
       "name": "chatsetting_member_remove",
       "value": "إزالة العضو"
     },
@@ -77,12 +73,16 @@
       "value": "فشل في تعيين المدير"
     },
     {
+      "name": "chatsetting_member_remove_admin",
+      "value": "إلغاء الإدارة"
+    },
+    {
       "name": "chatsetting_member_removing_admin",
-      "value": "جاري إزالة المدير..."
+      "value": "جاري إلغاء الإدارة..."
     },
     {
       "name": "chatsetting_member_remove_admin_fail",
-      "value": "فشل في إزالة المدير"
+      "value": "فشل في إلغاء الإدارة"
     },
     {
       "name": "chatsetting_member_removing",
@@ -345,6 +345,10 @@
       "value": "لا يوجد إعلان للمجموعة"
     },
     {
+      "name": "chatsetting_not_set",
+      "value": "غير محدد"
+    },
+    {
       "name": "chatsetting_group_announcement_add_tip",
       "value": "انقر على زر التحرير في الأعلى لإضافة إعلان المجموعة"
     },
@@ -414,7 +418,7 @@
     },
     {
       "name": "chatsetting_edit_my_group_nickname",
-      "value": "تحرير لقبي في المجموعة"
+      "value": "تحرير بطاقة المجموعة"
     },
     {
       "name": "chatsetting_input_group_nickname_placeholder",
@@ -582,7 +586,7 @@
     },
     {
       "name": "chatsetting_confirm_dismiss",
-      "value": "تأكيد الحل"
+      "value": "تأكيد"
     },
     {
       "name": "chatsetting_dismissing_group_progress",
@@ -601,12 +605,16 @@
       "value": "مسح تاريخ المحادثة"
     },
     {
+      "name": "chatsetting_clear_contact_history_confirm",
+      "value": "تأكيد حذف سجل الدردشة مع جهة الاتصال هذه"
+    },
+    {
       "name": "chatsetting_cancel_clear",
       "value": "إلغاء"
     },
     {
       "name": "chatsetting_confirm_clear",
-      "value": "تأكيد المسح"
+      "value": "تأكيد"
     },
     {
       "name": "chatsetting_clearing_chat_history",
@@ -646,11 +654,15 @@
     },
     {
       "name": "chatsetting_report_group",
-      "value": "الإبلاغ عن المجموعة"
+      "value": "إبلاغ"
     },
     {
       "name": "chatsetting_report_group_toast",
       "value": "الإبلاغ عن المجموعة"
+    },
+    {
+      "name": "chatsetting_report_contact_toast",
+      "value": "الإبلاغ عن جهة الاتصال"
     },
     {
       "name": "chatsetting_audio",
@@ -769,12 +781,12 @@
       "value": "منع جميع الأعضاء من إرسال الرسائل"
     },
     {
-      "name": "chatsetting_add_muted_members",
-      "value": "إضافة أعضاء مكتومين"
+      "name": "chatsetting_mute_all_tips",
+      "value": "عند التفعيل، يُسمح فقط لمالك المجموعة والمشرفين بالتحدث."
     },
     {
-      "name": "chatsetting_add_muted_members_description",
-      "value": "اختر الأعضاء للكتم بشكل فردي"
+      "name": "chatsetting_add_muted_members",
+      "value": "اختر الأعضاء المراد كتمهم"
     },
     {
       "name": "chatsetting_group_members_title",
@@ -833,6 +845,14 @@
       "value": "افتراضي"
     },
     {
+      "name": "chatsetting_custom",
+      "value": "مخصص"
+    },
+    {
+      "name": "chatsetting_select_chat_background",
+      "value": "اختيار خلفية الدردشة"
+    },
+    {
       "name": "chatsetting_confirm_add_members_dialog_format",
       "value": "هل أنت متأكد من دعوة أصدقاء للانضمام إلى المجموعة؟"
     },
@@ -849,12 +869,12 @@
       "value": "تم نقل ملكية المجموعة بنجاح إلى %s"
     },
     {
-      "name": "chatsetting_dismiss_group_confirm_format",
-      "value": "هل أنت متأكد من حل \"%s\"؟ ستحذف المجموعة نهائياً وسيتم إزالة جميع الأعضاء."
+      "name": "chatsetting_dismiss_group_confirm",
+      "value": "تأكيد حلّ هذه المجموعة"
     },
     {
-      "name": "chatsetting_clear_chat_history_confirm_format",
-      "value": "هل أنت متأكد من مسح تاريخ محادثة \"%s\"؟ هذا الإجراء لا يمكن التراجع عنه."
+      "name": "chatsetting_clear_group_history_confirm",
+      "value": "تأكيد حذف سجل دردشة هذه المجموعة"
     },
     {
       "name": "chatsetting_leave_group_confirm_format",

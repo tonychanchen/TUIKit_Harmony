@@ -254,7 +254,7 @@
     },
     {
       "name": "gender_unknown",
-      "value": "غير محدد"
+      "value": "سري"
     },
     {
       "name": "unsetted",
@@ -293,8 +293,12 @@
       "value": "الصينية"
     },
     {
+      "name": "language_traditional",
+      "value": "الصينية التقليدية"
+    },
+    {
       "name": "language_english",
-      "value": "الإنجليزية"
+      "value": "English"
     },
     {
       "name": "language_arabic",
@@ -303,10 +307,6 @@
     {
       "name": "login_success_message",
       "value": "تم تسجيل دخول المستخدم %s بنجاح"
-    },
-    {
-      "name": "theme_random_color",
-      "value": "لون عشوائي"
     },
     {
       "name": "setting_message_read_receipt",
@@ -327,10 +327,6 @@
     {
       "name": "translate_target_language_setting",
       "value": "لغة الترجمة المستهدفة"
-    },
-    {
-      "name": "setting_classic_message_action",
-      "value": "واجهة المستخدم الكلاسيكية"
     },
     {
       "name": "translate_language_select_title",

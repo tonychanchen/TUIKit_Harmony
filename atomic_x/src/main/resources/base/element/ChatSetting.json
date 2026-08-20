@@ -46,15 +46,11 @@
     },
     {
       "name": "chatsetting_member_detail",
-      "value": "Detail"
+      "value": "Member Info"
     },
     {
       "name": "chatsetting_member_set_admin",
       "value": "Set as Admin"
-    },
-    {
-      "name": "chatsetting_member_remove_admin",
-      "value": "Remove Admin"
     },
     {
       "name": "chatsetting_member_remove",
@@ -75,6 +71,10 @@
     {
       "name": "chatsetting_member_setting_admin_fail",
       "value": "Failed to set admin"
+    },
+    {
+      "name": "chatsetting_member_remove_admin",
+      "value": "Remove Admin"
     },
     {
       "name": "chatsetting_member_removing_admin",
@@ -345,6 +345,10 @@
       "value": "No group announcement"
     },
     {
+      "name": "chatsetting_not_set",
+      "value": "Not set"
+    },
+    {
       "name": "chatsetting_group_announcement_add_tip",
       "value": "Click the edit button in the top right to add group announcement"
     },
@@ -414,7 +418,7 @@
     },
     {
       "name": "chatsetting_edit_my_group_nickname",
-      "value": "Edit My Group Nickname"
+      "value": "Edit Group Card"
     },
     {
       "name": "chatsetting_input_group_nickname_placeholder",
@@ -582,7 +586,7 @@
     },
     {
       "name": "chatsetting_confirm_dismiss",
-      "value": "Confirm Dismiss"
+      "value": "Confirm"
     },
     {
       "name": "chatsetting_dismissing_group_progress",
@@ -601,12 +605,16 @@
       "value": "Clear Chat History"
     },
     {
+      "name": "chatsetting_clear_contact_history_confirm",
+      "value": "Confirm to delete chat history with this contact"
+    },
+    {
       "name": "chatsetting_cancel_clear",
       "value": "Cancel"
     },
     {
       "name": "chatsetting_confirm_clear",
-      "value": "Confirm Clear"
+      "value": "Confirm"
     },
     {
       "name": "chatsetting_clearing_chat_history",
@@ -646,11 +654,15 @@
     },
     {
       "name": "chatsetting_report_group",
-      "value": "Report Group"
+      "value": "Report"
     },
     {
       "name": "chatsetting_report_group_toast",
       "value": "Report group"
+    },
+    {
+      "name": "chatsetting_report_contact_toast",
+      "value": "Report contact"
     },
     {
       "name": "chatsetting_audio",
@@ -769,12 +781,12 @@
       "value": "Prevent all members from sending messages"
     },
     {
-      "name": "chatsetting_add_muted_members",
-      "value": "Add Muted Members"
+      "name": "chatsetting_mute_all_tips",
+      "value": "When enabled, only group owner and admins can speak"
     },
     {
-      "name": "chatsetting_add_muted_members_description",
-      "value": "Select members to mute individually"
+      "name": "chatsetting_add_muted_members",
+      "value": "Select Members to Mute"
     },
     {
       "name": "chatsetting_group_members_title",
@@ -833,6 +845,14 @@
       "value": "Default"
     },
     {
+      "name": "chatsetting_custom",
+      "value": "Custom"
+    },
+    {
+      "name": "chatsetting_select_chat_background",
+      "value": "Select Chat Background"
+    },
+    {
       "name": "chatsetting_confirm_add_members_dialog_format",
       "value": "Are you sure you want to invite %s friends to join the group?"
     },
@@ -849,12 +869,12 @@
       "value": "Group ownership has been successfully transferred to %s"
     },
     {
-      "name": "chatsetting_dismiss_group_confirm_format",
-      "value": "Are you sure you want to dismiss \"%s\"? The group will be permanently deleted and all members will be removed."
+      "name": "chatsetting_dismiss_group_confirm",
+      "value": "Confirm to dismiss this group chat"
     },
     {
-      "name": "chatsetting_clear_chat_history_confirm_format",
-      "value": "Are you sure you want to clear the chat history of \"%s\"? This action cannot be undone."
+      "name": "chatsetting_clear_group_history_confirm",
+      "value": "Confirm to delete this group's chat history"
     },
     {
       "name": "chatsetting_leave_group_confirm_format",

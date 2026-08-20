@@ -49,14 +49,8 @@ export class AppBuilderConfig {
   public hideSendButton: boolean = false;
   public hideSearch: boolean = false;
   public enableReadReceipt: boolean = false;
-  public avatarShape: GlobalAvatarShape = GlobalAvatarShape.CIRCULAR;
+  public avatarShape: GlobalAvatarShape = GlobalAvatarShape.ROUNDED;
   public translateTargetLanguage: string = '';
-  /**
-   * Use classic UI style for the entire app
-   * When true: classic floating popup for message actions, classic input bar, etc. (default)
-   * When false: modern full-screen dialog style
-   */
-  public useClassicUI: boolean = true;
 
   private constructor() {
   }
@@ -72,21 +66,6 @@ export class AppBuilderConfig {
       }
     } catch (e) {
       console.error('Failed to save enableReadReceipt to preferences', e);
-    }
-  }
-
-  public setUseClassicUI(enable: boolean): void {
-    this.useClassicUI = enable;
-    try {
-      const context = getAppContext();
-      if (context) {
-        const pref = dataPreferences.getPreferencesSync(context, { name: 'AppBuilderConfig' });
-        pref.putSync('UseClassicUI', enable);
-        pref.flushSync();
-        console.log(`[AppBuilderConfig] Saved useClassicUI: ${enable}`);
-      }
-    } catch (e) {
-      console.error('Failed to save useClassicUI to preferences', e);
     }
   }
 
@@ -173,10 +152,6 @@ export class AppBuilderConfig {
         const pref = dataPreferences.getPreferencesSync(context, { name: 'AppBuilderConfig' });
         if (pref.hasSync('EnableReadReceipt')) {
           this.enableReadReceipt = pref.getSync('EnableReadReceipt', false) as boolean;
-        }
-        if (pref.hasSync('UseClassicUI')) {
-          this.useClassicUI = pref.getSync('UseClassicUI', true) as boolean;
-          console.log(`[AppBuilderConfig] Loaded useClassicUI: ${this.useClassicUI}`);
         }
         if (pref.hasSync('TranslateTargetLanguage')) {
           this.translateTargetLanguage = pref.getSync('TranslateTargetLanguage', '') as string;

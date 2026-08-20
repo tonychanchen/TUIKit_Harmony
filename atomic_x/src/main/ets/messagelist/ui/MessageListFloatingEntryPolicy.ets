@@ -26,12 +26,14 @@ export enum MessageListFloatingEntryType {
   BACK_TO_LATEST = 1,
   NEW_MESSAGES = 2,
   MENTION = 3,
+  BACK_TO_QUOTE = 4,
 }
 
 export class MessageListFloatingEntry {
   type: MessageListFloatingEntryType = MessageListFloatingEntryType.NONE;
   count: number = 0;
   firstMessageId: string = '';
+  returnMessageId: string = '';
   target?: MessageListMentionTarget = undefined;
 
   static backToLatest(): MessageListFloatingEntry {
@@ -52,6 +54,13 @@ export class MessageListFloatingEntry {
     const entry = new MessageListFloatingEntry();
     entry.type = MessageListFloatingEntryType.MENTION;
     entry.target = target;
+    return entry;
+  }
+
+  static backToQuote(returnMessageId: string): MessageListFloatingEntry {
+    const entry = new MessageListFloatingEntry();
+    entry.type = MessageListFloatingEntryType.BACK_TO_QUOTE;
+    entry.returnMessageId = returnMessageId;
     return entry;
   }
 }
@@ -94,6 +103,9 @@ export class MessageListFloatingEntryStateController {
   private mentionTargetVisibility: MessageListMentionTargetVisibility = MessageListMentionTargetVisibility.UNKNOWN;
   private shouldShowBackToLatest: boolean = false;
   private isBeyondDisplayThreshold: boolean = false;
+  private backToQuoteMessageId: string = '';
+  private returnMessageVisible: boolean = false;
+  private returnMessageWasHidden: boolean = false;
 
   reset(): void {
     this.firstNewMessageId = '';
@@ -102,6 +114,43 @@ export class MessageListFloatingEntryStateController {
     this.mentionTargetVisibility = MessageListMentionTargetVisibility.UNKNOWN;
     this.shouldShowBackToLatest = false;
     this.isBeyondDisplayThreshold = false;
+    this.backToQuoteMessageId = '';
+    this.returnMessageVisible = false;
+    this.returnMessageWasHidden = false;
+  }
+
+  onQuoteNavigated(returnMessageId: string): void {
+    if (returnMessageId) {
+      this.backToQuoteMessageId = returnMessageId;
+      this.returnMessageVisible = false;
+      this.returnMessageWasHidden = false;
+    }
+  }
+
+  onReturnMessageVisibilityChanged(isVisible: boolean): void {
+    if (!this.backToQuoteMessageId) {
+      return;
+    }
+    if (!isVisible) {
+      this.returnMessageVisible = false;
+      this.returnMessageWasHidden = true;
+      return;
+    }
+    if (this.returnMessageWasHidden) {
+      this.backToQuoteMessageId = '';
+      this.returnMessageVisible = false;
+      this.returnMessageWasHidden = false;
+    }
+  }
+
+  clearBackToQuote(): void {
+    this.backToQuoteMessageId = '';
+    this.returnMessageVisible = false;
+    this.returnMessageWasHidden = false;
+  }
+
+  currentBackToQuoteReturnMessageId(): string {
+    return this.backToQuoteMessageId;
   }
 
   onInitialMentionTarget(target?: MessageListMentionTarget, visibility: MessageListMentionTargetVisibility = MessageListMentionTargetVisibility.HIDDEN): void {
@@ -157,6 +206,9 @@ export class MessageListFloatingEntryStateController {
   }
 
   currentEntry(): MessageListFloatingEntry | undefined {
+    if (this.backToQuoteMessageId && !this.returnMessageVisible) {
+      return MessageListFloatingEntry.backToQuote(this.backToQuoteMessageId);
+    }
     if (this.isBeyondDisplayThreshold && this.newMessageCount > 0 && this.firstNewMessageId.length > 0) {
       return MessageListFloatingEntry.newMessages(this.newMessageCount, this.firstNewMessageId);
     }
@@ -174,6 +226,8 @@ export class MessageListFloatingEntryStateController {
       this.clearNewMessages();
     } else if (entry.type === MessageListFloatingEntryType.MENTION) {
       this.mentionTarget = undefined;
+    } else if (entry.type === MessageListFloatingEntryType.BACK_TO_QUOTE) {
+      this.clearBackToQuote();
     }
   }
 

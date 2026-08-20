@@ -68,8 +68,7 @@ export class ChatMessageInputConfig implements MessageInputConfigProtocol {
     if (this.userInputStyle !== undefined) {
       return this.userInputStyle;
     }
-    // Read from AppBuilderConfig - useClassicUI controls all classic style components
-    return AppBuilderConfig.getInstance().useClassicUI ? 'classic' : 'minimalist';
+    return 'classic';
   }
 
   get isShowAudioRecorder(): boolean {

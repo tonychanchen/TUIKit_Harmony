@@ -44,28 +44,15 @@ export struct StartConversationDialog {
 
   build() {
     Column() {
-
-      Column()
-        .height(88)
-        .width('100%')
-        .backgroundColor(this.themeState.colors.bgColorMask)
-        .onClick(() => {
-          this.handleCancel();
-        })
-
-      Column() {
-        if (this.currentPage === DialogPageState.USER_PICKER) {
-          this.UserPickerPageBuilder()
-        } else if (this.currentPage === DialogPageState.GROUP_CREATION) {
-          this.GroupCreationPageBuilder()
-        }
+      if (this.currentPage === DialogPageState.USER_PICKER) {
+        this.UserPickerPageBuilder()
+      } else if (this.currentPage === DialogPageState.GROUP_CREATION) {
+        this.GroupCreationPageBuilder()
       }
-      .layoutWeight(1)
-      .backgroundColor(this.themeState.colors.bgColorOperate) // Figma: #FFFFFF
-      .borderRadius({ topLeft: 10, topRight: 10 })
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(this.themeState.colors.bgColorOperate)
   }
 
   @Builder
@@ -87,8 +74,12 @@ export struct StartConversationDialog {
           defaultSelectedItems: [],
           maxCount: this.getMaxSelectCount(),
           showNavigationBar: true,
+          showBackButton: true,
+          showSearchBar: true,
           title: this.getDialogTitle(),
           confirmButtonText: this.getConfirmButtonText(),
+          showHeaderConfirm: this.dialogType !== DialogType.CREATE_GROUP,
+          showBottomConfirm: this.dialogType === DialogType.CREATE_GROUP,
           onCancel: this.handleUserCancelComplete,
           onSelectedChanged: this.handleUserPickerComplete
         })
@@ -121,7 +112,7 @@ export struct StartConversationDialog {
 
   private getConfirmButtonText(): string | Resource {
     return this.dialogType === DialogType.CREATE_GROUP ?
-    $r('app.string.next_step_button') :
+    $r('app.string.confirm') :
     $r('app.string.start_conversation_button');
   }
 
@@ -136,7 +127,7 @@ export struct StartConversationDialog {
         if (contact) {
           const userPickerData: UserPickerData<ContactInfo> = {
             key: contact.userID || '',
-            label: contact.nickname || contact.userID || '',
+            label: contact.friendRemark || contact.nickname || contact.userID || '',
             avatarUrl: contact.avatarURL || '',
             extraData: contact
           };

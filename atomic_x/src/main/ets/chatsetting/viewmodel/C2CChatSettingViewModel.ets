@@ -6,6 +6,7 @@ import {
   GetContactInfoCompletionHandlerAdapter,
   GetConversationInfoCompletionHandlerAdapter
 } from '../../basecomponent/utils/CompletionHandlers'
+import { ChatBackgroundStore } from '../utils/ChatBackgroundStore'
 
 @Observed
 export class C2CChatSettingViewModel {
@@ -20,6 +21,7 @@ export class C2CChatSettingViewModel {
   constructor(userID: string) {
     this.userID = userID
     this.conversationID = `c2c_${userID}`
+    this.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID)
 
     this._contactStore.loadBlackList()
     this._contactStore.loadFriends()
@@ -106,13 +108,12 @@ export class C2CChatSettingViewModel {
   }
 
   setChatBackground(imageUri: string | null): void {
-    // TODO(harmony): MmkvChatBackgroundStore / ChatEventBus not implemented on Harmony yet
-    this.chatBackgroundImageUri = imageUri
+    ChatBackgroundStore.setImageUri(this.conversationID, imageUri)
+    this.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID)
   }
 
   clearChatBackground(): void {
-    // TODO(harmony): MmkvChatBackgroundStore / ChatEventBus not implemented on Harmony yet
-    this.chatBackgroundImageUri = null
+    this.setChatBackground(null)
   }
 
   deleteFriend(onSuccess?: () => void, onFailure?: (code: number, desc: string) => void): void {
@@ -139,6 +140,7 @@ export class C2CSettingState {
   isPinned: boolean = false;
   isContact: boolean = false;
   isInBlacklist: boolean = false;
+  chatBackgroundImageUri: string | null = null;
 }
 
 @Observed
@@ -152,6 +154,7 @@ export class C2CSettingStore {
   private constructor(userID: string) {
     this.userID = userID;
     this.conversationID = `c2c_${userID}`;
+    this.state.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID);
   }
 
   static create(userID: string): C2CSettingStore {
@@ -202,6 +205,15 @@ export class C2CSettingStore {
       });
       this.contactStore.setFriendRemark(this.userID, remark, completion);
     });
+  }
+
+  setChatBackground(imageUri: string | null): void {
+    ChatBackgroundStore.setImageUri(this.conversationID, imageUri);
+    this.state.chatBackgroundImageUri = ChatBackgroundStore.getImageUri(this.conversationID);
+  }
+
+  clearChatBackground(): void {
+    this.setChatBackground(null);
   }
 
   addToBlacklist(): Promise<void> {

@@ -11,13 +11,14 @@ import { GroupStore } from '@tencentcloud/atomicxcore'
 @Component
 export struct ContactsPage {
   private static readonly HEADER_HEIGHT: number = 56;
-  private static readonly LARGE_TITLE_HEIGHT: number = 52;
+  private static readonly LARGE_TITLE_HEIGHT: number = 56;
   private static readonly SEARCH_HEIGHT: number = 36;
   private static readonly SEARCH_BAR_HEIGHT: number = 36;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @ObjectLink contactStore: ContactStore;
   @ObjectLink groupStore: GroupStore;
   @State showAddMenu: boolean = false;
+  @State private searchKeyword: string = '';
   private addContactDialogController: CustomDialogController | null = null;
   onContactClick?: (contact: ContactInfo) => void;
   onGroupClick?: (group: ContactInfo) => void;
@@ -25,15 +26,18 @@ export struct ContactsPage {
   @Builder
   LargeTitleBuilder() {
     Row() {
+      Row()
+        .width(24)
+        .height(24)
+
       Text($r('app.string.contacts_title'))
-        .fontSize(34)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.themeState.colors.textColorPrimary)
-        .fontFamily('PingFang HK')
+        .textAlign(TextAlign.Center)
         .layoutWeight(1)
 
       Row() {
-
         Image($r('app.media.new_chat_icon'))
           .width(24)
           .height(24)
@@ -41,13 +45,56 @@ export struct ContactsPage {
             this.showAddMenu = true;
           })
       }
+      .width(24)
+      .height(24)
     }
     .width('100%')
     .height(ContactsPage.LARGE_TITLE_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
   }
-  
+
+  @Builder
+  SearchFieldBuilder() {
+    Row() {
+      Row() {
+        Image($rawfile('search/search_icon.svg'))
+          .width(20)
+          .height(20)
+          .fillColor(this.themeState.colors.textColorTertiary)
+          .margin({ right: 8 })
+
+        TextInput({
+          placeholder: $r('app.string.search_placeholder'),
+          text: $$this.searchKeyword
+        })
+          .placeholderColor(this.themeState.colors.textColorTertiary)
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .backgroundColor(Color.Transparent)
+          .border({ width: 0 })
+          .layoutWeight(1)
+
+        if (this.searchKeyword.length > 0) {
+          Image($rawfile('contactlist/contact_del.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .onClick(() => {
+              this.searchKeyword = '';
+            })
+        }
+      }
+      .width('100%')
+      .height(ContactsPage.SEARCH_HEIGHT)
+      .borderRadius(10)
+      .backgroundColor(this.themeState.colors.bgColorInput)
+      .padding({ left: 12, right: 12 })
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .margin({ top: 8, bottom: 8 })
+  }
 
   @Builder
   AddMenuDialog() {
@@ -131,9 +178,13 @@ export struct ContactsPage {
       Column() {
 
         this.LargeTitleBuilder()
+        if (!AppBuilderConfig.getInstance().hideSearch) {
+          this.SearchFieldBuilder()
+        }
         ContactList({
           contactStore: this.contactStore,
           groupStore: this.groupStore,
+          searchKeyword: this.searchKeyword,
           onContactClick: (contact: ContactInfo) => {
             if (this.onContactClick) {
               this.onContactClick(contact);

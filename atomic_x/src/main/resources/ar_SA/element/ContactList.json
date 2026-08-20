@@ -330,11 +330,11 @@
     },
     {
       "name": "create_group_chat_title",
-      "value": "إنشاء محادثة جماعية"
+      "value": "إنشاء مجموعة"
     },
     {
       "name": "select_contacts_title",
-      "value": "اختر جهات الاتصال"
+      "value": "بدء محادثة"
     },
     {
       "name": "next_step_button",

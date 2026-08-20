@@ -1,6 +1,11 @@
 import { ThemeState } from '../../basecomponent/Index';
 
-type VoiceRecordReleaseAction = 'send' | 'cancel' | 'transcribe';
+export type VoiceRecordReleaseAction = 'send' | 'cancel' | 'transcribe';
+
+interface VoiceTouchPoint {
+  x: number;
+  y: number;
+}
 
 @Component
 export struct AudioRecorderView {
@@ -10,34 +15,39 @@ export struct AudioRecorderView {
   @Link shouldCancelRecording: boolean;
   @Link shouldTranscribeRecording: boolean;
   @Prop primaryColor: string = '#4A90E2';
-  @Prop transcribeHorizontalActionThreshold: number = 72;
+  @Prop fullScreen: boolean = false;
   
-  onCancel?: () => void;
-  onSend?: (action?: VoiceRecordReleaseAction) => void;
   onTimeLimitReached?: () => void;
-  onDragUpdate?: (shouldCancel: boolean, shouldTranscribe?: boolean) => void;
-
-  // Touch handling state
-  @State private initialTouchX: number = 0;
-  @State private initialTouchY: number = 0;
-  @State private dragOffsetX: number = 0;
-  @State private dragOffset: number = 0;
-  @State private currentTouchX: number = 0;
-  @State private currentTouchY: number = 0;
-  @State private componentWidth: number = 0;
-  private readonly cancelThreshold: number = -50;
-  private readonly horizontalActionThreshold: number = 72;
-  private readonly actionTargetMaxY: number = 150;
-  private readonly leftActionMaxRatio: number = 0.42;
-  private readonly rightActionMinRatio: number = 0.58;
+  onActionTargetAreaChange?: (action: VoiceRecordReleaseAction, x: number, y: number, width: number, height: number) => void;
+  onPointerUpdate?: (x: number, y: number) => void;
+  onPointerEnd?: (x: number, y: number, forceCancel?: boolean) => void;
 
   // Animation state for waveform
   @State private animationValues: number[] = Array(24).fill(0);
   private animationTimer?: number;
   private recordingCheckTimer?: number;
-  private readonly maxRecordingDuration: number = 60; // 60 seconds
+  private readonly maxRecordingDuration: number = 60;
+  private readonly wavePhases: number[] = (() => {
+    const rng = (seed: number) => {
+      let s = seed;
+      return () => { s = (s * 1664525 + 1013904223) & 0xFFFFFFFF; return (s >>> 0) / 0xFFFFFFFF; };
+    };
+    const rand = rng(20260421);
+    return Array(24).fill(0).map(() => rand() * Math.PI * 2);
+  })();
+  private readonly waveFreqs: number[] = (() => {
+    const rng = (seed: number) => {
+      let s = seed ^ 0xDEADBEEF;
+      return () => { s = (s * 1664525 + 1013904223) & 0xFFFFFFFF; return (s >>> 0) / 0xFFFFFFFF; };
+    };
+    const rand = rng(20260421);
+    return Array(24).fill(0).map(() => 2.4 + rand() * 3.2);
+  })();
+  private waveStartTimeMs: number = 0;
+  @State private currentPowerLevel: number = 0;
 
   aboutToAppear() {
+    this.waveStartTimeMs = Date.now();
     this.startWaveformAnimation();
     this.startRecordingTimeCheck();
   }
@@ -47,38 +57,46 @@ export struct AudioRecorderView {
     this.stopRecordingTimeCheck();
   }
 
+  // Android 参考实现：录音面板背景是透明的白色渐变
+  //   stop 0    -> 完全透明
+  //   stop 0.42 -> 半透明白
+  //   stop 0.67 -> 较白
+  //   stop 1    -> 不透明白
+  private overlayGradientColors(): Array<[ResourceColor, number]> {
+    return [
+      ['#00000000', 0.0],
+      [this.themeState.colors.bgColorMaskDisappeared, 0.42],
+      [this.themeState.colors.bgColorOperate, 0.67],
+      [this.themeState.colors.bgColorOperate, 1.0]
+    ];
+  }
+
   build() {
-    Column({ space: 18 }) {
+    Column({ space: 32 }) {
       Row() {
         Blank()
         Text(this.releaseHintText())
-          .fontSize(15)
-          .fontWeight(FontWeight.Medium)
+          .fontSize(14)
+          .fontWeight(FontWeight.Regular)
           .fontColor(this.releaseHintColor())
           .textAlign(TextAlign.Center)
+          .lineHeight(20)
         Blank()
       }
       .padding({ left: 20, right: 20, top: 10 })
 
       Row() {
-        this.ActionTargetBuilder('×', $r('app.string.cancel'), 'cancel', '#FF4D4F')
-        Blank()
-        this.ActionTargetBuilder($r('app.string.voice_transcription_action'), undefined, 'transcribe',
-          this.themeState.colors.buttonColorPrimaryDefault)
+        this.ActionTargetBuilder($r('app.string.cancel'), 'cancel')
+        this.ActionTargetBuilder($r('app.string.voice_transcription_action'), 'transcribe')
       }
-      .width('74%')
-      .height(86)
+      .width('100%')
+      .padding({ left: 72, right: 72 })
+      .height(80)
+      .justifyContent(FlexAlign.SpaceBetween)
       .alignItems(VerticalAlign.Center)
 
       Row() {
-        Text(this.formatDuration(Math.floor(this.recordingDuration)))
-          .fontSize(17)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(Color.White)
-          .textAlign(TextAlign.Center)
-          .width(70)
-
-        Row({ space: 4 }) {
+        Row({ space: 3 }) {
           this.WaveBarBuilder(0)
           this.WaveBarBuilder(1)
           this.WaveBarBuilder(2)
@@ -107,102 +125,86 @@ export struct AudioRecorderView {
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
-        .constraintSize({ maxHeight: 28 })
+
+        Text(this.formatDuration(this.recordingDuration))
+          .fontSize(12)
+          .fontColor(this.themeState.colors.textColorButton)
       }
-      .width('96%')
-      .height(52)
-      .padding({ left: 20, right: 20 })
+      .height(40)
+      .width('92%')
+      .padding({ left: 16, right: 16 })
       .backgroundColor(this.recordingBarColor())
-      .borderRadius(10)
-      .margin({ left: 5, right: 5, bottom: 8 })
+      .borderRadius(12)
+      .margin({ bottom: 8 })
     }
     .width('100%')
-    .height(230)
-    .backgroundColor(this.themeState.colors.bgColorInput)
-    .justifyContent(FlexAlign.Center)
+    .height(this.fullScreen ? '100%' : 397)
+    .align(Alignment.Bottom)
+    .offset({ x: 0, y: 0 })
+    .justifyContent(FlexAlign.End)
     .alignItems(HorizontalAlign.Center)
-    .onAreaChange((oldValue: Area, newValue: Area) => {
-      this.componentWidth = newValue.width as number;
+    .linearGradient({
+      angle: 180,
+      colors: this.overlayGradientColors()
     })
     .onTouch((event: TouchEvent) => {
-      if (event.type === TouchType.Down) {
-        console.log('[AudioRecorderView] Touch down');
-        this.initialTouchX = event.touches[0].x;
-        this.initialTouchY = event.touches[0].y;
-        this.currentTouchX = event.touches[0].x;
-        this.currentTouchY = event.touches[0].y;
-      } else if (event.type === TouchType.Move) {
-        console.log('[AudioRecorderView] Touch move');
-        this.currentTouchX = event.touches[0].x;
-        this.currentTouchY = event.touches[0].y;
-        this.dragOffsetX = event.touches[0].x - this.initialTouchX;
-        this.dragOffset = event.touches[0].y - this.initialTouchY;
-        this.updateActionState();
-      } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
-        console.log('[AudioRecorderView] Touch up/cancel');
-        const action = this.currentReleaseAction();
-        if (action === 'cancel') {
-          this.onCancel?.();
-        } else {
-          this.onSend?.(action);
+      if (event.type === TouchType.Down || event.type === TouchType.Move) {
+        const point = this.getWindowTouchPoint(event);
+        if (point) {
+          this.onPointerUpdate?.(point.x, point.y);
         }
+      } else if (event.type === TouchType.Up) {
+        const point = this.getWindowTouchPoint(event, true);
+        if (point) {
+          this.onPointerEnd?.(point.x, point.y);
+        }
+      } else if (event.type === TouchType.Cancel) {
+        this.onPointerEnd?.(0, 0, true);
       }
     })
-    .gesture(
-      PanGesture({ fingers: 1, direction: PanDirection.All, distance: 1 })
-        .onActionUpdate((event: GestureEvent) => {
-          console.log('[AudioRecorderView] Pan gesture update');
-          this.dragOffsetX = event.offsetX;
-          this.dragOffset = event.offsetY;
-          if (this.initialTouchX > 0 || this.initialTouchY > 0) {
-            this.currentTouchX = this.initialTouchX + event.offsetX;
-            this.currentTouchY = this.initialTouchY + event.offsetY;
-          }
-          this.updateActionState();
-        })
-    )
   }
 
   @Builder
   private WaveBarBuilder(index: number) {
     Rect()
-      .width(3)
-      .height(`${8 + this.animationValues[index]}vp`)
+      .width(2.5)
+      .height(`${this.animationValues[index]}vp`)
       .fill(Color.White)
-      .borderRadius(2)
+      .borderRadius(1.25)
   }
 
   @Builder
-  private ActionTargetBuilder(content: string | Resource, label: Resource | undefined,
-    action: VoiceRecordReleaseAction, selectedColor: ResourceColor) {
-    Column({ space: 8 }) {
-      Row() {
-        if (typeof content === 'string') {
-          Text(content)
-            .fontSize(34)
-            .fontColor(this.isActionTargetSelected(action) ? Color.White : this.themeState.colors.textColorPrimary)
-            .textAlign(TextAlign.Center)
-        } else {
-          Text(content)
-            .fontSize(18)
-            .fontColor(this.isActionTargetSelected(action) ? Color.White : this.themeState.colors.textColorPrimary)
-            .textAlign(TextAlign.Center)
-        }
-      }
-      .width(70)
-      .height(70)
-      .borderRadius(35)
-      .backgroundColor(this.isActionTargetSelected(action) ? selectedColor : this.themeState.colors.bgColorOperate)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
-
-      if (label) {
-        Text(label)
-          .fontSize(13)
-          .fontColor(this.isActionTargetSelected(action) ? selectedColor : this.themeState.colors.textColorSecondary)
-      }
+  private ActionTargetBuilder(label: Resource, action: VoiceRecordReleaseAction) {
+    Row() {
+      Text(label)
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(this.isActionTargetSelected(action)
+          ? this.themeState.colors.textColorButton
+          : this.themeState.colors.textColorPrimary)
+        .textAlign(TextAlign.Center)
     }
-    .alignItems(HorizontalAlign.Center)
+    .width(80)
+    .height(80)
+    .borderRadius(40)
+    .backgroundColor(this.isActionTargetSelected(action)
+      ? (action === 'cancel' ? this.themeState.colors.buttonColorHangupDefault : this.themeState.colors.buttonColorPrimaryDefault)
+      : this.themeState.colors.buttonColorSecondaryDefault)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .onAreaChange((oldValue: Area, newValue: Area) => {
+      this.updateActionTargetArea(action, newValue);
+    })
+  }
+
+  private updateActionTargetArea(action: VoiceRecordReleaseAction, area: Area): void {
+    this.onActionTargetAreaChange?.(
+      action,
+      Number(area.globalPosition.x),
+      Number(area.globalPosition.y),
+      Number(area.width),
+      Number(area.height)
+    );
   }
 
   private isActionTargetSelected(action: VoiceRecordReleaseAction): boolean {
@@ -222,24 +224,23 @@ export struct AudioRecorderView {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
-  // Start waveform animation
   private startWaveformAnimation(): void {
     this.animationValues = Array(24).fill(0);
     this.animationTimer = setInterval(() => {
       this.updateWaveformAnimation();
-    }, 100);
+    }, 50);
   }
 
-  // Update waveform animation values
   private updateWaveformAnimation(): void {
-    // Simulate audio power level (in real implementation, get from AudioRecorder)
-    const basePower = Math.random() * 10 + 1; // Random power between 1-11
-    
-    for (let i = 0; i < this.animationValues.length; i++) {
-      const normalizedPower = Math.min(Math.max(basePower * 0.3, 1), 10);
-      const randomOffset = (Math.random() - 0.5) * 4; // Random offset between -2 and 2
-      this.animationValues[i] = normalizedPower + randomOffset;
+    const t = (Date.now() - this.waveStartTimeMs) / 1000.0;
+    const amplitude = 13 * (0.45 + (this.currentPowerLevel / 100) * 0.55);
+    const minH = 3;
+    const newValues: number[] = [];
+    for (let i = 0; i < 24; i++) {
+      const wave = Math.abs(Math.sin(t * this.waveFreqs[i] + this.wavePhases[i]));
+      newValues.push(minH + amplitude * wave);
     }
+    this.animationValues = newValues;
   }
 
   // Stop waveform animation
@@ -270,41 +271,16 @@ export struct AudioRecorderView {
     }
   }
 
-  private updateActionState(): void {
-    const action = this.currentReleaseAction();
-    this.shouldCancelRecording = action === 'cancel';
-    this.shouldTranscribeRecording = action === 'transcribe';
-    this.onDragUpdate?.(this.shouldCancelRecording, this.shouldTranscribeRecording);
-  }
-
-  private currentReleaseAction(): VoiceRecordReleaseAction {
-    if (this.isTouchInCancelActionTarget()) {
-      return 'cancel';
+  private getWindowTouchPoint(event: TouchEvent, useChangedTouch: boolean = false): VoiceTouchPoint | undefined {
+    const touches = useChangedTouch ? event.changedTouches : event.touches;
+    const touch = touches?.[0];
+    if (!touch) {
+      return undefined;
     }
-    if (this.isTouchInTranscribeActionTarget()) {
-      return 'transcribe';
-    }
-    if (this.dragOffset < this.cancelThreshold && this.dragOffsetX < -this.horizontalActionThreshold) {
-      return 'cancel';
-    }
-    if (this.dragOffset < this.cancelThreshold && this.dragOffsetX > this.transcribeHorizontalActionThreshold) {
-      return 'transcribe';
-    }
-    return 'send';
-  }
-
-  private isTouchInCancelActionTarget(): boolean {
-    return this.isTouchInActionTargetY() && this.componentWidth > 0 &&
-      this.currentTouchX < this.componentWidth * this.leftActionMaxRatio;
-  }
-
-  private isTouchInTranscribeActionTarget(): boolean {
-    return this.isTouchInActionTargetY() && this.componentWidth > 0 &&
-      this.currentTouchX > this.componentWidth * this.rightActionMinRatio;
-  }
-
-  private isTouchInActionTargetY(): boolean {
-    return this.currentTouchY > 0 && this.currentTouchY < this.actionTargetMaxY;
+    return {
+      x: Number(touch.windowX),
+      y: Number(touch.windowY)
+    };
   }
 
   private releaseHintText(): Resource {
@@ -318,18 +294,12 @@ export struct AudioRecorderView {
   }
 
   private releaseHintColor(): ResourceColor {
-    if (this.shouldCancelRecording) {
-      return '#FF4D4F';
-    }
-    if (this.shouldTranscribeRecording) {
-      return this.themeState.colors.buttonColorPrimaryDefault;
-    }
     return this.themeState.colors.textColorSecondary;
   }
 
   private recordingBarColor(): ResourceColor {
     if (this.shouldCancelRecording) {
-      return '#FF4D4F';
+      return this.themeState.colors.buttonColorHangupDefault;
     }
     return this.themeState.colors.buttonColorPrimaryDefault;
   }

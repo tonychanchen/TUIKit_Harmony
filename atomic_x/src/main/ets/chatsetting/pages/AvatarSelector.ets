@@ -17,17 +17,10 @@ export struct AvatarSelector {
 
   @State selectedIndex: number = -1;
 
-  aboutToAppear(): void {
-    console.log('[AvatarPickerPage] Title:', this.title);
-    console.log('[AvatarPickerPage] URL list length:', this.urlList.length);
-  }
-
   build() {
     Column() {
-      
       this.HeaderBuilder()
 
-      
       if (this.urlList.length === 0) {
         this.EmptyStateBuilder()
       } else {
@@ -35,64 +28,47 @@ export struct AvatarSelector {
       }
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor('#F2F2F7')
+    .height('60%')
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .borderRadius({ topLeft: 16, topRight: 16 })
+    .clip(true)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
   }
 
   @Builder
   HeaderBuilder() {
-    Row() {
-      // Back button
-      Button() {
-        Image($rawfile('basecomponent/common_back_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
-          .scale({
-            x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
-            y: 1
-          })
-      }
-      .width(44)
-      .height(44)
-      .backgroundColor('transparent')
-      .onClick(() => {
-        if (this.onBack) {
-          this.onBack();
-        }
-      })
-
-      Blank()
-
-      // Title
+    Stack() {
       Text(this.title)
-        .fontSize(18)
+        .fontSize(16)
         .fontWeight(600)
-        .fontColor(this.themeState.colors.textColorSecondary)
+        .fontColor(this.themeState.colors.textColorPrimary)
         .textAlign(TextAlign.Center)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .align(Alignment.Center)
 
-      Blank()
-
-      
-      Button($r('app.string.chatsetting_confirm_select'))
-        .fontSize(16)
-        .fontWeight(600)
-        .fontColor(this.selectedIndex >= 0 ? this.themeState.colors.textColorLink :
-        this.themeState.colors.textColorSecondary)
-        .backgroundColor('transparent')
-        .enabled(this.selectedIndex >= 0)
-        .onClick(() => {
-          this.handleConfirm();
-        })
+      Row() {
+        Text('✕')
+          .fontSize(18)
+          .fontColor(this.themeState.colors.textColorSecondary)
+          .width(44)
+          .height(44)
+          .textAlign(TextAlign.Center)
+          .onClick(() => {
+            if (this.onBack) {
+              this.onBack();
+            }
+          })
+      }
+      .width('100%')
+      .height(AvatarSelector.HEADER_HEIGHT)
+      .padding({ right: 16 })
+      .justifyContent(FlexAlign.End)
+      .alignItems(VerticalAlign.Center)
     }
     .width('100%')
     .height(AvatarSelector.HEADER_HEIGHT)
-    .padding({ left: 16, right: 16 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
   }
 
   @Builder
@@ -127,11 +103,12 @@ export struct AvatarSelector {
         left: 12,
         right: 12,
         top: 8,
-        bottom: 0
+        bottom: 16
       })
     }
     .width('100%')
-    .backgroundColor('#FF2F7')
+    .layoutWeight(1)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
   }
 
   @Builder
@@ -172,13 +149,8 @@ export struct AvatarSelector {
     .width(AvatarSelector.IMAGE_SIZE)
     .height(AvatarSelector.IMAGE_SIZE)
     .onClick(() => {
-      
-      if (this.selectedIndex === index) {
-        this.selectedIndex = -1;
-      } else {
-        this.selectedIndex = index;
-      }
-      console.log('[AvatarPickerPage] Image clicked, selectedIndex:', this.selectedIndex);
+      this.selectedIndex = index;
+      this.handleConfirm();
     })
   }
 
@@ -186,18 +158,12 @@ export struct AvatarSelector {
   private closeDialog(): void {
     if (this.onBack) {
       this.onBack();
-    } else {
-      console.warn('[AvatarPickerPage] No shutdown method is provided');
     }
   }
 
-  
   private handleConfirm(): void {
     if (this.selectedIndex >= 0 && this.selectedIndex < this.urlList.length) {
       const selectedUrl = this.urlList[this.selectedIndex];
-      console.log('[AvatarPickerPage] Confirmed selection:', selectedUrl, 'at index:', this.selectedIndex);
-
-      
       if (this.onConfirm) {
         this.onConfirm(selectedUrl, this.selectedIndex);
       }

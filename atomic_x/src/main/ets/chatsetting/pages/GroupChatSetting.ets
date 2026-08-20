@@ -26,8 +26,7 @@ import {
 import { GroupPermission, GroupPermissionManager } from '../manager/GroupPermissionManager';
 import { ImmersiveMode, LevelMode, router } from '@kit.ArkUI';
 import { AvatarSelector } from './AvatarSelector';
-import { GroupNameEditDialog, InviteGroupMethodDialog, JoinGroupMethodDialog } from '../dialog/GroupSettingDialogs';
-import { GroupAnnouncementView } from './GroupAnnouncementView';
+import { GroupNameEditDialog, GroupTextInputDialog, InviteGroupMethodDialog, JoinGroupMethodDialog } from '../dialog/GroupSettingDialogs';
 import { GroupManagementView } from './GroupManagementView';
 import { GroupMemberListPage } from './GroupMemberListPage';
 import { UserPicker, UserPickerData } from '../../userpicker/Index';
@@ -35,6 +34,7 @@ import { CompletionHandlerAdapter } from '../../basecomponent/utils/CompletionHa
 import { C2CChatSetting } from './C2CChatSetting';
 import { ContactDetailPage } from '../../contactlist/pages/dialog/ContactDetailPage';
 import { UserInteractionHelper } from '../helper/UserInteractionHelper';
+import { ChatBackgroundPickerDialog } from './ChatBackgroundPicker';
 
 type UserPickerDataType = ContactInfo | GroupMember;
 
@@ -100,23 +100,6 @@ struct AvatarPickerDialog {
       title: this.title,
       urlList: this.urlList,
       onConfirm: this.onConfirm,
-      onBack: () => {
-        this.controller.close();
-      }
-    })
-  }
-}
-
-@CustomDialog
-struct GroupAnnouncementDialog {
-  controller: CustomDialogController;
-  groupID: string = '';
-  onSave?: (announcement: string) => void;
-
-  build() {
-    GroupAnnouncementView({
-      groupID: this.groupID,
-      onSave: this.onSave,
       onBack: () => {
         this.controller.close();
       }
@@ -197,10 +180,12 @@ struct GroupManagementDialog {
 export struct GroupChatSetting {
   private static readonly AVATAR_SIZE: number = 80;
   private static readonly CELL_HEIGHT: number = 56;
-  private static readonly SECTION_MARGIN: number = 12;
-  private static readonly HORIZONTAL_PADDING: number = 8;
+  private static readonly SECTION_MARGIN: number = 10;
+  private static readonly HORIZONTAL_PADDING: number = 16;
   private static readonly MEMBER_AVATAR_SIZE: number = 40;
   private static readonly ACTION_BUTTON_SIZE: number = 56;
+  private static readonly MEMBER_PREVIEW_COLUMNS: number = 5;
+  private static readonly MEMBER_PREVIEW_MAX_ROWS: number = 2;
   private static readonly BORDER_RADIUS: number = 12;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @StorageLink('LanguageState') languageState: LanguageState = LanguageState.getInstance();
@@ -235,6 +220,7 @@ export struct GroupChatSetting {
   private groupMemberListDialogController?: CustomDialogController;
   private userPickerDialogController?: CustomDialogController;
   private groupManagementDialogController?: CustomDialogController;
+  private chatBackgroundDialogController?: CustomDialogController;
 
   aboutToAppear(): void {
     console.info('[GroupSettingPage]aboutToAppear Param:', {
@@ -276,13 +262,14 @@ export struct GroupChatSetting {
 
         Scroll() {
           Column({ space: 0 }) {
-            this.GroupInfoSectionBuilder()
-            this.NotificationSettingsSectionBuilder()
+            this.GroupHeaderSectionBuilder()
+            if (this.showMemberList && this.hasPermission(GroupPermission.GET_GROUP_MEMBER_LIST)) {
+              this.MemberPreviewSectionBuilder()
+            }
             this.SettingsSectionBuilder()
             this.MyGroupNicknameSectionBuilder()
-            if (this.showMemberList && this.hasPermission(GroupPermission.GET_GROUP_MEMBER_LIST)) {
-              this.MemberListSectionBuilder()
-            }
+            this.NotificationSettingsSectionBuilder()
+            this.ChatBackgroundSectionBuilder()
             this.ActionButtonsSectionBuilder()
           }
           .width('100%')
@@ -292,7 +279,7 @@ export struct GroupChatSetting {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .backgroundColor(this.themeState.colors.bgColorTopBar)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 
@@ -368,52 +355,99 @@ export struct GroupChatSetting {
 
   @Builder
   NavigationBarBuilder() {
-    Row() {
-      // Back button
+    Stack() {
       Row() {
-        Image($rawfile('basecomponent/common_back_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
-          .scale({
-            x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
-            y: 1
-          })
-      }
-      .width(44)
-      .height(44)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
-      .onClick(() => {
-        if (this.dialogController) {
-          this.dialogController.close();
-        } else {
-          console.warn('[GroupSettingPage] dialogController not available');
+        Row() {
+          Image($rawfile('basecomponent/common_back_icon.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .scale({
+              x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
+              y: 1
+            })
         }
-      })
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+        .margin({ left: 16 })
+        .onClick(() => {
+          if (this.dialogController) {
+            this.dialogController.close();
+          } else {
+            console.warn('[GroupSettingPage] dialogController not available');
+          }
+        })
+      }
+      .width('100%')
+      .height(56)
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center)
 
-      Blank()
-
-      // Title
       Text($r('app.string.chatsetting_group_info'))
         .fontSize(18)
         .fontWeight(600)
         .fontFamily('SF Pro Display')
         .fontColor(this.themeState.colors.textColorPrimary)
-
-      Blank()
+        .align(Alignment.Center)
     }
     .width('100%')
     .height(56)
-    .padding({ left: 16, right: 16 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
 
-    // Divider
     Divider()
       .height(0.5)
       .color(this.themeState.colors.strokeColorSecondary)
+  }
+
+  @Builder
+  GroupHeaderSectionBuilder() {
+    Row() {
+      Avatar({
+        content: {
+          type: AvatarContentType.Image,
+          url: this.groupState?.avatarURL,
+          name: this.getGroupInitials() || '',
+        },
+        avatarSize: AvatarSize.L,
+      })
+        .width(40)
+        .height(40)
+        .onClick(() => {
+          if (this.hasPermission(GroupPermission.SET_GROUP_AVATAR)) {
+            this.navigateToAvatarPicker();
+          }
+        })
+
+      Column({ space: 4 }) {
+        Text(this.groupState?.groupName || '')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .onClick(() => {
+            if (this.hasPermission(GroupPermission.SET_GROUP_NAME)) {
+              this.openGroupNameEditDialog();
+            }
+          })
+
+        Text(`ID: ${this.groupStore?.groupID || this.groupID}`)
+          .fontSize(13)
+          .fontColor(this.themeState.colors.textColorSecondary)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .margin({ left: 16 })
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+    }
+    .width('100%')
+    .height(64)
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: GroupChatSetting.SECTION_MARGIN })
   }
 
   @Builder
@@ -556,12 +590,8 @@ export struct GroupChatSetting {
         this.PinConversationRowBuilder()
       }
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
     .borderRadius(GroupChatSetting.BORDER_RADIUS)
-    .padding({
-      left: GroupChatSetting.HORIZONTAL_PADDING,
-      right: GroupChatSetting.HORIZONTAL_PADDING
-    })
     .margin({
       bottom: GroupChatSetting.SECTION_MARGIN
     })
@@ -634,89 +664,61 @@ export struct GroupChatSetting {
 
   @Builder
   GroupNoticeRowBuilder() {
-    Column({ space: 8 }) {
+    Row({ space: 12 }) {
+      Text($r('app.string.chatsetting_group_announcement'))
+        .fontSize(17)
+        .fontWeight(400)
+        .fontFamily('SF Pro Text')
+        .fontColor(this.themeState.colors.textColorPrimary)
 
-      Row() {
-        Text($r('app.string.chatsetting_group_announcement'))
-          .fontSize(16)
-          .fontWeight(400)
-          .fontFamily('PingFang SC')
-          .fontColor(this.themeState.colors.textColorPrimary)
+      Text(this.groupState?.notice || $r('app.string.chatsetting_group_announcement_empty'))
+        .fontSize(17)
+        .fontWeight(400)
+        .fontFamily('SF Pro Text')
+        .fontColor(this.themeState.colors.textColorSecondary)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+        .textAlign(TextAlign.End)
 
-        Blank()
-
-        Image($rawfile('search/right_arrow_icon.svg'))
-          .width(12)
-          .height(24)
+      if (this.hasPermission(GroupPermission.SET_GROUP_NOTICE)) {
+        Image($rawfile('chatsetting/setting_edit_icon.svg'))
+          .width(15)
+          .height(15)
           .fillColor(this.themeState.colors.textColorSecondary)
-
+          .flexShrink(0)
       }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
-
-      Row() {
-        Text(this.groupState?.notice)
-          .fontSize(14)
-          .fontWeight(400)
-          .fontFamily('PingFang SC')
-          .fontColor(this.themeState.colors.textColorSecondary)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .layoutWeight(1)
-      }
-      .width('100%')
     }
     .width('100%')
-    .padding({
-      top: 8,
-      bottom: 8,
-      left: GroupChatSetting.HORIZONTAL_PADDING,
-      right: GroupChatSetting.HORIZONTAL_PADDING
-    })
+    .height(GroupChatSetting.CELL_HEIGHT)
+    .padding({ left: GroupChatSetting.HORIZONTAL_PADDING, right: GroupChatSetting.HORIZONTAL_PADDING })
+    .alignItems(VerticalAlign.Center)
     .onClick(() => {
-      this.navigateToGroupAnnouncement();
+      if (this.hasPermission(GroupPermission.SET_GROUP_NOTICE)) {
+        this.navigateToGroupAnnouncement();
+      }
     })
   }
 
   @Builder
   SettingsSectionBuilder() {
     Column({ space: 0 }) {
-
-      if (this.hasPermission(GroupPermission.SET_GROUP_NOTICE)) {
-        this.GroupNoticeRowBuilder()
-        this.DividerBuilder()
-      }
-
+      this.GroupNoticeRowBuilder()
+      this.DividerBuilder()
 
       if (this.hasPermission(GroupPermission.SET_GROUP_MANAGEMENT)) {
         this.GroupManagementRowBuilder()
         this.DividerBuilder()
       }
 
-
-      if (this.hasPermission(GroupPermission.GET_GROUP_TYPE)) {
-        this.GroupTypeRowBuilder()
-        this.DividerBuilder()
-      }
-
-
-      if (this.hasPermission(GroupPermission.SET_JOIN_GROUP_APPROVAL_TYPE)) {
-        this.JoinMethodRowBuilder()
-        this.DividerBuilder()
-      }
-
-
-      if (this.hasPermission(GroupPermission.SET_INVITE_TO_GROUP_APPROVAL_TYPE)) {
-        this.InviteMethodRowBuilder()
-      }
+      this.GroupTypeRowBuilder()
+      this.DividerBuilder()
+      this.JoinMethodRowBuilder()
+      this.DividerBuilder()
+      this.InviteMethodRowBuilder()
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
     .borderRadius(GroupChatSetting.BORDER_RADIUS)
-    .padding({
-      left: GroupChatSetting.HORIZONTAL_PADDING,
-      right: GroupChatSetting.HORIZONTAL_PADDING
-    })
     .margin({
       bottom: GroupChatSetting.SECTION_MARGIN
     })
@@ -791,20 +793,25 @@ export struct GroupChatSetting {
           .fontSize(17)
           .fontWeight(400)
           .fontFamily('SF Pro Text')
-          .fontColor(this.themeState.colors.textColorPrimary)
+          .fontColor(this.themeState.colors.textColorSecondary)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        Image($rawfile('search/right_arrow_icon.svg'))
-          .width(12)
-          .height(24)
-          .fillColor(this.themeState.colors.textColorSecondary)
+        if (this.hasPermission(GroupPermission.SET_JOIN_GROUP_APPROVAL_TYPE)) {
+          Image($rawfile('search/right_arrow_icon.svg'))
+            .width(12)
+            .height(24)
+            .fillColor(this.themeState.colors.textColorSecondary)
+        }
       }
     }
     .width('100%')
     .height(GroupChatSetting.CELL_HEIGHT)
     .padding({ left: GroupChatSetting.HORIZONTAL_PADDING, right: GroupChatSetting.HORIZONTAL_PADDING })
     .onClick(() => {
+      if (!this.hasPermission(GroupPermission.SET_JOIN_GROUP_APPROVAL_TYPE)) {
+        return;
+      }
       this.joinGroupDialogController = new CustomDialogController({
         builder: JoinGroupMethodDialog({
           currentOpt: this.groupState?.joinGroupApprovalType,
@@ -840,20 +847,25 @@ export struct GroupChatSetting {
           .fontSize(17)
           .fontWeight(400)
           .fontFamily('SF Pro Text')
-          .fontColor(this.themeState.colors.textColorPrimary)
+          .fontColor(this.themeState.colors.textColorSecondary)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        Image($rawfile('search/right_arrow_icon.svg'))
-          .width(12)
-          .height(24)
-          .fillColor(this.themeState.colors.textColorSecondary)
+        if (this.hasPermission(GroupPermission.SET_INVITE_TO_GROUP_APPROVAL_TYPE)) {
+          Image($rawfile('search/right_arrow_icon.svg'))
+            .width(12)
+            .height(24)
+            .fillColor(this.themeState.colors.textColorSecondary)
+        }
       }
     }
     .width('100%')
     .height(GroupChatSetting.CELL_HEIGHT)
     .padding({ left: GroupChatSetting.HORIZONTAL_PADDING, right: GroupChatSetting.HORIZONTAL_PADDING })
     .onClick(() => {
+      if (!this.hasPermission(GroupPermission.SET_INVITE_TO_GROUP_APPROVAL_TYPE)) {
+        return;
+      }
       this.inviteGroupDialogController = new CustomDialogController({
         builder: InviteGroupMethodDialog({
           currentOpt: this.groupState?.inviteToGroupApprovalType,
@@ -902,10 +914,12 @@ export struct GroupChatSetting {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-          Image($rawfile('search/right_arrow_icon.svg'))
-            .width(12)
-            .height(24)
-            .fillColor(this.themeState.colors.textColorSecondary)
+          if (this.hasPermission(GroupPermission.SET_GROUP_REMARK)) {
+            Image($rawfile('chatsetting/setting_edit_icon.svg'))
+              .width(15)
+              .height(15)
+              .fillColor(this.themeState.colors.textColorSecondary)
+          }
         }
       }
       .width('100%')
@@ -915,12 +929,8 @@ export struct GroupChatSetting {
         this.openGroupNicknameEditDialog();
       })
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
     .borderRadius(GroupChatSetting.BORDER_RADIUS)
-    .padding({
-      left: GroupChatSetting.HORIZONTAL_PADDING,
-      right: GroupChatSetting.HORIZONTAL_PADDING
-    })
     .margin({
       bottom: GroupChatSetting.SECTION_MARGIN
     })
@@ -940,7 +950,9 @@ export struct GroupChatSetting {
           Blank()
 
           Row({ space: 8 }) {
-            Text($r('app.string.chatsetting_default'))
+            Text(this.groupState?.chatBackgroundImageUri
+              ? $r('app.string.chatsetting_custom')
+              : $r('app.string.chatsetting_default'))
               .fontSize(17)
               .fontWeight(400)
               .fontFamily('SF Pro Text')
@@ -958,20 +970,178 @@ export struct GroupChatSetting {
         .height(GroupChatSetting.CELL_HEIGHT)
         .padding({ left: GroupChatSetting.HORIZONTAL_PADDING, right: GroupChatSetting.HORIZONTAL_PADDING })
         .onClick(() => {
-          console.log('Chat Background clicked');
-
+          this.openChatBackgroundPicker();
         })
       }
-      .backgroundColor(this.themeState.colors.bgColorTopBar)
+      .backgroundColor(this.themeState.colors.bgColorOperate)
       .borderRadius(GroupChatSetting.BORDER_RADIUS)
-      .padding({
-        left: GroupChatSetting.HORIZONTAL_PADDING,
-        right: GroupChatSetting.HORIZONTAL_PADDING
-      })
       .margin({
         bottom: GroupChatSetting.SECTION_MARGIN
       })
+
     }
+  }
+
+  private openChatBackgroundPicker(): void {
+    if (!this.groupStore) {
+      return;
+    }
+    this.chatBackgroundDialogController = new CustomDialogController({
+      builder: ChatBackgroundPickerDialog({
+        selectedImageUri: this.groupState?.chatBackgroundImageUri || null,
+        onBackgroundSelected: (imageUri: string | null) => {
+          this.groupStore?.setChatBackground(imageUri);
+          this.groupState = this.groupStore?.state;
+        }
+      }),
+      alignment: DialogAlignment.Bottom,
+      customStyle: true,
+      maskColor: 'rgba(0, 0, 0, 0.6)',
+      autoCancel: true
+    });
+    this.chatBackgroundDialogController.open();
+  }
+
+  @Builder
+  MemberPreviewSectionBuilder() {
+    Column() {
+      Row() {
+        Text($r('app.string.chatsetting_members'))
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorSecondary)
+
+        Blank()
+
+        Text($r('app.string.chatsetting_people_count', `${this.groupState?.memberCount ?? 0} `))
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorPrimary)
+
+        Image($rawfile('search/right_arrow_icon.svg'))
+          .width(16)
+          .height(16)
+          .fillColor(this.themeState.colors.textColorSecondary)
+      }
+      .width('100%')
+      .height(48)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        this.navigateToGroupMemberList();
+      })
+
+      Column({ space: 12 }) {
+        Row() {
+          ForEach(this.getFirstMemberPreviewRow(), (member: GroupMember) => {
+            this.MemberPreviewItemBuilder(member)
+          }, (member: GroupMember) => member.userID)
+
+          if (this.shouldShowAddMemberActionInFirstRow()) {
+            this.MemberActionItemBuilder('+', () => {
+              this.navigateToAddMember();
+            })
+          }
+
+          if (this.shouldShowRemoveMemberActionInFirstRow()) {
+            this.MemberActionItemBuilder('−', () => {
+              this.navigateToGroupMemberList();
+            })
+          }
+
+          ForEach(this.getFirstMemberPreviewPlaceholderIndexes(), (index: number) => {
+            Blank()
+              .layoutWeight(1)
+          }, (index: number) => `${index}`)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+
+        if (this.hasSecondMemberPreviewRow()) {
+          Row() {
+            ForEach(this.getSecondMemberPreviewRow(), (member: GroupMember) => {
+              this.MemberPreviewItemBuilder(member)
+            }, (member: GroupMember) => member.userID)
+
+            if (this.shouldShowAddMemberActionInSecondRow()) {
+              this.MemberActionItemBuilder('+', () => {
+                this.navigateToAddMember();
+              })
+            }
+
+            if (this.shouldShowRemoveMemberActionInSecondRow()) {
+              this.MemberActionItemBuilder('−', () => {
+                this.navigateToGroupMemberList();
+              })
+            }
+
+            ForEach(this.getSecondMemberPreviewPlaceholderIndexes(), (index: number) => {
+              Blank()
+                .layoutWeight(1)
+            }, (index: number) => `${index}`)
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Start)
+        }
+      }
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+    }
+    .width('100%')
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: GroupChatSetting.SECTION_MARGIN })
+  }
+
+  @Builder
+  MemberPreviewItemBuilder(member: GroupMember) {
+    Column({ space: 6 }) {
+      Avatar({
+        content: {
+          type: AvatarContentType.Image,
+          url: member.avatarURL,
+          name: (member.nameCard || member.nickname || member.userID).toString(),
+        },
+        avatarSize: AvatarSize.M,
+      })
+        .width(40)
+        .height(40)
+
+      Text((member.nameCard || member.nickname || member.userID).toString())
+        .fontSize(12)
+        .fontColor(this.themeState.colors.textColorPrimary)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .textAlign(TextAlign.Center)
+    }
+    .width('100%')
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Center)
+    .onClick(() => {
+      if (this.hasPermission(GroupPermission.GET_GROUP_MEMBER_INFO)) {
+        this.showMemberOptions(member);
+      }
+    })
+  }
+
+  @Builder
+  MemberActionItemBuilder(symbol: string, action: () => void) {
+    Column({ space: 6 }) {
+      Row() {
+        Text(symbol)
+          .fontSize(22)
+          .fontColor(this.themeState.colors.textColorSecondary)
+          .fontWeight(FontWeight.Normal)
+      }
+      .width(40)
+      .height(40)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center)
+      .backgroundColor(this.themeState.colors.bgColorInput)
+      .borderRadius(8)
+
+      Row().height(16)
+    }
+    .width('100%')
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Center)
+    .onClick(action)
   }
 
   @Builder
@@ -1023,7 +1193,7 @@ export struct GroupChatSetting {
         }
       })
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
     .borderRadius(GroupChatSetting.BORDER_RADIUS)
     .padding({
       left: GroupChatSetting.HORIZONTAL_PADDING,
@@ -1158,6 +1328,19 @@ export struct GroupChatSetting {
   @Builder
   ActionButtonsSectionBuilder() {
     Column({ space: 0 }) {
+      if (this.hasPermission(GroupPermission.TRANSFER_OWNER)) {
+        this.ActionButtonBuilder($r('app.string.chatsetting_transfer_ownership'),
+          this.themeState.colors.textColorLink, () => {
+            this.navigateToTransferOwnership();
+          })
+
+        if (this.hasPermission(GroupPermission.CLEAR_HISTORY_MESSAGES) ||
+          this.hasPermission(GroupPermission.DELETE_AND_QUIT) ||
+          this.hasPermission(GroupPermission.DISMISS_GROUP) ||
+          this.hasPermission(GroupPermission.REPORT_GROUP)) {
+          this.DividerBuilder()
+        }
+      }
 
       if (this.hasPermission(GroupPermission.CLEAR_HISTORY_MESSAGES)) {
         this.ActionButtonBuilder($r('app.string.chatsetting_clear_chat_history'),
@@ -1165,41 +1348,12 @@ export struct GroupChatSetting {
             this.showClearHistoryConfirmDialog();
           })
 
-        if (this.hasPermission(GroupPermission.TRANSFER_OWNER) ||
-        this.hasPermission(GroupPermission.DISMISS_GROUP) ||
-        this.hasPermission(GroupPermission.DELETE_AND_QUIT) ||
-        this.hasPermission(GroupPermission.REPORT_GROUP)) {
-          this.DividerBuilder()
-        }
-      }
-
-
-      if (this.hasPermission(GroupPermission.TRANSFER_OWNER)) {
-        this.ActionButtonBuilder($r('app.string.chatsetting_transfer_ownership'),
-          this.themeState.colors.textColorWarning, () => {
-            this.navigateToTransferOwnership();
-          })
-
-        if (this.hasPermission(GroupPermission.DISMISS_GROUP) ||
-        this.hasPermission(GroupPermission.DELETE_AND_QUIT) ||
-        this.hasPermission(GroupPermission.REPORT_GROUP)) {
-          this.DividerBuilder()
-        }
-      }
-
-
-      if (this.hasPermission(GroupPermission.DISMISS_GROUP)) {
-        this.ActionButtonBuilder($r('app.string.chatsetting_dismiss_group'),
-          this.themeState.colors.textColorError, () => {
-            this.showDismissGroupConfirmDialog();
-          })
-
         if (this.hasPermission(GroupPermission.DELETE_AND_QUIT) ||
-        this.hasPermission(GroupPermission.REPORT_GROUP)) {
+          this.hasPermission(GroupPermission.DISMISS_GROUP) ||
+          this.hasPermission(GroupPermission.REPORT_GROUP)) {
           this.DividerBuilder()
         }
       }
-
 
       if (this.hasPermission(GroupPermission.DELETE_AND_QUIT)) {
         this.ActionButtonBuilder($r('app.string.chatsetting_leave_group'),
@@ -1207,20 +1361,31 @@ export struct GroupChatSetting {
             this.showLeaveGroupConfirmDialog();
           })
 
+        if (this.hasPermission(GroupPermission.DISMISS_GROUP) ||
+          this.hasPermission(GroupPermission.REPORT_GROUP)) {
+          this.DividerBuilder()
+        }
+      }
+
+      if (this.hasPermission(GroupPermission.DISMISS_GROUP)) {
+        this.ActionButtonBuilder($r('app.string.chatsetting_dismiss_group'),
+          this.themeState.colors.textColorError, () => {
+            this.showDismissGroupConfirmDialog();
+          })
+
         if (this.hasPermission(GroupPermission.REPORT_GROUP)) {
           this.DividerBuilder()
         }
       }
 
-
       if (this.hasPermission(GroupPermission.REPORT_GROUP)) {
         this.ActionButtonBuilder($r('app.string.chatsetting_report_group'),
-          this.themeState.colors.textColorWarning, () => {
+          this.themeState.colors.textColorError, () => {
             Toast.info($r('app.string.chatsetting_report_group_toast'), this.getUIContext());
           })
       }
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
     .borderRadius(GroupChatSetting.BORDER_RADIUS)
     .padding({
       left: GroupChatSetting.HORIZONTAL_PADDING,
@@ -1415,36 +1580,82 @@ export struct GroupChatSetting {
     return name.charAt(0).toUpperCase();
   }
 
+  private shouldShowAddMemberAction(): boolean {
+    return this.hasPermission(GroupPermission.ADD_GROUP_MEMBER) &&
+      this.groupState?.inviteToGroupApprovalType !== GroupJoinOption.FORBID;
+  }
+
+  private shouldShowRemoveMemberAction(): boolean {
+    return this.hasPermission(GroupPermission.REMOVE_GROUP_MEMBER);
+  }
+
+  private getMemberPreviewCapacity(): number {
+    const actionCount = (this.shouldShowAddMemberAction() ? 1 : 0) +
+      (this.shouldShowRemoveMemberAction() ? 1 : 0);
+    return GroupChatSetting.MEMBER_PREVIEW_COLUMNS * GroupChatSetting.MEMBER_PREVIEW_MAX_ROWS - actionCount;
+  }
+
+  private getFirstMemberPreviewRow(): GroupMember[] {
+    return this.getDisplayMembers().slice(0, GroupChatSetting.MEMBER_PREVIEW_COLUMNS);
+  }
+
+  private getSecondMemberPreviewRow(): GroupMember[] {
+    return this.getDisplayMembers().slice(GroupChatSetting.MEMBER_PREVIEW_COLUMNS);
+  }
+
+  private shouldShowAddMemberActionInFirstRow(): boolean {
+    return this.shouldShowAddMemberAction() &&
+      this.getFirstMemberPreviewRow().length < GroupChatSetting.MEMBER_PREVIEW_COLUMNS;
+  }
+
+  private shouldShowRemoveMemberActionInFirstRow(): boolean {
+    const occupiedSlots = this.getFirstMemberPreviewRow().length +
+      (this.shouldShowAddMemberActionInFirstRow() ? 1 : 0);
+    return this.shouldShowRemoveMemberAction() && occupiedSlots < GroupChatSetting.MEMBER_PREVIEW_COLUMNS;
+  }
+
+  private shouldShowAddMemberActionInSecondRow(): boolean {
+    return this.shouldShowAddMemberAction() && !this.shouldShowAddMemberActionInFirstRow();
+  }
+
+  private shouldShowRemoveMemberActionInSecondRow(): boolean {
+    return this.shouldShowRemoveMemberAction() && !this.shouldShowRemoveMemberActionInFirstRow();
+  }
+
+  private hasSecondMemberPreviewRow(): boolean {
+    return this.getSecondMemberPreviewRow().length > 0 ||
+      this.shouldShowAddMemberActionInSecondRow() ||
+      this.shouldShowRemoveMemberActionInSecondRow();
+  }
+
+  private getFirstMemberPreviewPlaceholderIndexes(): number[] {
+    const occupiedSlots = this.getFirstMemberPreviewRow().length +
+      (this.shouldShowAddMemberActionInFirstRow() ? 1 : 0) +
+      (this.shouldShowRemoveMemberActionInFirstRow() ? 1 : 0);
+    return this.getMemberPreviewPlaceholderIndexes(occupiedSlots);
+  }
+
+  private getSecondMemberPreviewPlaceholderIndexes(): number[] {
+    const occupiedSlots = this.getSecondMemberPreviewRow().length +
+      (this.shouldShowAddMemberActionInSecondRow() ? 1 : 0) +
+      (this.shouldShowRemoveMemberActionInSecondRow() ? 1 : 0);
+    return this.getMemberPreviewPlaceholderIndexes(occupiedSlots);
+  }
+
+  private getMemberPreviewPlaceholderIndexes(occupiedSlots: number): number[] {
+    return Array.from<undefined, number>(
+      { length: GroupChatSetting.MEMBER_PREVIEW_COLUMNS - occupiedSlots },
+      (_: undefined, index: number): number => index
+    );
+  }
+
   private getDisplayMembers(): GroupMember[] {
     const allMembers: GroupMember[] = this.groupState?.allMembers ?? [];
     const currentUserID = LoginStore.shared().state.loginUserInfo?.userID;
-
-    if (allMembers.length === 0) {
-      return [];
-    }
-
-
     const currentUser = allMembers.find((member: GroupMember) => member.userID === currentUserID);
-
-
-    const otherMembers: GroupMember[] = allMembers.filter((member: GroupMember) => member.userID !== currentUserID);
-
-
-    const displayMembers: GroupMember[] = [];
-
-
-    if (currentUser) {
-      displayMembers.push(currentUser);
-    }
-
-
-    const maxOtherMembers = 2;
-    const otherMembersToShow: GroupMember[] = otherMembers.slice(0, maxOtherMembers);
-    for (let i = 0; i < otherMembersToShow.length; i++) {
-      displayMembers.push(otherMembersToShow[i]);
-    }
-
-    return displayMembers;
+    const otherMembers = allMembers.filter((member: GroupMember) => member.userID !== currentUserID);
+    const orderedMembers = currentUser ? [currentUser, ...otherMembers] : otherMembers;
+    return orderedMembers.slice(0, this.getMemberPreviewCapacity());
   }
 
   private getCurrentUserNickname(): string {
@@ -1460,12 +1671,11 @@ export struct GroupChatSetting {
 
     const currentUser = allMembers.find((member: GroupMember) => member.userID === currentUserID);
 
-    if (currentUser) {
-
-      return currentUser.nameCard || currentUser.nickname || currentUser.userID || 'Not set';
+    if (currentUser?.nameCard && currentUser.nameCard.length > 0) {
+      return currentUser.nameCard;
     }
 
-    return 'Not set';
+    return getContext(this).resourceManager.getStringSync($r('app.string.chatsetting_not_set').id);
   }
 
   private getGroupTypeDisplayName(): Resource {
@@ -1611,37 +1821,30 @@ export struct GroupChatSetting {
   }
 
   private openGroupNicknameEditDialog(): void {
+    if (!this.hasPermission(GroupPermission.SET_GROUP_REMARK)) {
+      return;
+    }
     this.groupNicknameEditDialogController = new CustomDialogController({
-      builder: GroupNameEditDialog({
+      builder: GroupTextInputDialog({
         title: $r('app.string.chatsetting_edit_my_group_nickname'),
-        currentName: this.getCurrentUserNickname(),
+        initialText: this.groupState?.selfNameCard ?? '',
         placeholder: $r('app.string.chatsetting_input_group_nickname_placeholder'),
-        helpText: $r('app.string.chatsetting_group_nickname_help_text'),
-        maxLength: 20,
-        onSave: (newNickname: string) => {
-          if (newNickname && newNickname.trim().length > 0) {
-            this.groupStore?.setSelfGroupNameCard(newNickname.trim())
-              .then(() => {
-                Toast.success($r('app.string.chatsetting_group_nickname_update_success'), this.getUIContext());
-
-                this.groupStore?.fetchSelfMemberInfo();
-              })
-              .catch((error: Error) => {
-                console.error('[GroupSettingPage] Failed to update group nickname:', error);
-                Toast.error($r('app.string.chatsetting_group_nickname_update_fail'), this.getUIContext());
-              });
-          }
-        },
-        onCancel: () => {
-          // Dialog will close automatically
+        onConfirm: (newNickname: string): void => {
+          this.groupStore?.setSelfGroupNameCard(newNickname)
+            .then(() => {
+              Toast.success($r('app.string.chatsetting_group_nickname_update_success'), this.getUIContext());
+            })
+            .catch((error: Error) => {
+              console.error('[GroupSettingPage] Failed to update group nickname:', error);
+              Toast.error($r('app.string.chatsetting_group_nickname_update_fail'), this.getUIContext());
+            });
         }
       }),
-      alignment: DialogAlignment.Bottom,
+      alignment: DialogAlignment.Center,
       customStyle: true,
       maskColor: 'rgba(0, 0, 0, 0.6)',
       autoCancel: true
     });
-
     this.groupNicknameEditDialogController.open();
   }
 
@@ -1911,24 +2114,21 @@ export struct GroupChatSetting {
   }
 
   private showDismissGroupConfirmDialog(): void {
-    const groupName = this.groupState?.groupName || '';
-
     AlertDialog.show(
-      $r('app.string.chatsetting_dismiss_group_title'),
-      $r('app.string.chatsetting_dismiss_group_confirm_format', groupName),
+      undefined,
+      $r('app.string.chatsetting_dismiss_group_confirm'),
       $r('app.string.chatsetting_cancel_dismiss'),
       $r('app.string.chatsetting_confirm_dismiss'),
-      undefined, // onDismiss
+      undefined,
       () => {
-
         console.log('[GroupSettingPage] User cancelled dismiss group');
       },
       () => {
-
         console.log('[GroupSettingPage] User confirmed dismiss group');
         this.performDismissGroup();
       },
-      this.getUIContext()
+      this.getUIContext(),
+      true
     );
   }
 
@@ -1970,11 +2170,9 @@ export struct GroupChatSetting {
   }
 
   private showClearHistoryConfirmDialog(): void {
-    const groupName = this.groupState?.groupName || '';
-
     AlertDialog.show(
-      $r('app.string.chatsetting_clear_chat_history_title'),
-      $r('app.string.chatsetting_clear_chat_history_confirm_format', groupName),
+      undefined,
+      $r('app.string.chatsetting_clear_group_history_confirm'),
       $r('app.string.chatsetting_cancel_clear'),
       $r('app.string.chatsetting_confirm_clear'),
       undefined, // onDismiss
@@ -2105,11 +2303,10 @@ export struct GroupChatSetting {
             this.handleAvatarSelected(selectedUrl);
           }
         }),
-        alignment: DialogAlignment.Default,
+        alignment: DialogAlignment.Bottom,
         customStyle: true,
+        maskColor: 'rgba(0, 0, 0, 0.6)',
         autoCancel: true,
-        levelMode: LevelMode.EMBEDDED,
-        immersiveMode: ImmersiveMode.EXTEND,
         cancel: () => {
           this.avatarPickerDialogController = undefined;
         }
@@ -2122,40 +2319,39 @@ export struct GroupChatSetting {
   }
 
   private showGroupAnnouncementDialog(): void {
-    try {
-      if (this.groupAnnouncementDialogController) {
-        this.groupAnnouncementDialogController.close();
+    if (!this.hasPermission(GroupPermission.SET_GROUP_NOTICE)) {
+      return;
+    }
+    this.groupAnnouncementDialogController = new CustomDialogController({
+      builder: GroupTextInputDialog({
+        title: $r('app.string.chatsetting_group_announcement'),
+        initialText: this.groupState?.notice ?? '',
+        placeholder: $r('app.string.chatsetting_input_announcement_placeholder'),
+        multiline: true,
+        maxLength: 300,
+        onConfirm: (announcement: string): void => {
+          if (announcement === (this.groupState?.notice ?? '')) {
+            return;
+          }
+          this.groupStore?.updateGroupProfile(undefined, announcement)
+            .then(() => {
+              Toast.success($r('app.string.chatsetting_group_announcement_save_success'), this.getUIContext());
+            })
+            .catch((error: Error) => {
+              console.error('[GroupSettingPage] Failed to update group announcement:', error);
+              Toast.error($r('app.string.chatsetting_group_announcement_save_fail'), this.getUIContext());
+            });
+        }
+      }),
+      alignment: DialogAlignment.Center,
+      customStyle: true,
+      maskColor: 'rgba(0, 0, 0, 0.6)',
+      autoCancel: true,
+      cancel: () => {
         this.groupAnnouncementDialogController = undefined;
       }
-
-      if (!this.groupStore?.groupID) {
-
-        return;
-      }
-
-      this.groupAnnouncementDialogController = new CustomDialogController({
-        builder: GroupAnnouncementDialog({
-          groupID: this.groupStore?.groupID,
-          onSave: (announcement: string) => {
-            console.log('[GroupSettingPage] GroupAnnouncement saved:', announcement);
-            this.groupStore?.fetchGroupInfo();
-          }
-        }),
-        alignment: DialogAlignment.Default,
-        customStyle: true,
-        autoCancel: true,
-        keyboardAvoidMode: KeyboardAvoidMode.NONE,
-        levelMode: LevelMode.EMBEDDED,
-        immersiveMode: ImmersiveMode.EXTEND,
-        cancel: () => {
-          this.groupAnnouncementDialogController = undefined;
-        }
-      });
-
-      this.groupAnnouncementDialogController.open();
-    } catch (error) {
-
-    }
+    });
+    this.groupAnnouncementDialogController.open();
   }
 
   private showGroupMemberListDialog(): void {
@@ -2173,7 +2369,7 @@ export struct GroupChatSetting {
       this.groupMemberListDialogController = new CustomDialogController({
         builder: GroupMemberListDialog({
           groupID: this.groupStore?.groupID || '',
-          groupName: this.groupState?.groupName || 'Info',
+          groupName: getContext(this).resourceManager.getStringSync($r('app.string.chatsetting_group_members_title').id),
           onMemberSelect: (member: GroupMember) => {
             console.log('[GroupSettingPage] Select member:', member.userID);
           },
@@ -2182,6 +2378,7 @@ export struct GroupChatSetting {
         alignment: DialogAlignment.Default,
         customStyle: true,
         autoCancel: true,
+        keyboardAvoidMode: KeyboardAvoidMode.NONE,
         levelMode: LevelMode.EMBEDDED,
         immersiveMode: ImmersiveMode.EXTEND,
         cancel: () => {

@@ -23,8 +23,7 @@ export struct ContactList {
   @State private groupState: GroupState = this.groupStore.state as GroupState;
   // State management
   @State isLoading: boolean = false;
-  @State showSearchResults: boolean = false;
-  @State searchResults: ContactInfo[] = [];
+  @Prop searchKeyword: string = '';
   @State currentSelectedLetter: string = '';
   onContactClick?: (item: ContactInfo) => void;
   onGroupClick?: (item: ContactInfo) => void;
@@ -50,115 +49,87 @@ export struct ContactList {
 
 
   @Builder
+  ManagementItemBuilder(iconRes: string, title: Resource, badgeCount: number, onTap: () => void, showDivider: boolean) {
+    Column() {
+      Row() {
+        Image($rawfile(iconRes))
+          .width(40)
+          .height(40)
+          .margin({ right: 12 })
+
+        Text(title)
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .fontFamily('PingFang SC')
+          .layoutWeight(1)
+
+        if (badgeCount > 0) {
+          BadgeControl({
+            text: badgeCount.toString(),
+            type: BadgeType.Text
+          })
+        }
+      }
+      .width('100%')
+      .height(64)
+      .padding({ left: 16, right: 16 })
+      .onClick(onTap)
+
+      if (showDivider) {
+        Divider()
+          .color(this.themeState.colors.strokeColorSecondary)
+          .strokeWidth(0.5)
+          .margin({ left: 68, right: 16 })
+      }
+    }
+  }
+
+  @Builder
   ManagementSectionBuilder() {
     Column() {
+      this.ManagementItemBuilder(
+        'contactlist/ic_new_contacts.svg',
+        $r('app.string.new_contacts'),
+        this.contactState.friendApplicationUnreadCount,
+        () => {
+          console.info('Navigate to new contacts page');
+          this.showFriendApplicationDialogInternal();
+        },
+        true
+      )
 
-      Row() {
-        Text($r('app.string.new_contacts'))
-          .fontSize(16)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .fontFamily('PingFang SC')
-          .layoutWeight(1)
+      this.ManagementItemBuilder(
+        'contactlist/ic_group_notification.svg',
+        $r('app.string.new_group_requests'),
+        this.groupState.unreadApplicationCount,
+        () => {
+          console.info('Navigate to new group requests page');
+          this.showGroupApplicationDialogInternal();
+        },
+        true
+      )
 
-        Row() {
-          if (this.contactState.friendApplicationUnreadCount > 0) {
-            BadgeControl({
-              text: this.contactState.friendApplicationUnreadCount.toString(),
-              type: BadgeType.Text
-            })
-              .margin({ right: 8 })
-          }
+      this.ManagementItemBuilder(
+        'contactlist/ic_my_group.svg',
+        $r('app.string.my_group'),
+        0,
+        () => {
+          console.info('Navigate to my groups');
+          this.showGroupListDialogInternal();
+        },
+        true
+      )
 
-          Image($rawfile('contactlist/contact_arrow.svg'))
-            .width(12)
-            .height(12)
-            .fillColor(this.themeState.colors.textColorPrimary)
-        }
-      }
-      .width('100%')
-      .height(52)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(this.themeState.colors.bgColorInput)
-      .onClick(() => {
-        console.info('Navigate to new contacts page');
-        this.showFriendApplicationDialogInternal();
-      })
-
-
-      Row() {
-        Text($r('app.string.new_group_requests'))
-          .fontSize(16)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .fontFamily('PingFang SC')
-          .layoutWeight(1)
-
-        Row() {
-          if (this.groupState.unreadApplicationCount > 0) {
-            BadgeControl({
-              text: this.groupState.unreadApplicationCount.toString(),
-              type: BadgeType.Text
-            })
-              .margin({ right: 8 })
-          }
-
-          Image($rawfile('contactlist/contact_arrow.svg'))
-            .width(12)
-            .height(12)
-            .fillColor(this.themeState.colors.textColorPrimary)
-        }
-      }
-      .width('100%')
-      .height(52)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(this.themeState.colors.bgColorInput)
-      .onClick(() => {
-        console.info('Navigate to new group requests page');
-        this.showGroupApplicationDialogInternal();
-      })
-
-
-      Row() {
-        Text($r('app.string.my_group'))
-          .fontSize(16)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .fontFamily('PingFang SC')
-          .layoutWeight(1)
-
-        Image($rawfile('contactlist/contact_arrow.svg'))
-          .width(12)
-          .height(12)
-          .fillColor(this.themeState.colors.textColorPrimary)
-      }
-      .width('100%')
-      .height(52)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(this.themeState.colors.bgColorInput)
-      .onClick(() => {
-        console.info('Navigate to my groups');
-        this.showGroupListDialogInternal();
-      })
-
-
-      Row() {
-        Text($r('app.string.the_blacklist'))
-          .fontSize(16)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .fontFamily('PingFang SC')
-          .layoutWeight(1)
-
-        Image($rawfile('contactlist/contact_arrow.svg'))
-          .width(12)
-          .height(12)
-          .fillColor(this.themeState.colors.textColorPrimary)
-      }
-      .width('100%')
-      .height(52)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(this.themeState.colors.bgColorInput)
-      .onClick(() => {
-        console.info('Navigate to blacklist management');
-        this.showBlackListDialogInternal();
-      })
+      this.ManagementItemBuilder(
+        'contactlist/ic_blacklist.svg',
+        $r('app.string.the_blacklist'),
+        0,
+        () => {
+          console.info('Navigate to blacklist management');
+          this.showBlackListDialogInternal();
+        },
+        false
+      )
     }
     .margin({ left: 0, right: 0 })
   }
@@ -167,7 +138,7 @@ export struct ContactList {
   @Builder
   ContactListBuilder() {
     Column() {
-      if (this.showSearchResults) {
+      if (this.searchKeyword.trim().length > 0) {
         this.SearchResultsBuilder()
       } else {
         this.GroupedContactListBuilder()
@@ -201,35 +172,15 @@ export struct ContactList {
 
   @Builder
   SearchResultsBuilder() {
-    if (this.searchResults.length > 0) {
-      AZOrderedList({
-        dataSource: this.convertSearchResultsToAZOrderedListItems(),
-        config: { showIndexBar: false },
-        header: this.getHeaderBuilder(),
-        onItemClick: (item: AZOrderedListItem<ContactInfo>) => {
-          if (this.onContactClick) {
-            this.onContactClick(item.extraData);
-          }
+    AZOrderedList({
+      dataSource: this.convertSearchResultsToAZOrderedListItems(),
+      config: { showIndexBar: false },
+      onItemClick: (item: AZOrderedListItem<ContactInfo>) => {
+        if (this.onContactClick) {
+          this.onContactClick(item.extraData);
         }
-      })
-    } else {
-      Column() {
-        this.ManagementSectionBuilder()
-        
-        Column() {
-          Text($r('app.string.no_results_found'))
-            .fontSize(16)
-            .fontColor(this.themeState.colors.textColorSecondary)
-            .margin({ top: 50 })
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
       }
-      .width('100%')
-      .height('100%')
-      .backgroundColor(this.themeState.colors.bgColorOperate)
-    }
+    })
   }
 
   @Builder
@@ -339,14 +290,24 @@ export struct ContactList {
     return items;
   }
 
-  // Convert search results to AZOrderedListItem
   private convertSearchResultsToAZOrderedListItems(): AZOrderedListItem<ContactInfo>[] {
-    return this.searchResults.map((contact: ContactInfo): AZOrderedListItem<ContactInfo> => ({
-      key: contact.userID,
-      label: this.getContactDisplayName(contact),
-      avatarUrl: contact.avatarURL,
-      extraData: contact
-    }));
+    const keyword = this.searchKeyword.trim().toLowerCase();
+    return this.contactState.friendList
+      .filter((contact: ContactInfo) => this.matchesSearchKeyword(contact, keyword))
+      .map((contact: ContactInfo): AZOrderedListItem<ContactInfo> => ({
+        key: contact.userID,
+        label: this.getContactDisplayName(contact),
+        avatarUrl: contact.avatarURL,
+        extraData: contact
+      }));
+  }
+
+  private matchesSearchKeyword(contact: ContactInfo, keyword: string): boolean {
+    if (!keyword) {
+      return true;
+    }
+    return [contact.friendRemark, contact.nickname, contact.userID]
+      .some((value?: string) => value?.toLowerCase().includes(keyword) ?? false);
   }
 
   // Dialog builders for sub-pages

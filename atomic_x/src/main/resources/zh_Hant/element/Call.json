@@ -1,0 +1,152 @@
+{
+  "string": [
+    {
+      "name": "call_connected",
+      "value": "已接通"
+    },
+    {
+      "name": "call_waiting_for_acceptance",
+      "value": "等待對方接受邀請"
+    },
+    {
+      "name": "call_invited_to_audio",
+      "value": "邀請你進行語音通話"
+    },
+    {
+      "name": "call_invited_to_video",
+      "value": "邀請你進行影片通話"
+    },
+    {
+      "name": "call_invited_to_group",
+      "value": "邀請你進行多人通話"
+    },
+    {
+      "name": "call_hangup",
+      "value": "挂斷"
+    },
+    {
+      "name": "call_accept",
+      "value": "接聽"
+    },
+    {
+      "name": "call_switch_camera",
+      "value": "翻轉"
+    },
+    {
+      "name": "call_mic_on",
+      "value": "麥克風已開啟"
+    },
+    {
+      "name": "call_mic_off",
+      "value": "麥克風已關閉"
+    },
+    {
+      "name": "call_speaker_on",
+      "value": "揚聲器已開啟"
+    },
+    {
+      "name": "call_speaker_off",
+      "value": "揚聲器已關閉"
+    },
+    {
+      "name": "call_camera_on",
+      "value": "攝影機已開啟"
+    },
+    {
+      "name": "call_camera_off",
+      "value": "攝影機已關閉"
+    },
+    {
+      "name": "call_self_network_low",
+      "value": "當前通話你的網路不佳"
+    },
+    {
+      "name": "call_other_network_low",
+      "value": "當前通話對方網路不佳"
+    },
+    {
+      "name": "call_they_are_also_there",
+      "value": "他们也在"
+    },
+    {
+      "name": "call_reject_caller",
+      "value": "對方已拒絕"
+    },
+    {
+      "name": "call_reject_callee",
+      "value": "已拒絕"
+    },
+    {
+      "name": "call_cancel_caller",
+      "value": "已取消"
+    },
+    {
+      "name": "call_cancel_callee",
+      "value": "對方已取消"
+    },
+    {
+      "name": "call_timeout_caller",
+      "value": "對方無應答"
+    },
+    {
+      "name": "call_timeout_callee",
+      "value": "超時無應答"
+    },
+    {
+      "name": "call_line_busy_caller",
+      "value": "對方忙線中"
+    },
+    {
+      "name": "call_line_busy_callee",
+      "value": "忙線未接聽"
+    },
+    {
+      "name": "call_start",
+      "value": "發起通話"
+    },
+    {
+      "name": "call_accept_call",
+      "value": "已接聽"
+    },
+    {
+      "name": "call_stop_tip",
+      "value": "通話時長"
+    },
+    {
+      "name": "call_switch_to_audio",
+      "value": "切換為語音通話"
+    },
+    {
+      "name": "call_switch_to_audio_accept",
+      "value": "確定影片轉語音"
+    },
+    {
+      "name": "call_group_send",
+      "value": "發起了群通話"
+    },
+    {
+      "name": "call_group_end",
+      "value": "通話結束"
+    },
+    {
+      "name": "call_group_no_answer",
+      "value": "未接聽"
+    },
+    {
+      "name": "call_group_reject",
+      "value": "拒絕了群通話"
+    },
+    {
+      "name": "call_group_accept",
+      "value": "已接聽"
+    },
+    {
+      "name": "call_group_confirm_switch_to_audio",
+      "value": "同意影片轉語音"
+    },
+    {
+      "name": "call_unknown",
+      "value": "未知通話"
+    }
+  ]
+}

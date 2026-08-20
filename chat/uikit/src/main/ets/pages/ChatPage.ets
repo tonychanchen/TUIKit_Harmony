@@ -1,5 +1,5 @@
-import { MessageInfo } from '@tencentcloud/atomicxcore';
-import { Avatar, AvatarContentType, AvatarSize, LanguageState, NotifyParams, ThemeState, TUIEventBus, TUIObserver } from '@tencentcloud/atomicx/src/main/ets/basecomponent/Index';
+import { MessageInfo, ConversationListStore } from '@tencentcloud/atomicxcore';
+import { LanguageState, NotifyParams, ThemeState, TUIEventBus, TUIObserver } from '@tencentcloud/atomicx/src/main/ets/basecomponent/Index';
 import { MessageList, MultiSelectBottomBar, MultiSelectActions } from '@tencentcloud/atomicx/src/main/ets/messagelist/Index';
 import { MessageInput } from '@tencentcloud/atomicx/src/main/ets/messageinput/Index';
 
@@ -20,6 +20,7 @@ export struct ChatDialog {
   onBack?: () => void;
   onUserClick?: (userID: string) => void;
   onChatHeaderClick?: (conversationID: string) => void;
+  onSecurityReportClick?: () => void;
 
   build() {
     ChatPage({
@@ -44,6 +45,11 @@ export struct ChatDialog {
           this.onChatHeaderClick(conversationID);
         }
       },
+      onSecurityReportClick: () => {
+        if (this.onSecurityReportClick) {
+          this.onSecurityReportClick();
+        }
+      },
       dialogController: this.controller
     })
   }
@@ -62,16 +68,21 @@ export struct ChatPage {
   @State locateMessage?: MessageInfo = undefined;
   @State isMultiSelectMode: boolean = false;
   @State selectedCount: number = 0;
+  @State unreadCount: number = 0;
+  @State showSecurityBar: boolean = true;
   private multiSelectActions?: MultiSelectActions = undefined;
 
   onBack?: () => void;
   onUserClick?: (userID: string) => void;
   onChatHeaderClick?: (conversationID: string) => void;
+  onSecurityReportClick?: () => void;
   dialogController?: CustomDialogController;
   private chatProfileObserver?: TUIObserver;
+  private unreadTimer?: number;
   aboutToAppear(): void {
     this.chatProfileObserver = new ChatProfileUpdatedObserver(this);
     TUIEventBus.getInstance().subscribe('chat.conversation.profileUpdated', null, this.chatProfileObserver);
+    this.startUnreadObserver();
     console.info(`[ChatPage] subscribe profileUpdated. conversationID=${this.conversationID}`);
   }
 
@@ -81,6 +92,38 @@ export struct ChatPage {
       this.chatProfileObserver = undefined;
       console.info(`[ChatPage] unsubscribe profileUpdated. conversationID=${this.conversationID}`);
     }
+    if (this.unreadTimer !== undefined) {
+      clearInterval(this.unreadTimer);
+      this.unreadTimer = undefined;
+    }
+  }
+
+  private startUnreadObserver(): void {
+    try {
+      const store: ConversationListStore = ConversationListStore.create();
+      const refresh: () => void = () => {
+        try {
+          const total: number = store.state.totalUnreadCount;
+          this.unreadCount = total;
+        } catch (_e) {
+          this.unreadCount = 0;
+        }
+      };
+      refresh();
+      this.unreadTimer = setInterval(refresh, 1500);
+    } catch (e) {
+      console.warn(`[ChatPage] startUnreadObserver failed: ${e}`);
+    }
+  }
+
+  private formatUnread(count: number): string {
+    if (count <= 0) {
+      return '';
+    }
+    if (count > 99) {
+      return '99+';
+    }
+    return `${count}`;
   }
 
   applyProfileUpdate(conversationID: string, title?: string, avatarURL?: string): void {
@@ -97,145 +140,193 @@ export struct ChatPage {
     }
   }
 
+  onBackPress(): boolean {
+    if (this.isMultiSelectMode) {
+      this.multiSelectActions?.cancel();
+      return true;
+    }
+    return false;
+  }
+
   build() {
-    Stack() {
-      Column() {
-        this.LargeTitleBuilder();
-        MessageList({
-          conversationID: this.conversationID,
-          locateMessage: this.locateMessage,
-          onUserClick: (userID: string) => {
-            if (this.onUserClick) {
-              this.onUserClick(userID);
-            }
+    Column() {
+      this.LargeTitleBuilder();
+      if (this.showSecurityBar) {
+        this.SecurityWarningBuilder();
+      }
+      MessageList({
+        conversationID: this.conversationID,
+        locateMessage: this.locateMessage,
+        onUserClick: (userID: string) => {
+          if (this.onUserClick) {
+            this.onUserClick(userID);
+          }
+        },
+        onMultiSelectModeChange: (isMultiSelectMode: boolean, selectedCount: number, actions?: MultiSelectActions) => {
+          this.isMultiSelectMode = isMultiSelectMode;
+          this.selectedCount = selectedCount;
+          this.multiSelectActions = actions;
+        }
+      })
+        .width('100%')
+        .layoutWeight(1)
+
+      if (this.isMultiSelectMode) {
+        MultiSelectBottomBar({
+          selectedCount: this.selectedCount,
+          onDelete: () => {
+            this.multiSelectActions?.deleteMessages();
           },
-          onMultiSelectModeChange: (isMultiSelectMode: boolean, selectedCount: number, actions?: MultiSelectActions) => {
-            this.isMultiSelectMode = isMultiSelectMode;
-            this.selectedCount = selectedCount;
-            this.multiSelectActions = actions;
+          onSeparateForward: () => {
+            this.multiSelectActions?.forwardSeparately();
+          },
+          onMergedForward: () => {
+            this.multiSelectActions?.forwardMerged();
           }
         })
-          .width('100%')
-          .layoutWeight(1)
-
-        if (this.isMultiSelectMode) {
-          MultiSelectBottomBar({
-            selectedCount: this.selectedCount,
-            onCancel: () => {
-              if (this.multiSelectActions) {
-                this.multiSelectActions.cancel();
-              }
-            },
-            onDelete: () => {
-              if (this.multiSelectActions) {
-                this.multiSelectActions.deleteMessages();
-              }
-            },
-            onForward: () => {
-              if (this.multiSelectActions) {
-                this.multiSelectActions.forward();
-              }
-            }
-          })
-        } else {
-          MessageInput({
-            conversationID: this.conversationID,
-          })
-        }
+      } else {
+        MessageInput({
+          conversationID: this.conversationID,
+        })
       }
-      .width('100%')
-      .height('100%')
-      .backgroundColor(this.themeState.colors.bgColorOperate)
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
   }
 
   @Builder
   LargeTitleBuilder() {
     Column() {
       Row() {
-        Row({ space: 8 }) {
-          Row() {
-            Image($rawfile("basecomponent/common_back_icon.svg"))
-              .scale({
-                x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
-                y: 1
+        Row() {
+          if (this.isMultiSelectMode) {
+            Text($r('app.string.cancel'))
+              .fontSize(16)
+              .fontColor(this.themeState.colors.textColorPrimary)
+              .onClick(() => {
+                this.multiSelectActions?.cancel();
               })
-              .width(16)
-              .height(16)
-              .fillColor(this.themeState.colors.buttonColorPrimaryDefault)
-          }
-          .width(44)
-          .height(44)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-          .onClick(() => {
-            if (this.onBack) {
-              this.onBack();
+          } else {
+            Row() {
+              Image($rawfile("basecomponent/common_back_icon.svg"))
+                .scale({
+                  x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
+                  y: 1
+                })
+                .width(16)
+                .height(16)
+                .fillColor(this.themeState.colors.textColorSecondary)
             }
-          })
-
-          Row({ space: 8 }) {
-            Avatar({
-              content: {
-                type: AvatarContentType.Image,
-                url: this.avatarUrl,
-                name: this.title || '',
-              },
-              avatarSize: AvatarSize.S,
+            .height(48)
+            .justifyContent(FlexAlign.Center)
+            .alignItems(VerticalAlign.Center)
+            .padding({ left: 4, right: 4 })
+            .onClick(() => {
+              this.onBack?.();
             })
 
-            Column() {
-              Text(this.title)
-                .fontSize(14)
-                .fontColor(this.themeState.colors.textColorPrimary)
-                .fontWeight(FontWeight.Bold)
-                .textAlign(TextAlign.Start)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-              Text(this.status)
-                .fontSize(12)
-                .fontColor(this.themeState.colors.textColorTertiary)
-                .fontWeight(FontWeight.Regular)
-                .textAlign(TextAlign.Start)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            if (this.unreadCount > 0) {
+              Row() {
+                Text(this.formatUnread(this.unreadCount))
+                  .fontSize(12)
+                  .fontColor(this.themeState.colors.textColorButton)
+                  .textAlign(TextAlign.Center)
+              }
+              .width(22)
+              .height(22)
+              .borderRadius(11)
+              .backgroundColor(this.themeState.colors.buttonColorOff)
+              .justifyContent(FlexAlign.Center)
+              .alignItems(VerticalAlign.Center)
+              .margin({ left: 2 })
             }
-            .alignItems(HorizontalAlign.Start)
-            .layoutWeight(1)
-            .constraintSize({ maxWidth: '60%' })
           }
-          .layoutWeight(1)
         }
         .layoutWeight(1)
         .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.Start)
 
-        Image($rawfile('conversationlist/ic_public_more.svg'))
-          .width(24)
-          .height(24)
-          .fillColor(this.themeState.colors.textColorPrimary)
-          .onClick(() => {
-            if (this.onChatHeaderClick) {
-              this.onChatHeaderClick(this.conversationID);
-            }
-          })
+        Text(this.title)
+          .fontSize(17)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .fontWeight(FontWeight.Bold)
+          .textAlign(TextAlign.Center)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .layoutWeight(2)
+
+        Row() {
+          Image($rawfile('conversationlist/ic_public_more.svg'))
+            .width(24)
+            .height(24)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .visibility(this.isMultiSelectMode ? Visibility.Hidden : Visibility.Visible)
+            .onClick(() => {
+              if (!this.isMultiSelectMode) {
+                this.onChatHeaderClick?.(this.conversationID);
+              }
+            })
+        }
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.End)
+        .alignItems(VerticalAlign.Center)
       }
       .width('100%')
-      .height(56)
-      .padding({ left: 10, right: 10 })
+      .height(48)
+      .padding({ left: 16, right: 16 })
       .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.SpaceBetween)
 
       Divider()
         .width('100%')
-        .height(0.3)
-        .color(this.themeState.colors.strokeColorSecondary)
+        .height(0.5)
+        .color(this.themeState.colors.strokeColorPrimary)
     }
     .width('100%')
     .backgroundColor(this.themeState.colors.bgColorOperate)
+  }
+
+  @Builder
+  SecurityWarningBuilder() {
+    Row() {
+      Image($rawfile('messagelist/ic_security_warning.svg'))
+        .width(16)
+        .height(16)
+        .margin({ top: 3 })
+
+      Column() {
+        Text() {
+          Span('请勿轻信汇款、中奖等信息，谨慎对待陌生电话，避免上当受骗。遇到可疑情况请及时反馈。 ')
+            .fontColor('#A02800')
+            .fontSize(14)
+          Span('点此举报')
+            .fontColor('#147AFF')
+            .fontSize(14)
+            .onClick(() => {
+              if (this.onSecurityReportClick) {
+                this.onSecurityReportClick();
+              }
+            })
+        }
+        .textAlign(TextAlign.Start)
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      .margin({ left: 10, right: 7 })
+
+      Image($rawfile('messagelist/ic_security_close.svg'))
+        .width(22)
+        .height(22)
+        .padding(3)
+        .onClick(() => {
+          this.showSecurityBar = false;
+        })
+    }
+    .width('100%')
+    .padding({ left: 20, right: 17, top: 16, bottom: 16 })
+    .backgroundColor('#FFE8D5')
+    .alignItems(VerticalAlign.Top)
   }
 }
 
@@ -248,16 +339,19 @@ class ChatProfileUpdatedObserver implements TUIObserver {
 
   onNotify(event: string, key: string | null, params: NotifyParams | null): void {
     console.info(`[ChatProfileUpdatedObserver] onNotify. event=${event}, key=${key}, hasData=${params?.data != null}`);
-    const data = params?.data;
+    const data: Record<string, Object> | null | undefined = params?.data;
     if (!data) {
       return;
     }
-    const conversationID = data['conversationID'] as string | undefined;
-    if (!conversationID) {
+    const conversationIDValue: Object | undefined = data['conversationID'];
+    if (!conversationIDValue) {
       return;
     }
-    const title = data['title'] as string | undefined;
-    const avatarURL = data['avatarURL'] as string | undefined;
+    const conversationID: string = conversationIDValue as string;
+    const titleValue: Object | undefined = data['title'];
+    const avatarURLValue: Object | undefined = data['avatarURL'];
+    const title: string | undefined = titleValue === undefined ? undefined : (titleValue as string);
+    const avatarURL: string | undefined = avatarURLValue === undefined ? undefined : (avatarURLValue as string);
     this.host.applyProfileUpdate(conversationID, title, avatarURL);
   }
 }

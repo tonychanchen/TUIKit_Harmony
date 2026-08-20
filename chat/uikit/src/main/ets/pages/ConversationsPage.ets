@@ -6,10 +6,11 @@ import { ConversationInfo } from '@tencentcloud/atomicxcore';
 import { ContactInfo } from '@tencentcloud/atomicxcore';
 import { MessageInfo } from '@tencentcloud/atomicxcore';
 import { StartConversationDialog, DialogType, GroupInfo } from '@tencentcloud/atomicx/src/main/ets/contactlist/Index';
+import { ImmersiveMode, LevelMode } from '@kit.ArkUI';
 
 @Component
 export struct ConversationsPage {
-  private static readonly LARGE_TITLE_HEIGHT: number = 52;
+  private static readonly LARGE_TITLE_HEIGHT: number = 56;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @State showAddMenu: boolean = false;
   private startConversationDialogController: CustomDialogController | null = null;
@@ -20,10 +21,15 @@ export struct ConversationsPage {
   @Builder
   LargeTitleBuilder() {
     Row() {
+      Row()
+        .width(24)
+        .height(24)
+
       Text($r('app.string.chat_title'))
-        .fontSize(34)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.themeState.colors.textColorPrimary)
+        .textAlign(TextAlign.Center)
         .layoutWeight(1)
 
       Row() {
@@ -34,10 +40,12 @@ export struct ConversationsPage {
             this.showAddMenu = true;
           })
       }
+      .width(24)
+      .height(24)
     }
     .width('100%')
     .height(ConversationsPage.LARGE_TITLE_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
   }
 
@@ -238,8 +246,12 @@ export struct ConversationsPage {
         }
       }),
       autoCancel: false,
-      alignment: DialogAlignment.Bottom,
+      alignment: DialogAlignment.Default,
       customStyle: true,
+      keyboardAvoidMode: KeyboardAvoidMode.NONE,
+      levelMode: LevelMode.EMBEDDED,
+      immersiveMode: ImmersiveMode.EXTEND,
+      maskColor: Color.Transparent,
       cancel: () => {
         this.startConversationDialogController = null;
       }
@@ -278,8 +290,12 @@ export struct ConversationsPage {
         }
       }),
       autoCancel: false,
-      alignment: DialogAlignment.Bottom,
+      alignment: DialogAlignment.Default,
       customStyle: true,
+      keyboardAvoidMode: KeyboardAvoidMode.NONE,
+      levelMode: LevelMode.EMBEDDED,
+      immersiveMode: ImmersiveMode.EXTEND,
+      maskColor: Color.Transparent,
       cancel: () => {
         this.createGroupDialogController = null;
       }

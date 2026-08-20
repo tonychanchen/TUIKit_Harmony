@@ -18,6 +18,7 @@ interface ActionButtonConfig {
   action: string;
   icon?: Resource;
   color?: string;
+  useIntrinsicIconColor?: boolean;
   showDivider?: boolean;
 }
 
@@ -83,6 +84,7 @@ export struct MessageActionDialog {
           action: action.action,
           icon: action.icon,
           color: action.color,
+          useIntrinsicIconColor: action.useIntrinsicIconColor,
           showDivider: action.showDivider,
         })
       })
@@ -272,7 +274,8 @@ export struct MessageActionDialog {
         return {
           text: $r('app.string.action_recall'),
           action: 'recall',
-          icon: $rawfile('messagelist/icon_extion_recall.svg')
+          icon: $rawfile('messagelist/icon_extion_recall.svg'),
+          useIntrinsicIconColor: true
         };
       case MessageAction.DELETE:
         return {
@@ -351,20 +354,13 @@ export struct MessageActionDialog {
       }
     }
     
-   if (this.shouldShowReadReceiptDetail()) {
-      configuredActions.push({
-        text: $r('app.string.action_detail'),
-        action: 'detail',
-        icon: $rawfile('messagelist/icon_extion_info.svg')
-      });
-    }
-
     // Add convert to text action for sound messages
     if (this.shouldShowConvertToText()) {
       configuredActions.push({
         text: $r('app.string.action_convert_to_text'),
         action: 'convertToText',
-        icon: $rawfile('messagelist/icon_extion_convert_to_text.svg')
+        icon: $rawfile('messagelist/icon_extion_convert_to_text.svg'),
+        useIntrinsicIconColor: true
       });
     }
 
@@ -507,7 +503,29 @@ export struct MessageActionDialog {
       return false;
     }
 
-    return true;
+    if (this.translationDisplayManager?.isTranslating(this.message.msgID) ?? false) {
+      return false;
+    }
+
+    const hasTranslation = this.hasTranslationResult();
+    const isExpanded = this.translationDisplayManager?.isExpanded(this.message.msgID) ?? true;
+    return !hasTranslation || !isExpanded;
+  }
+
+  private hasTranslationResult(): boolean {
+    const textPayload = this.message.messagePayload as TextMessagePayload | undefined;
+    const translatedTextMap = textPayload?.translatedText;
+    if (!translatedTextMap) {
+      return false;
+    }
+
+    let hasTranslation = false;
+    translatedTextMap.forEach((value: string) => {
+      if (value && value.length > 0) {
+        hasTranslation = true;
+      }
+    });
+    return hasTranslation;
   }
 
   private shouldShowQuote(): boolean {
@@ -541,10 +559,18 @@ export struct MessageActionDialog {
           .textAlign(TextAlign.Start)
 
 
-        Image(config.icon)
-          .width(17)
-          .height(17)
-          .fillColor(this.themeState.colors.textColorLink)
+        if (config.useIntrinsicIconColor) {
+          Image(config.icon)
+            .width(18)
+            .height(18)
+            .objectFit(ImageFit.Contain)
+        } else {
+          Image(config.icon)
+            .width(18)
+            .height(18)
+            .objectFit(ImageFit.Contain)
+            .fillColor(config.color || this.themeState.colors.textColorPrimary)
+        }
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceBetween)

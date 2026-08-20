@@ -9,6 +9,7 @@ export interface AudioRecorderListener {
   onRecordingStart?: () => void;
   onRecordingStop?: (filePath: string, duration: number) => void;
   onRecordingCancel?: () => void;
+  onRecordingTooShort?: () => void;
   onError?: (error: string) => void;
   onPermissionDenied?: () => void;
 }
@@ -38,6 +39,7 @@ class AudioRecorderImpl {
   private onRecordingStart?: () => void;
   private onRecordingStop?: (filePath: string, duration: number) => void;
   private onRecordingCancel?: () => void;
+  private onRecordingTooShort?: () => void;
   private onError?: (error: string) => void;
   private onPermissionDenied?: () => void;
 
@@ -56,6 +58,7 @@ class AudioRecorderImpl {
     this.onRecordingStart = listener.onRecordingStart;
     this.onRecordingStop = listener.onRecordingStop;
     this.onRecordingCancel = listener.onRecordingCancel;
+    this.onRecordingTooShort = listener.onRecordingTooShort;
     this.onError = listener.onError;
     this.onPermissionDenied = listener.onPermissionDenied;
   }
@@ -131,9 +134,12 @@ class AudioRecorderImpl {
         this.recordingTimer = null;
       }
       const duration = this.recordingDuration;
-      if (duration < 1) {
-        console.warn('[AudioRecorderManager] Recording duration too short, cancelling');
+      if (duration < 2) {
+        console.warn('[AudioRecorderManager] Recording duration is less than 2 seconds, cancelling');
         await this.cancelRecording();
+        if (this.onRecordingTooShort) {
+          this.onRecordingTooShort();
+        }
         return false;
       }
       if (this.avRecorder != undefined) {

@@ -2,7 +2,7 @@
   "string": [
     {
       "name": "input_message_placeholder",
-      "value": "Type a message..."
+      "value": "Send a message or hold to talk..."
     },
     {
       "name": "send_button",
@@ -79,6 +79,10 @@
     {
       "name": "audio_too_large_error",
       "value": "Audio size exceeds 28MB limit"
+    },
+    {
+      "name": "audio_too_short_error",
+      "value": "The voice recording is too short"
     },
     {
       "name": "video_too_large_error",

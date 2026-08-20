@@ -22,11 +22,11 @@
     },
     {
       "name": "demo_contact_tab_name",
-      "value": "联系人"
+      "value": "通讯录"
     },
     {
       "name": "demo_profile_tab_name",
-      "value": "设置"
+      "value": "我的"
     },
     {
       "name": "demo_profile_signature_label",
@@ -54,7 +54,7 @@
     },
     {
       "name": "chat_title",
-      "value": "聊天"
+      "value": "消息"
     },
     {
       "name": "search_placeholder",
@@ -142,7 +142,7 @@
     },
     {
       "name": "contacts_title",
-      "value": "联系人"
+      "value": "通讯录"
     },
     {
       "name": "contacts_search_placeholder",
@@ -206,15 +206,19 @@
     },
     {
       "name": "profile_details",
-      "value": "个人资料"
+      "value": "详情"
     },
     {
       "name": "profile_account",
       "value": "账号"
     },
     {
+      "name": "profile_nickname",
+      "value": "昵称"
+    },
+    {
       "name": "profile_signature",
-      "value": "个性签名"
+      "value": "签名"
     },
     {
       "name": "profile_gender",
@@ -226,7 +230,7 @@
     },
     {
       "name": "profile_edit_name",
-      "value": "编辑昵称"
+      "value": "修改昵称"
     },
     {
       "name": "profile_edit_name_desc",
@@ -254,7 +258,7 @@
     },
     {
       "name": "gender_unknown",
-      "value": "未知"
+      "value": "保密"
     },
     {
       "name": "unsetted",
@@ -285,24 +289,28 @@
       "value": "选择语言"
     },
     {
+      "name": "profile_select_avatar",
+      "value": "选择头像"
+    },
+    {
       "name": "language_chinese",
       "value": "简体中文"
     },
     {
+      "name": "language_traditional",
+      "value": "繁體中文"
+    },
+    {
       "name": "language_english",
-      "value": "英语"
+      "value": "English"
     },
     {
       "name": "language_arabic",
-      "value": "阿拉伯语"
+      "value": "العربية"
     },
     {
       "name": "login_success_message",
       "value": "用户 %s 登录成功"
-    },
-    {
-      "name": "theme_random_color",
-      "value": "随机颜色"
     },
     {
       "name": "setting_message_read_receipt",
@@ -323,10 +331,6 @@
     {
       "name": "translate_target_language_setting",
       "value": "翻译目标语言"
-    },
-    {
-      "name": "setting_classic_message_action",
-      "value": "经典版界面"
     },
     {
       "name": "translate_language_select_title",

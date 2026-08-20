@@ -23,8 +23,8 @@ interface SearchCategoryInfo {
 
 @Component
 export struct SearchListPage {
-  private static readonly AVATAR_SIZE: number = 40;
-  private static readonly ITEM_HEIGHT: number = 68;
+  private static readonly AVATAR_SIZE: number = 36;
+  private static readonly ITEM_HEIGHT: number = 58;
   private static readonly SEARCH_BAR_HEIGHT: number = 56;
   private static readonly DIVIDER_HEIGHT: number = 0;
   private static readonly MAX_RESULTS_PER_CATEGORY: number = 3;
@@ -278,6 +278,12 @@ export struct SearchListPage {
             ListItem() {
               this.FriendListBuilder()
             }
+
+            if (this.friendCategoryInfo.hasMore) {
+              ListItem() {
+                this.CategoryMoreBuilder(this.friendCategoryInfo)
+              }
+            }
           }
 
           // Groups section
@@ -289,6 +295,12 @@ export struct SearchListPage {
             ListItem() {
               this.GroupListBuilder()
             }
+
+            if (this.groupCategoryInfo.hasMore) {
+              ListItem() {
+                this.CategoryMoreBuilder(this.groupCategoryInfo)
+              }
+            }
           }
 
           // Messages section
@@ -299,6 +311,12 @@ export struct SearchListPage {
 
             ListItem() {
               this.MessageListBuilder()
+            }
+
+            if (this.messageCategoryInfo.hasMore) {
+              ListItem() {
+                this.CategoryMoreBuilder(this.messageCategoryInfo)
+              }
             }
           }
         }
@@ -331,30 +349,38 @@ export struct SearchListPage {
 
   @Builder
   CategoryHeaderBuilder(info: SearchCategoryInfo) {
-    Row() {
-      Text(info.title)
-        .fontSize(18)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .layoutWeight(1)
+    Text(info.title)
+      .width('100%')
+      .fontSize(14)
+      .fontWeight(FontWeight.Normal)
+      .fontColor(this.themeState.colors.textColorSecondary)
+      .padding({ left: 20, right: 20, top: 10, bottom: 2 })
+      .backgroundColor(this.themeState.colors.bgColorOperate)
+  }
 
-      if (info.hasMore) {
-        Button() {
-          Text($r('app.string.search_view_more'))
-            .fontSize(14)
-            .fontColor(this.themeState.colors.textColorLink)
-        }
-        .type(ButtonType.Normal)
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          this.showMoreResults(info.type);
-        })
+  @Builder
+  CategoryMoreBuilder(info: SearchCategoryInfo) {
+    Button() {
+      if (info.type === SearchType.FRIEND) {
+        Text($r('app.string.search_view_more_contacts'))
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorLink)
+      } else if (info.type === SearchType.GROUP) {
+        Text($r('app.string.search_view_more_groups'))
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorLink)
+      } else {
+        Text($r('app.string.search_view_more_messages'))
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorLink)
       }
     }
-    .width('100%')
-    .height(44)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .type(ButtonType.Normal)
+    .backgroundColor(Color.Transparent)
+    .padding({ left: 20, right: 20, top: 10, bottom: 10 })
+    .onClick(() => {
+      this.showMoreResults(info.type);
+    })
   }
 
   @Builder
@@ -379,14 +405,17 @@ export struct SearchListPage {
           name: item.friendRemark || item.userInfo.nickname || item.userID,
         },
         avatarSize: AvatarSize.M,
-      }).margin({ right: 12 })
+      })
+        .width(SearchListPage.AVATAR_SIZE)
+        .height(SearchListPage.AVATAR_SIZE)
+        .margin({ right: 8 })
 
       Column() {
         HighlightText({
           text: item.friendRemark || item.userInfo.nickname || item.userID,
           keyword: this.searchKeyword,
-          fontSize: 16,
-          fontWeight: FontWeight.Medium,
+          fontSize: 14,
+          fontWeight: FontWeight.Normal,
           textColor: this.themeState.colors.textColorPrimary,
           maxLines: 1
         })
@@ -394,25 +423,19 @@ export struct SearchListPage {
         HighlightText({
           text: `ID: ${item.userID}`,
           keyword: this.searchKeyword,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.Normal,
           textColor: this.themeState.colors.textColorSecondary,
           maxLines: 1
         })
-          .margin({ top: 4 })
           .width('100%')
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
-
-      Image($rawfile('search/right_arrow_icon.svg'))
-        .width(8)
-        .height(12)
-        .fillColor(this.themeState.colors.textColorTertiary)
     }
     .width('100%')
     .height(SearchListPage.ITEM_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 20, right: 20, top: 6, bottom: 6 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
     .onClick(() => {
       if (this.onContactSelect) {
@@ -443,14 +466,17 @@ export struct SearchListPage {
           name: item.groupName || item.groupID,
         },
         avatarSize: AvatarSize.M,
-      }).margin({ right: 12 })
+      })
+        .width(SearchListPage.AVATAR_SIZE)
+        .height(SearchListPage.AVATAR_SIZE)
+        .margin({ right: 8 })
 
       Column() {
         HighlightText({
           text: item.groupName || item.groupID,
           keyword: this.searchKeyword,
-          fontSize: 16,
-          fontWeight: FontWeight.Medium,
+          fontSize: 14,
+          fontWeight: FontWeight.Normal,
           textColor: this.themeState.colors.textColorPrimary,
           maxLines: 1
         })
@@ -458,25 +484,19 @@ export struct SearchListPage {
         HighlightText({
           text: `ID: ${item.groupID}`,
           keyword: this.searchKeyword,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.Normal,
           textColor: this.themeState.colors.textColorSecondary,
           maxLines: 1
         })
-          .margin({ top: 4 })
           .width('100%')
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
-
-      Image($rawfile('search/right_arrow_icon.svg'))
-        .width(8)
-        .height(12)
-        .fillColor(this.themeState.colors.textColorTertiary)
     }
     .width('100%')
     .height(SearchListPage.ITEM_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 20, right: 20, top: 6, bottom: 6 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
     .onClick(() => {
       if (this.onGroupSelect) {
@@ -507,14 +527,17 @@ export struct SearchListPage {
           name: item.conversationShowName || item.conversationID,
         },
         avatarSize: AvatarSize.M,
-      }).margin({ right: 12 })
+      })
+        .width(SearchListPage.AVATAR_SIZE)
+        .height(SearchListPage.AVATAR_SIZE)
+        .margin({ right: 8 })
 
       Column() {
         HighlightText({
           text: item.conversationShowName || item.conversationID,
           keyword: this.searchKeyword,
-          fontSize: 16,
-          fontWeight: FontWeight.Medium,
+          fontSize: 14,
+          fontWeight: FontWeight.Normal,
           textColor: this.themeState.colors.textColorPrimary,
           maxLines: 1
         })
@@ -522,25 +545,19 @@ export struct SearchListPage {
         HighlightText({
           text: this.getMessageSubtitle(item),
           keyword: this.searchKeyword,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.Normal,
           textColor: this.themeState.colors.textColorSecondary,
-          maxLines: 2
+          maxLines: 1
         })
-          .margin({ top: 4 })
           .width('100%')
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
-
-      Image($rawfile('search/right_arrow_icon.svg'))
-        .width(8)
-        .height(12)
-        .fillColor(this.themeState.colors.textColorTertiary)
     }
     .width('100%')
     .height(SearchListPage.ITEM_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 20, right: 20, top: 6, bottom: 6 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
     .onClick(() => {
       this.selectedConversation = item;
@@ -672,7 +689,7 @@ export struct SearchListPage {
       this.friendCategoryInfo = {
         type: SearchType.FRIEND,
         title: getContext().resourceManager.getStringSync($r('app.string.search_contacts_title').id),
-        hasMore: friendCount > SearchListPage.MAX_RESULTS_PER_CATEGORY,
+        hasMore: state.hasMoreFriends || friendCount > SearchListPage.MAX_RESULTS_PER_CATEGORY,
         totalCount: friendCount
       }
     } else {
@@ -685,7 +702,7 @@ export struct SearchListPage {
       this.groupCategoryInfo = {
         type: SearchType.GROUP,
         title: getContext().resourceManager.getStringSync($r('app.string.search_groups_title').id),
-        hasMore: groupCount > SearchListPage.MAX_RESULTS_PER_CATEGORY,
+        hasMore: state.hasMoreGroups || groupCount > SearchListPage.MAX_RESULTS_PER_CATEGORY,
         totalCount: groupCount
       }
     } else {
@@ -698,7 +715,7 @@ export struct SearchListPage {
       this.messageCategoryInfo = {
         type: SearchType.MESSAGE,
         title: getContext().resourceManager.getStringSync($r('app.string.search_messages_title').id),
-        hasMore: messageCount > SearchListPage.MAX_RESULTS_PER_CATEGORY,
+        hasMore: state.hasMoreMessageResults || messageCount > SearchListPage.MAX_RESULTS_PER_CATEGORY,
         totalCount: messageCount
       }
     } else {

@@ -46,19 +46,15 @@
     },
     {
       "name": "chatsetting_member_detail",
-      "value": "详情"
+      "value": "成员信息"
     },
     {
       "name": "chatsetting_member_set_admin",
-      "value": "设置为管理员"
-    },
-    {
-      "name": "chatsetting_member_remove_admin",
-      "value": "取消管理员"
+      "value": "设为管理员"
     },
     {
       "name": "chatsetting_member_remove",
-      "value": "删除群成员"
+      "value": "移除成员"
     },
     {
       "name": "chatsetting_navigate_to_single_chat_fail",
@@ -77,12 +73,16 @@
       "value": "设置管理员失败"
     },
     {
+      "name": "chatsetting_member_remove_admin",
+      "value": "撤销管理员"
+    },
+    {
       "name": "chatsetting_member_removing_admin",
-      "value": "正在取消管理员权限..."
+      "value": "正在撤销管理员..."
     },
     {
       "name": "chatsetting_member_remove_admin_fail",
-      "value": "取消管理员权限失败"
+      "value": "撤销管理员失败"
     },
     {
       "name": "chatsetting_member_removing",
@@ -142,7 +142,7 @@
     },
     {
       "name": "chatsetting_select_members_to_mute",
-      "value": "选择要禁言的成员"
+      "value": "选择禁言成员"
     },
     {
       "name": "chatsetting_mute",
@@ -342,7 +342,11 @@
     },
     {
       "name": "chatsetting_group_announcement_empty",
-      "value": "暂无群公告"
+      "value": "没有群公告"
+    },
+    {
+      "name": "chatsetting_not_set",
+      "value": "未设置"
     },
     {
       "name": "chatsetting_group_announcement_add_tip",
@@ -414,7 +418,7 @@
     },
     {
       "name": "chatsetting_edit_my_group_nickname",
-      "value": "修改我的群昵称"
+      "value": "修改群名片"
     },
     {
       "name": "chatsetting_input_group_nickname_placeholder",
@@ -582,7 +586,7 @@
     },
     {
       "name": "chatsetting_confirm_dismiss",
-      "value": "确定解散"
+      "value": "确认"
     },
     {
       "name": "chatsetting_dismissing_group_progress",
@@ -601,12 +605,16 @@
       "value": "清空聊天记录"
     },
     {
+      "name": "chatsetting_clear_contact_history_confirm",
+      "value": "确认删除与该联系人的聊天记录"
+    },
+    {
       "name": "chatsetting_cancel_clear",
       "value": "取消"
     },
     {
       "name": "chatsetting_confirm_clear",
-      "value": "确定清空"
+      "value": "确认"
     },
     {
       "name": "chatsetting_clearing_chat_history",
@@ -646,11 +654,15 @@
     },
     {
       "name": "chatsetting_report_group",
-      "value": "举报群组"
+      "value": "举报"
     },
     {
       "name": "chatsetting_report_group_toast",
       "value": "举报群组"
+    },
+    {
+      "name": "chatsetting_report_contact_toast",
+      "value": "举报联系人"
     },
     {
       "name": "chatsetting_audio",
@@ -674,7 +686,7 @@
     },
     {
       "name": "chatsetting_dismiss_group",
-      "value": "解散群组"
+      "value": "解散该群聊"
     },
     {
       "name": "chatsetting_leave_group",
@@ -706,7 +718,7 @@
     },
     {
       "name": "chatsetting_pin_conversation",
-      "value": "置顶会话"
+      "value": "置顶聊天"
     },
     {
       "name": "chatsetting_group_announcement",
@@ -714,7 +726,7 @@
     },
     {
       "name": "chatsetting_chat_background",
-      "value": "设置背景"
+      "value": "聊天背景"
     },
     {
       "name": "chatsetting_blacklist",
@@ -769,12 +781,12 @@
       "value": "禁止所有成员发送消息"
     },
     {
-      "name": "chatsetting_add_muted_members",
-      "value": "添加禁言成员"
+      "name": "chatsetting_mute_all_tips",
+      "value": "全员禁言开启后，只允许群主和管理员发言。"
     },
     {
-      "name": "chatsetting_add_muted_members_description",
-      "value": "选择要禁言的成员"
+      "name": "chatsetting_add_muted_members",
+      "value": "选择禁言成员"
     },
     {
       "name": "chatsetting_group_members_title",
@@ -818,11 +830,11 @@
     },
     {
       "name": "chatsetting_message",
-      "value": "消息"
+      "value": "发送消息"
     },
     {
       "name": "chatsetting_set_remark_title",
-      "value": "设置备注"
+      "value": "备注名"
     },
     {
       "name": "chatsetting_add_member",
@@ -831,6 +843,14 @@
     {
       "name": "chatsetting_default",
       "value": "默认"
+    },
+    {
+      "name": "chatsetting_custom",
+      "value": "已设置"
+    },
+    {
+      "name": "chatsetting_select_chat_background",
+      "value": "选择聊天背景"
     },
     {
       "name": "chatsetting_confirm_add_members_dialog_format",
@@ -849,12 +869,12 @@
       "value": "群主已成功转移给 %s"
     },
     {
-      "name": "chatsetting_dismiss_group_confirm_format",
-      "value": "你想解散此群聊 \"%s\" 吗?."
+      "name": "chatsetting_dismiss_group_confirm",
+      "value": "确认解散该群聊"
     },
     {
-      "name": "chatsetting_clear_chat_history_confirm_format",
-      "value": "你想清理历史消息吗 \"%s\"? 操作无法撤回"
+      "name": "chatsetting_clear_group_history_confirm",
+      "value": "确认删除该群的聊天记录"
     },
     {
       "name": "chatsetting_leave_group_confirm_format",

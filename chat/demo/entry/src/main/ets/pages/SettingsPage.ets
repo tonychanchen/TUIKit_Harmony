@@ -1,5 +1,5 @@
 import { MMKV } from '@tencent/mmkv';
-import { LoginStore, UserProfile, Gender, LoginState } from '@tencentcloud/atomicxcore';
+import { AllowType, LoginStore, UserProfile, Gender, LoginState } from '@tencentcloud/atomicxcore';
 import { ImageSizeUtil, ThemeState, Log, Toast, TextUtils, ToastType, Avatar, AvatarSize , AvatarContentType,AvatarShape, AppBuilderConfig, Switch, LanguageState } from '@tencentcloud/atomicx/src/main/ets/basecomponent/Index';
 import router from '@ohos.router';
 import DemoConstants from '../utils/DemoConstants';
@@ -26,7 +26,7 @@ class SettingsCompletionHandler {
   private settingItemView?: SettingItemView;
   private profileDialog?: ProfileDetailDialog;
   private action: SettingsCompletionAction = SettingsCompletionAction.LOGOUT;
-  private allowType: number = 0;
+  private allowType: AllowType = AllowType.ALLOW_ANY;
   private nickname: string = '';
   private signature: string = '';
   private gender: Gender = Gender.UNKNOWN;
@@ -52,7 +52,7 @@ class SettingsCompletionHandler {
     return this;
   }
 
-  setAllowType(allowType: number): SettingsCompletionHandler {
+  setAllowType(allowType: AllowType): SettingsCompletionHandler {
     this.allowType = allowType;
     return this;
   }
@@ -124,15 +124,13 @@ class SettingsCompletionHandler {
 }
 
 class LanguageModel {
-  languageID: string = "";        
-  languageName: string = "";      
-  nameInCurrentLanguage: Resource = $r('app.string.language_chinese'); 
-  selected: boolean = false;      
+  languageID: string = "";
+  languageName: string = "";
+  selected: boolean = false;
 
-  constructor(languageID: string, languageName: string, nameInCurrentLanguage: Resource, selected: boolean = false) {
+  constructor(languageID: string, languageName: string, selected: boolean = false) {
     this.languageID = languageID;
     this.languageName = languageName;
-    this.nameInCurrentLanguage = nameInCurrentLanguage;
     this.selected = selected;
   }
 }
@@ -153,7 +151,7 @@ class TranslateLanguageModel {
 @Preview
 @Entry
 export struct SettingsPage {
-  private static readonly LARGE_TITLE_HEIGHT: number = 52;
+  private static readonly LARGE_TITLE_HEIGHT: number = 56;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @State loginState: LoginState = LoginStore.shared().state;
   @State loginUserInfo?: UserProfile = LoginStore.shared().state.loginUserInfo;
@@ -180,17 +178,20 @@ export struct SettingsPage {
               this.showProfileDetailDialog();
             }
           })
+          Row().width('100%').height(12).backgroundColor(this.themeState.colors.bgColorInput)
           SettingItemView({ 
             loginState: this.loginState
           })
+          Row().width('100%').height(12).backgroundColor(this.themeState.colors.bgColorInput)
           Column() {
             Button($r("app.string.demo_logout_button_name"), { type: ButtonType.Normal, stateEffect: true })
-              .fontColor(Color.White)
-              .backgroundColor(this.themeState.colors.buttonColorPrimaryDefault)
-              .width('90%')
+              .fontColor(this.themeState.colors.textColorError)
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .backgroundColor(this.themeState.colors.bgColorInput)
+              .width('100%')
               .borderRadius(8)
-              .height(56)
-              .margin({ top: 16, bottom: 38 })
+              .height(48)
               .onClick(() => {
                 const handler = new SettingsCompletionHandler(SettingsCompletionAction.LOGOUT).setSettingsPage(this);
                 LoginStore.shared().logout()
@@ -205,7 +206,8 @@ export struct SettingsPage {
 
           }
           .width('100%')
-          .margin({ top: "10vp" })
+          .padding({ left: 16, right: 16 })
+          .margin({ top: 20, bottom: 24 })
           .alignItems(HorizontalAlign.Center)
         }
       }
@@ -245,6 +247,7 @@ export struct SettingsPage {
       alignment: DialogAlignment.Default,
       customStyle: true,
       autoCancel: true,
+      keyboardAvoidMode: KeyboardAvoidMode.NONE,
       levelMode: LevelMode.EMBEDDED,
       immersiveMode: ImmersiveMode.EXTEND,
       cancel: () => {
@@ -257,16 +260,17 @@ export struct SettingsPage {
   @Builder
   LargeTitleBuilder() {
     Row() {
-      Text($r('app.string.setting_title'))
-        .fontSize(34)
+      Text($r('app.string.demo_profile_tab_name'))
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.themeState.colors.textColorPrimary)
         .fontFamily('PingFang HK')
         .layoutWeight(1)
+        .textAlign(TextAlign.Center)
     }
     .width('100%')
     .height(SettingsPage.LARGE_TITLE_HEIGHT)
-    .padding({ left: 16, right: 16 })
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
   }
 }
@@ -278,7 +282,7 @@ struct SelfInfoView {
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
 
   build() {
-    RelativeContainer() {
+    Row() {
       Avatar({
         content: {
           type: AvatarContentType.Image,
@@ -286,88 +290,57 @@ struct SelfInfoView {
           name: TextUtils.getAvatarLetter(this.loginUserInfo?.nickname || this.loginUserInfo?.userID) || '',
         },
         avatarSize: AvatarSize.XL,
-        shape:AvatarShape.Round
+        shape: AvatarShape.RoundedRectangle
       })
-        .id("faceUrl")
-        .alignRules({
-          start: { anchor: "__container__", align: HorizontalAlign.Start },
-        })
 
-      Text(this.loginUserInfo?.nickname || this.loginUserInfo?.userID)
-        .id("userName")
-        .fontSize($r("app.float.demo_profile_name_font_size"))
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .fontWeight(FontWeight.Medium)
-        .margin({
-          left: 16
-        })
-        .alignRules({
-          left: { anchor: "faceUrl", align: HorizontalAlign.End },
-          top: { anchor: "faceUrl", align: VerticalAlign.Top }
-        })
-
-      Row() {
-        Text("ID:")
-          .id("userIDLabel")
+      Column() {
+        Text(this.loginUserInfo?.nickname || this.loginUserInfo?.userID)
+          .fontSize(24)
           .fontColor(this.themeState.colors.textColorPrimary)
-          .fontSize($r("app.float.demo_profile_id_font_size"))
+          .fontWeight(FontWeight.Bold)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        Text(this.loginUserInfo?.userID)
-          .id("userID")
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .fontSize($r("app.float.demo_profile_id_font_size"))
+        Row() {
+          Text("ID：")
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .fontSize(12)
+
+          Text(this.loginUserInfo?.userID)
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .fontSize(12)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
+        .width('100%')
+        .margin({ top: 2 })
+
+        Row() {
+          Text($r("app.string.demo_profile_signature_label"))
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .fontSize(12)
+
+          Text(this.loginUserInfo?.selfSignature)
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .fontSize(12)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
+        .width('100%')
+        .margin({ top: 2 })
       }
-      .id("idRow")
-      .margin({ top: 10 })
-      .alignRules({
-        left: { anchor: "userName", align: HorizontalAlign.Start },
-        top: { anchor: "userName", align: VerticalAlign.Bottom },
-      })
-
-      Text($r("app.string.demo_profile_signature_label"))
-        .id("signatureLabel")
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .fontSize($r("app.float.demo_profile_id_font_size"))
-        .margin({ top: 10 })
-        .alignRules({
-          left: { anchor: "idRow", align: HorizontalAlign.Start },
-          top: { anchor: "idRow", align: VerticalAlign.Bottom }
-        })
-
-      Text(this.loginUserInfo?.selfSignature)
-        .id("signature")
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .fontSize($r("app.float.demo_profile_id_font_size"))
-        .alignRules({
-          left: { anchor: "signatureLabel", align: HorizontalAlign.End },
-          top: { anchor: "signatureLabel", align: VerticalAlign.Top }
-        })
-
-      Image($rawfile("basecomponent/common_forward_icon.svg"))
-        .id("forwardIcon")
-        .width(14)
-        .height(14)
-        .objectFit(ImageFit.Contain)
-        .alignRules({
-          right: { anchor: "__container__", align: HorizontalAlign.End },
-          center: { anchor: "idRow", align: VerticalAlign.Center }
-        })
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+      .margin({ left: 12 })
     }
-    .backgroundColor(this.themeState.colors.bgColorBubbleReciprocal)
-    .id("selfInfoSettings")
     .width('100%')
-    .height('auto')
-    .padding({
-      top: $r("app.float.demo_profile_face_image_margin_top"),
-      bottom: $r("app.float.demo_profile_face_image_margin_top"),
-      left: 16,
-      right: 16
+    .padding({ top: 12, bottom: 12, left: 16, right: 16 })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .onClick(() => {
+      this.onProfileClick?.();
     })
-    .borderRadius(12)
-    .margin({ top: 16, left: 16, right: 16 })
-        .onClick(() => {
-          this.onProfileClick?.();
-        })
   }
 }
 
@@ -377,7 +350,7 @@ struct SettingItemView {
   @State friendRequestVisible: boolean = false;
   @State languageSelectVisible: boolean = false;
   @State translateLanguageSelectVisible: boolean = false;
-  @State currentAllowType: number = 0;
+  @State currentAllowType: AllowType = AllowType.ALLOW_ANY;
   @State currentAllowTypeText: string | Resource = '';
   @State currentThemeText: string | Resource= '';
   @State currentLanguageText: string | Resource = '';
@@ -385,7 +358,6 @@ struct SettingItemView {
   @Prop @Watch('onLoginStateChange') loginState: LoginState;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @State enableReadReceipt: boolean = AppBuilderConfig.getInstance().enableReadReceipt;
-  @State useClassicUI: boolean = AppBuilderConfig.getInstance().useClassicUI;
   
   // Language models array
   @State languageModels: LanguageModel[] = [];
@@ -406,9 +378,6 @@ struct SettingItemView {
             break;
           case 'system':
             this.themeState.setThemeMode(ThemeMode.system);
-            break;
-          case 'custom':
-            this.themeState.setPrimaryColor(this.generateRandomColor())
             break;
         }
         this.themeSelectVisible = false;
@@ -431,7 +400,7 @@ struct SettingItemView {
       onClose: () => {
         this.friendRequestVisible = false;
       },
-      onSelectAllowType: (allowType: number) => {
+      onSelectAllowType: (allowType: AllowType) => {
         this.updateAllowType(allowType);
         this.friendRequestVisible = false;
       }
@@ -494,9 +463,10 @@ struct SettingItemView {
 
   private initializeLanguageModels() {
     this.languageModels = [
-      new LanguageModel("zh-CN", "简体中文", $r('app.string.language_chinese')),
-      new LanguageModel("en-US", "English", $r('app.string.language_english')),
-      new LanguageModel("ar-SA", "العربية", $r('app.string.language_arabic'))
+      new LanguageModel("zh-CN", "简体中文"),
+      new LanguageModel("zh-Hant", "繁體中文"),
+      new LanguageModel("en-US", "English"),
+      new LanguageModel("ar-SA", "العربية")
     ];
     this.updateLanguageSelection();
   }
@@ -525,9 +495,16 @@ struct SettingItemView {
   }
 
   private updateLanguageSelection() {
-    const currentLang = this.getCurrentLanguage();
+    const currentLang = this.getCurrentLanguage().toLowerCase();
     this.languageModels.forEach(model => {
-      model.selected = currentLang.startsWith(model.languageID.split('-')[0]);
+      const languageID = model.languageID.toLowerCase();
+      if (languageID === 'zh-hant') {
+        model.selected = currentLang.includes('hant') || currentLang === 'zh-tw' || currentLang === 'zh-hk' || currentLang === 'zh-mo';
+      } else if (languageID === 'zh-cn') {
+        model.selected = currentLang === 'zh' || (currentLang.startsWith('zh') && !currentLang.includes('hant') && currentLang !== 'zh-tw' && currentLang !== 'zh-hk' && currentLang !== 'zh-mo');
+      } else {
+        model.selected = currentLang === languageID || currentLang.startsWith(languageID.split('-')[0]);
+      }
     });
   }
 
@@ -543,8 +520,8 @@ struct SettingItemView {
     this.updateStatusTexts();
   }
 
-  private getCurrentAllowType(): number {
-    return this.loginState.loginUserInfo?.allowType || 0;
+  private getCurrentAllowType(): AllowType {
+    return this.loginState.loginUserInfo?.allowType ?? AllowType.ALLOW_ANY;
   }
 
   private updateStatusTexts() {
@@ -562,111 +539,87 @@ struct SettingItemView {
 
   build() {
     Column() {
-      SettingItem({ 
-        text: $r("app.string.friend_request_setting"),
-        status: this.currentAllowTypeText
-      })
-        .onClick(() => {
-          this.friendRequestDialogController.open();
-          this.friendRequestVisible = true;
+      Column() {
+        SettingItem({
+          text: $r("app.string.demo_theme_button_name"),
+          status: this.currentThemeText
         })
-      SettingItem({ 
-        text: $r("app.string.demo_theme_button_name"),
-        status: this.currentThemeText
-      })
-        .onClick(() => {
-          this.dialogController.open();
-          this.themeSelectVisible = true;
+          .onClick(() => {
+            this.dialogController.open();
+            this.themeSelectVisible = true;
+          })
+
+        Divider().height(0.5).color(this.themeState.colors.strokeColorSecondary).width('100%')
+
+        SettingItem({
+          text: $r("app.string.demo_switch_language_button_name"),
+          status: this.currentLanguageText
         })
+          .onClick(() => {
+            this.languageDialogController.open();
+            this.languageSelectVisible = true;
+          })
+      }
+      .width('100%')
+      .backgroundColor(this.themeState.colors.bgColorOperate)
 
-      Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
+      Row().width('100%').height(12).backgroundColor(this.themeState.colors.bgColorInput)
 
-      SettingSwitchItem({
-        text: $r("app.string.setting_message_read_receipt"),
-        isOn: this.enableReadReceipt,
-        onToggle: (isOn: boolean) => {
-          this.enableReadReceipt = isOn;
-          AppBuilderConfig.getInstance().setEnableReadReceipt(isOn);
-        }
-      })
-      Text(this.enableReadReceipt ? 
-        $r("app.string.MeMessageReadStatusOpenDesc") : 
-        $r("app.string.MeMessageReadStatusCloseDesc"))
-        .width('100%')
-        .fontSize(14)
-        .fontColor(this.themeState.colors.textColorSecondary)
-        .textAlign(TextAlign.Start)
-        .padding({ left: 16, right: 16, top: 4, bottom: 8 })
-
-      Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
-
-      SettingSwitchItem({
-        text: $r("app.string.setting_classic_message_action"),
-        isOn: this.useClassicUI,
-        onToggle: (isOn: boolean) => {
-          this.useClassicUI = isOn;
-          AppBuilderConfig.getInstance().setUseClassicUI(isOn);
-        }
-      })
-      Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
-
-      SettingItem({ 
-        text: $r("app.string.demo_switch_language_button_name"),
-        status: this.currentLanguageText
-      })
-        .onClick(() => {
-          this.languageDialogController.open();
-          this.languageSelectVisible = true;
+      Column() {
+        SettingItem({
+          text: $r("app.string.friend_request_setting"),
+          status: this.currentAllowTypeText
         })
+          .onClick(() => {
+            this.friendRequestDialogController.open();
+            this.friendRequestVisible = true;
+          })
 
-      Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
+        Divider().height(0.5).color(this.themeState.colors.strokeColorSecondary).width('100%')
 
-      SettingItem({ 
-        text: $r("app.string.translate_target_language_setting"),
-        status: this.currentTranslateLanguageText
-      })
-        .onClick(() => {
-          this.translateLanguageDialogController.open();
-          this.translateLanguageSelectVisible = true;
+        SettingSwitchItem({
+          text: $r("app.string.setting_message_read_receipt"),
+          isOn: this.enableReadReceipt,
+          onToggle: (isOn: boolean) => {
+            this.enableReadReceipt = isOn;
+            AppBuilderConfig.getInstance().setEnableReadReceipt(isOn);
+          }
         })
+        Text(this.enableReadReceipt ?
+          $r("app.string.MeMessageReadStatusOpenDesc") :
+          $r("app.string.MeMessageReadStatusCloseDesc"))
+          .width('100%')
+          .fontSize(12)
+          .fontColor(this.themeState.colors.textColorSecondary)
+          .textAlign(TextAlign.Start)
+          .padding({ left: 16, right: 16, top: 0, bottom: 12 })
 
-      Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
+        Divider().height(0.5).color(this.themeState.colors.strokeColorSecondary).width('100%')
 
-      SettingItem({ text: $r("app.string.demo_about_button_name") })
-        .onClick(() => {
-          Toast.info($r("app.string.demo_title"), this.getUIContext());
+        SettingItem({
+          text: $r("app.string.translate_target_language_setting"),
+          status: this.currentTranslateLanguageText
         })
+          .onClick(() => {
+            this.translateLanguageDialogController.open();
+            this.translateLanguageSelectVisible = true;
+          })
+      }
+      .width('100%')
+      .backgroundColor(this.themeState.colors.bgColorOperate)
 
-      Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
+      Row().width('100%').height(12).backgroundColor(this.themeState.colors.bgColorInput)
+
+      Column() {
+        SettingItem({ text: $r("app.string.demo_about_button_name") })
+          .onClick(() => {
+            Toast.info($r("app.string.demo_title"), this.getUIContext());
+          })
+      }
+      .width('100%')
+      .backgroundColor(this.themeState.colors.bgColorOperate)
     }
     .width('100%')
-    .backgroundColor(this.themeState.colors.bgColorBubbleReciprocal)
-    .borderRadius(12)
-    .margin({ top: 16, left: 16, right: 16 })
-  }
-
-  private generateRandomColor(): string {
-
-    const colorPalettes = [
-
-      '#1E88E5', '#2196F3', '#42A5F5', '#64B5F6', '#0D47A1', '#1565C0',
-
-      '#43A047', '#4CAF50', '#66BB6A', '#81C784', '#2E7D32', '#388E3C',
-
-      '#E53935', '#F44336', '#EF5350', '#E57373', '#C62828', '#D32F2F',
-
-      '#FB8C00', '#FF9800', '#FFA726', '#FFB74D', '#E65100', '#F57C00',
-
-      '#8E24AA', '#9C27B0', '#AB47BC', '#BA68C8', '#6A1B9A', '#7B1FA2',
-
-      '#00ACC1', '#00BCD4', '#26C6DA', '#4DD0E1', '#006064', '#00838F',
-
-      '#00695C', '#00796B', '#26A69A', '#4DB6AC', '#004D40', '#00695C',
-
-      '#3F51B5', '#5C6BC0', '#7986CB', '#9FA8DA', '#283593', '#303F9F'
-    ];
-    const randomIndex = Math.floor(Math.random() * colorPalettes.length);
-    return colorPalettes[randomIndex];
   }
 
   private restartApplication() {
@@ -718,7 +671,7 @@ struct SettingItemView {
     }
   }
 
-  private updateAllowType(allowType: number) {
+  private updateAllowType(allowType: AllowType) {
     // Get current user info
     const currentUserInfo = this.loginState.loginUserInfo;
     if (currentUserInfo) {
@@ -753,7 +706,7 @@ struct SettingItemView {
     }
   }
 
-  onUpdateAllowTypeSuccess(allowType: number): void {
+  onUpdateAllowTypeSuccess(allowType: AllowType): void {
     const allowTypeText = this.getAllowTypeText(allowType);
     this.currentAllowType = allowType;
     this.currentAllowTypeText = allowTypeText;
@@ -765,13 +718,13 @@ struct SettingItemView {
     Toast.error($r('app.string.friend_request_update_failed'), this.getUIContext());
   }
 
-  private getAllowTypeText(allowType: number): Resource {
+  private getAllowTypeText(allowType: AllowType): Resource {
     switch (allowType) {
-      case 0:
+      case AllowType.ALLOW_ANY:
         return $r('app.string.friend_request_allow_any');
-      case 1:
+      case AllowType.NEED_CONFIRM:
         return $r('app.string.friend_request_need_confirm');
-      case 2:
+      case AllowType.DENY_ANY:
         return $r('app.string.friend_request_deny_any');
       default:
         return $r('app.string.friend_request_need_confirm');
@@ -803,28 +756,42 @@ struct SettingItemView {
     return currentLanguage;
   }
 
-  private getDisplayLanguageText(language: string): string | Resource {
-    const model = this.languageModels.find(model => 
-      language.startsWith(model.languageID.split('-')[0])
+  private getLanguageModel(language: string): LanguageModel | undefined {
+    const normalizedLanguage: string = language.toLowerCase();
+    if (normalizedLanguage.includes('hant') || normalizedLanguage === 'zh-tw' ||
+      normalizedLanguage === 'zh-hk' || normalizedLanguage === 'zh-mo') {
+      return this.languageModels.find((model: LanguageModel): boolean => model.languageID === 'zh-Hant');
+    }
+    if (normalizedLanguage === 'zh' || normalizedLanguage.startsWith('zh-')) {
+      return this.languageModels.find((model: LanguageModel): boolean => model.languageID === 'zh-CN');
+    }
+    return this.languageModels.find((model: LanguageModel): boolean =>
+      normalizedLanguage === model.languageID.toLowerCase() ||
+      normalizedLanguage.startsWith(`${model.languageID.split('-')[0].toLowerCase()}-`)
     );
-    return model ? model.nameInCurrentLanguage : this.languageModels[0]?.nameInCurrentLanguage || '';
   }
 
-  private getLanguageText(language: string): string | Resource {
-    const model = this.languageModels.find(model => 
-      language.startsWith(model.languageID.split('-')[0])
-    );
-    
-    if (model) {
-      try {
-        return model.nameInCurrentLanguage;
-      } catch (error) {
-        // Fallback to display text if resource strings are not available
-        return model.languageName;
-      }
+  private getLanguageResource(model: LanguageModel | undefined): Resource {
+    switch (model?.languageID) {
+      case 'zh-CN':
+        return $r('app.string.language_chinese');
+      case 'zh-Hant':
+        return $r('app.string.language_traditional');
+      case 'en-US':
+        return $r('app.string.language_english');
+      case 'ar-SA':
+        return $r('app.string.language_arabic');
+      default:
+        return $r('app.string.language_chinese');
     }
-    
-    return this.languageModels[0]?.languageName || '';
+  }
+
+  private getDisplayLanguageText(language: string): Resource {
+    return this.getLanguageResource(this.getLanguageModel(language));
+  }
+
+  private getLanguageText(language: string): Resource {
+    return this.getLanguageResource(this.getLanguageModel(language));
   }
 
   private updateLanguage(language: string) {
@@ -883,7 +850,7 @@ struct SettingSwitchItem {
     Column() {
       Row() {
         Text(this.text)
-          .fontSize(17)
+          .fontSize(16)
           .fontColor(this.themeState.colors.textColorPrimary)
           .layoutWeight(1)
           .margin({ left: 16 })
@@ -912,22 +879,21 @@ struct SettingSwitchItem {
 @Component
 struct SettingItem {
   text: string | Resource = "";
-  @Prop  status?: string | Resource = undefined; // Optional status text to show on the right
+  @Prop  status?: string | Resource = undefined;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
 
   build() {
     Column() {
       Row() {
         Text(this.text)
-          .fontSize(17)
+          .fontSize(16)
           .fontColor(this.themeState.colors.textColorPrimary)
           .layoutWeight(1)
           .margin({ left: 16 })
           .fontFamily('PingFang HK')
 
-        // Status text (if provided)
           Text(this.status)
-            .fontSize(15)
+            .fontSize(16)
             .fontColor(this.themeState.colors.textColorSecondary)
             .margin({ right: 8 })
             .fontFamily('PingFang HK')
@@ -955,9 +921,9 @@ struct FriendRequestDialog {
   private static readonly BUTTON_HEIGHT: number = 56;
   private static readonly BOTTOM_RADIUS: number = 14;
   controller?: CustomDialogController;
-  @Link currentAllowType: number;
+  @Link currentAllowType: AllowType;
   onClose?: () => void;
-  onSelectAllowType?: (allowType: number) => void;
+  onSelectAllowType?: (allowType: AllowType) => void;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
 
   build() {
@@ -981,7 +947,7 @@ struct FriendRequestDialog {
             .fontWeight(400)
             .layoutWeight(1)
 
-          if (this.currentAllowType === 0) {
+          if (this.currentAllowType === AllowType.ALLOW_ANY) {
             Image($r('app.media.ic_public_check'))
               .width(24)
               .height(24)
@@ -992,7 +958,7 @@ struct FriendRequestDialog {
         .height(FriendRequestDialog.BUTTON_HEIGHT)
         .padding({ start: LengthMetrics.vp(16), end: LengthMetrics.vp(16) })
         .onClick(() => {
-          this.onSelectAllowType?.(0);
+          this.onSelectAllowType?.(AllowType.ALLOW_ANY);
           this.controller?.close();
         })
 
@@ -1007,7 +973,7 @@ struct FriendRequestDialog {
             .fontWeight(400)
             .layoutWeight(1)
 
-          if (this.currentAllowType === 1) {
+          if (this.currentAllowType === AllowType.NEED_CONFIRM) {
             Image($r('app.media.ic_public_check'))
               .width(24)
               .height(24)
@@ -1018,7 +984,7 @@ struct FriendRequestDialog {
         .height(FriendRequestDialog.BUTTON_HEIGHT)
         .padding({ left: 16, right: 16 })
         .onClick(() => {
-          this.onSelectAllowType?.(1);
+          this.onSelectAllowType?.(AllowType.NEED_CONFIRM);
           this.controller?.close();
         })
 
@@ -1033,7 +999,7 @@ struct FriendRequestDialog {
             .fontWeight(400)
             .layoutWeight(1)
 
-          if (this.currentAllowType === 2) {
+          if (this.currentAllowType === AllowType.DENY_ANY) {
             Image($r('app.media.ic_public_check'))
               .width(24)
               .height(24)
@@ -1044,7 +1010,7 @@ struct FriendRequestDialog {
         .height(FriendRequestDialog.BUTTON_HEIGHT)
         .padding({ left: 16, right: 16 })
         .onClick(() => {
-          this.onSelectAllowType?.(2);
+          this.onSelectAllowType?.(AllowType.DENY_ANY);
           this.controller?.close();
         })
       }
@@ -1082,6 +1048,7 @@ struct LanguageSelectDialog {
   onClose?: () => void;
   onSelectLanguage?: (language: string) => void;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
+  @StorageLink('LanguageState') languageState: LanguageState = LanguageState.getInstance();
 
   build() {
     Column() {
@@ -1099,11 +1066,13 @@ struct LanguageSelectDialog {
         ForEach(this.languageModels, (model: LanguageModel, index: number) => {
           Column() {
             Row() {
-              Text(model.nameInCurrentLanguage)
+              Text(model.languageName)
                 .fontSize(17)
                 .fontColor(this.themeState.colors.textColorPrimary)
                 .fontFamily('PingFang HK')
                 .fontWeight(400)
+                .direction(this.languageState.getLayoutDirection() === LayoutDirection.RTL ? Direction.Rtl : Direction.Ltr)
+                .textAlign(TextAlign.Start)
                 .layoutWeight(1)
 
               if (model.selected) {
@@ -1334,25 +1303,6 @@ struct ThemeSelectDialog {
           this.onSelectTheme?.('system');
           this.controller?.close();
         })
-
-        Divider().height(0.4).color(this.themeState.colors.strokeColorPrimary).width('100%')
-
-
-        Row() {
-          Text($r('app.string.theme_random_color'))
-            .fontSize(17)
-            .fontColor(this.themeState.colors.textColorPrimary)
-            .fontFamily('PingFang HK')
-            .fontWeight(400)
-            .layoutWeight(1)
-        }
-        .width('100%')
-        .height(ThemeSelectDialog.BUTTON_HEIGHT)
-        .padding({ left: 16, right: 16 })
-        .onClick(() => {
-          this.onSelectTheme?.('custom');
-          this.controller?.close();
-        })
       }
       .width('100%')
       .backgroundColor(this.themeState.colors.bgColorBubbleReciprocal)
@@ -1492,7 +1442,8 @@ struct ProfileDetailDialog {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.themeState.colors.bgColorDefault)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 
   @Builder
@@ -1532,7 +1483,7 @@ struct ProfileDetailDialog {
     .width('100%')
     .height(56)
     .padding({ left: 16, right: 16 })
-    .backgroundColor(this.themeState.colors.bgColorDefault)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
   }
 
   @Builder
@@ -1555,26 +1506,10 @@ struct ProfileDetailDialog {
         this.showAvatarPickerDialog();
       })
 
-      // Nickname with edit button
-      Row({ space: 8 }) {
-        Text(this.getNickName())
-          .fontSize(20)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.themeState.colors.textColorPrimary)
-
-        Button() {
-          Image($rawfile("basecomponent/common_forward_icon.svg"))
-            .width(16)
-            .height(16)
-            .fillColor(this.themeState.colors.textColorLink)
-        }
-        .width(24)
-        .height(24)
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          this.showNicknameEditDialog();
-        })
-      }
+      Text(this.getNickName())
+        .fontSize(20)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(this.themeState.colors.textColorPrimary)
     }
     .width('100%')
     .padding({ top: 40, bottom: 30 })
@@ -1589,13 +1524,20 @@ struct ProfileDetailDialog {
       .backgroundColor(this.themeState.colors.listColorDefault)
 
       ListItem() {
+        this.buildDetailItem($r('app.string.profile_nickname'), this.nickname, true, () => {
+          this.showNicknameEditDialog();
+        })
+      }
+      .backgroundColor(this.themeState.colors.listColorDefault)
+
+      ListItem() {
         Row() {
           Text($r('app.string.profile_signature'))
             .fontSize(16)
             .fontColor(this.themeState.colors.textColorPrimary)
             .layoutWeight(1)
 
-          Text(this.displaySignature ||$r('app.string.no_self_signature'))
+          Text(this.displaySignature)
             .fontSize(16)
             .fontColor(this.themeState.colors.textColorSecondary)
             .maxLines(1)
@@ -1735,8 +1677,8 @@ struct ProfileDetailDialog {
   }
 
   private getBirthdayTextFromValue(birthday: number): string {
-    if (birthday === 0) {
-      return '';
+    if (birthday <= 0) {
+      return '1970-01-01';
     }
     const date = new Date(birthday * 1000);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -1988,8 +1930,9 @@ struct ProfileDetailDialog {
           }
         }
       }),
-      alignment: DialogAlignment.Default,
+      alignment: DialogAlignment.Bottom,
       customStyle: true,
+      maskColor: 'rgba(0, 0, 0, 0.6)',
       autoCancel: true,
       levelMode: LevelMode.EMBEDDED,
       immersiveMode: ImmersiveMode.EXTEND,
@@ -2152,26 +2095,16 @@ struct GenderSelectDialog {
 
   build() {
     Column() {
-      // Title
-      Text($r('app.string.profile_edit_gender'))
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .width('100%')
-        .textAlign(TextAlign.Center)
-        .margin({ top: 16, bottom: 16 })
-
       Column() {
-        // Male option
         this.buildGenderOption($r('app.string.gender_male'), Gender.MALE)
-        
+
         Divider().height(0.5).color(this.themeState.colors.strokeColorPrimary).width('100%')
-        
-        // Female option
+
         this.buildGenderOption($r('app.string.gender_female'), Gender.FEMALE)
-        
+
         Divider().height(0.5).color(this.themeState.colors.strokeColorPrimary).width('100%')
-        
+
+        this.buildGenderOption($r('app.string.gender_unknown'), Gender.UNKNOWN)
       }
       .backgroundColor(this.themeState.colors.bgColorDefault)
       .borderRadius(12)
@@ -2197,22 +2130,13 @@ struct GenderSelectDialog {
 
   @Builder
   private buildGenderOption(title: Resource, gender: Gender) {
-    Row() {
-      Text(title)
-        .fontSize(17)
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .layoutWeight(1)
-
-      if (this.currentGender === gender) {
-        Image($r('app.media.ic_public_check'))
-          .width(24)
-          .height(24)
-          .fillColor(this.themeState.colors.buttonColorPrimaryDefault)
-      }
-    }
-    .width('100%')
-    .height(56)
-    .padding({ left: 16, right: 16 })
+    Text(title)
+      .fontSize(17)
+      .fontColor(this.themeState.colors.textColorPrimary)
+      .width('100%')
+      .height(56)
+      .textAlign(TextAlign.Center)
+      .padding({ left: 16, right: 16 })
     .onClick(() => {
       this.onSelect?.(gender);
       this.controller?.close();

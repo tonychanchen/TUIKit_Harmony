@@ -50,42 +50,27 @@ export struct BlackListView {
   @Builder
   buildNavigationBar() {
     Column() {
-      Row() {
+      Stack({ alignContent: Alignment.Center }) {
+
+        Text($r('app.string.the_blacklist'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .textAlign(TextAlign.Center)
 
         Row() {
           Image($rawfile('contactlist/back_arrow.svg'))
             .width(24)
             .height(24)
             .fillColor(this.themeState.colors.textColorLink)
-
-          Text($r('app.string.back_button'))
-            .fontSize(14)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(this.themeState.colors.textColorLink)
-            .margin({ left: 8 })
         }
         .onClick(() => this.handleBack())
-
-
-        Text($r('app.string.the_blacklist'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorPrimary)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-
-
-        Text($r('app.string.done_button'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.themeState.colors.textColorLink)
-          .opacity(0)
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .padding({ left: 10, right: 10 })
       }
       .width('100%')
       .height(56)
-      .padding({ left: 10, right: 10 })
-      .justifyContent(FlexAlign.SpaceBetween)
-      .alignItems(VerticalAlign.Center)
 
       // Divider
       Divider()

@@ -50,7 +50,7 @@ export struct EmojiPicker {
       top: 12,
       left: 16,
       right: 16,
-      bottom: 8
+      bottom: 0
     })
     .transition({
       type: TransitionType.Insert,
@@ -213,42 +213,43 @@ export struct EmojiPicker {
   
   @Builder
   buildBottomCategoryBar() {
-    
     Row() {
-      
       Button() {
         Image($r('sys.media.ohos_ic_back'))
-          .width(20)
-          .height(20)
-          .fillColor(this.themeState.colors.textColorSecondary)
+          .width(18)
+          .height(18)
+          .fillColor(this.themeState.colors.textColorPrimary)
       }
-      .width(44)
-      .height(44)
-      .backgroundColor(this.themeState.colors.bgColorInput)
-      .borderRadius(22)
-      .margin({ right: 8 })
+      .width(40)
+      .height(30)
+      .padding(6)
+      .backgroundColor(this.themeState.colors.buttonColorSecondaryDefault)
+      .borderRadius(15)
+      .margin({ right: 10 })
       .onClick(() => {
-        
         if (this.onDeleteClick) {
           this.onDeleteClick();
         }
       })
 
-      
-      Button('发送')
+      Button($r('app.string.emoji_picker_send'))
         .fontSize(14)
-        .fontColor(Color.White)
-        .backgroundColor('#007AFF')
-        .borderRadius(22)
-        .width(60)
-        .height(44)
+        .fontColor(this.themeState.colors.textColorButton)
+        .backgroundColor(this.themeState.colors.buttonColorPrimaryDefault)
+        .borderRadius(15)
+        .width(50)
+        .height(30)
+        .padding(0)
         .onClick(() => {
           if (this.onSendClick) {
             this.onSendClick();
           }
         })
     }
-    .padding({ bottom: 16, right: 16 })
+    .alignItems(VerticalAlign.Center)
+    .margin({ right: 8 })
+    .padding({ top: 16, bottom: 0 })
+    .hitTestBehavior(HitTestMode.Transparent)
   }
 
   

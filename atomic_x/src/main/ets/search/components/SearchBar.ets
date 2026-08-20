@@ -24,7 +24,7 @@ import { SearchListPage, FriendSearchInfo, GroupSearchInfo, MessageSearchResultI
  */
 @Component
 export struct SearchBar {
-  private static readonly SEARCH_HEIGHT: number = 36;
+  private static readonly SEARCH_HEIGHT: number = 40;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   private searchDialogController: CustomDialogController | null = null;
   
@@ -46,20 +46,20 @@ export struct SearchBar {
     Row() {
       Row() {
         Image($rawfile('search/search_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
-          .margin({ right: 6 })
+          .width(20)
+          .height(20)
+          .fillColor(this.themeState.colors.textColorTertiary)
+          .margin({ right: 8 })
 
         Text($r('app.string.search_placeholder'))
-          .fontSize(16)
+          .fontSize(14)
           .fontColor(this.themeState.colors.textColorTertiary)
       }
       .width('100%')
       .height(SearchBar.SEARCH_HEIGHT)
       .borderRadius(10)
       .backgroundColor(this.themeState.colors.bgColorInput)
-      .padding({ left: 8, right: 22 })
+      .padding({ left: 12, right: 12 })
       .onClick(() => {
         this.openSearch();
       })

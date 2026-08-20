@@ -1,0 +1,284 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "模組描述"
+    },
+    {
+      "name": "merge_message_title",
+      "value": "[合並訊息]"
+    },
+    {
+      "name": "message_type_image",
+      "value": "[圖片]"
+    },
+    {
+      "name": "message_type_voice",
+      "value": "[語音]"
+    },
+    {
+      "name": "message_type_video",
+      "value": "[影片]"
+    },
+    {
+      "name": "message_type_file",
+      "value": "[檔案]"
+    },
+    {
+      "name": "message_type_animate_emoji",
+      "value": "[動畫表情]"
+    },
+    {
+      "name": "message_type_merged",
+      "value": "[聊天記錄]"
+    },
+    {
+      "name": "message_tips_unsupport_custom",
+      "value": "[不支援的自訂訊息]"
+    },
+    {
+      "name": "group_create_tips_message",
+      "value": "建立群組"
+    },
+    {
+      "name": "community_create_tips_message",
+      "value": "建立社群"
+    },
+    {
+      "name": "community_create_tips_format",
+      "value": "%s建立社群"
+    },
+    {
+      "name": "group_create_tips_format",
+      "value": "%s建立群組"
+    },
+    {
+      "name": "message_tips_you_recall",
+      "value": "你撤回了一條訊息"
+    },
+    {
+      "name": "message_tips_others_recall",
+      "value": "對方撤回了一條訊息"
+    },
+    {
+      "name": "message_tips_recall",
+      "value": "撤回了一條訊息"
+    },
+    {
+      "name": "message_tips_recall_format",
+      "value": "%s撤回了一條訊息"
+    },
+    {
+      "name": "message_tips_normal_recall",
+      "value": "訊息已撤回"
+    },
+    {
+      "name": "message_tips_join_group",
+      "value": "%s加入了群組"
+    },
+    {
+      "name": "message_tips_invite_join_group",
+      "value": "%s邀請%s加入群組"
+    },
+    {
+      "name": "message_tips_leave_group",
+      "value": "%s退出了群組"
+    },
+    {
+      "name": "message_tips_kickoff_group",
+      "value": "%s將%s移出群組"
+    },
+    {
+      "name": "you",
+      "value": "你"
+    },
+    {
+      "name": "message_tips_unmute",
+      "value": "被取消禁言"
+    },
+    {
+      "name": "message_tips_mute",
+      "value": "被禁言"
+    },
+    {
+      "name": "message_tips_mute_format",
+      "value": "%s %s"
+    },
+    {
+      "name": "message_tips_self_unmute",
+      "value": "你被取消禁言"
+    },
+    {
+      "name": "message_tips_member_unmute",
+      "value": "%s 被取消禁言"
+    },
+    {
+      "name": "message_tips_self_mute",
+      "value": "你被禁言 %s"
+    },
+    {
+      "name": "message_tips_member_mute",
+      "value": "%s 被禁言 %s"
+    },
+    {
+      "name": "message_tips_group_pin",
+      "value": "%s置頂了一條訊息"
+    },
+    {
+      "name": "message_tips_group_unpin",
+      "value": "%s取消置頂了一條訊息"
+    },
+    {
+      "name": "message_tips_set_admin",
+      "value": "%s被設定為管理員"
+    },
+    {
+      "name": "message_tips_cancel_admin",
+      "value": "%s被取消管理員"
+    },
+    {
+      "name": "message_tips_edit_group_name",
+      "value": "%s修改群名稱為\"%s\""
+    },
+    {
+      "name": "message_tips_edit_group_intro",
+      "value": "%s修改群簡介為\"%s\""
+    },
+    {
+      "name": "message_tips_edit_group_announce",
+      "value": "%s修改群公告為\"%s\""
+    },
+    {
+      "name": "message_tips_delete_group_announce",
+      "value": "%s刪除了群公告"
+    },
+    {
+      "name": "message_tips_edit_group_avatar",
+      "value": "%s修改了群組頭像"
+    },
+    {
+      "name": "message_tips_edit_group_owner",
+      "value": "%s將群轉讓给\"%s\""
+    },
+    {
+      "name": "message_tips_shutup_all",
+      "value": "%s開啟了全員禁言"
+    },
+    {
+      "name": "message_tips_cancel_shutup_all",
+      "value": "%s關閉了全員禁言"
+    },
+    {
+      "name": "message_tips_edit_group_join",
+      "value": "%s修改入群方式為\"%s\""
+    },
+    {
+      "name": "message_tips_edit_group_invite",
+      "value": "%s修改邀請方式為\"%s\""
+    },
+    {
+      "name": "group_join_disable",
+      "value": "禁止加入"
+    },
+    {
+      "name": "group_admin_approve",
+      "value": "管理員审批"
+    },
+    {
+      "name": "group_auto_approval",
+      "value": "自動批准"
+    },
+    {
+      "name": "group_invite_disable",
+      "value": "禁止邀請"
+    },
+    {
+      "name": "unknown",
+      "value": "未知"
+    },
+    {
+      "name": "sunday",
+      "value": "星期日"
+    },
+    {
+      "name": "monday",
+      "value": "星期一"
+    },
+    {
+      "name": "tuesday",
+      "value": "星期二"
+    },
+    {
+      "name": "wednesday",
+      "value": "星期三"
+    },
+    {
+      "name": "thursday",
+      "value": "星期四"
+    },
+    {
+      "name": "friday",
+      "value": "星期五"
+    },
+    {
+      "name": "saturday",
+      "value": "星期六"
+    },
+    {
+      "name": "group_id_empty",
+      "value": "群組ID不能為空"
+    },
+    {
+      "name": "message_empty",
+      "value": "訊息不能為空"
+    },
+    {
+      "name": "fetch_members_first",
+      "value": "請先獲取群成員列表"
+    },
+    {
+      "name": "fetch_members_failed",
+      "value": "獲取群成員列表失敗"
+    },
+    {
+      "name": "message_not_found",
+      "value": "訊息不存在"
+    },
+    {
+      "name": "conversation_clear_message_failed",
+      "value": "清除歷史訊息失敗"
+    },
+    {
+      "name": "conversation_mark_read_failed",
+      "value": "標記會話已/未讀失敗"
+    },
+    {
+      "name": "conversation_mark_unread_failed",
+      "value": "標記會話為未讀失敗"
+    },
+    {
+      "name": "forward_group_chat_history",
+      "value": "群聊的聊天記錄"
+    },
+    {
+      "name": "forward_and_text",
+      "value": "和"
+    },
+    {
+      "name": "forward_chat_history_c2c",
+      "value": "的聊天記錄"
+    },
+    {
+      "name": "forward_compatible_text",
+      "value": "請升級到最新版本查看聊天記錄"
+    },
+    {
+      "name": "message_type_message",
+      "value": "[訊息]"
+    },
+    {
+      "name": "cloud_media_download_failed",
+      "value": "檔案為空或云端资源下载失敗，請重試"
+    }
+  ]
+}

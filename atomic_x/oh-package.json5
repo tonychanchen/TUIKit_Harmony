@@ -7,8 +7,8 @@
   "license": "Apache-2.0",
   "packageType": "InterfaceHar",
   "dependencies": {
-    "@tencentcloud/atomicxcore": "^5.0.0",
-    "@tencentcloud/imsdk": "^9.0.7652",
+    "@tencentcloud/atomicxcore": "^5.0.1",
+    "@tencentcloud/imsdk": "^9.0.7662",
     "@tencent/mmkv": "1.3.5"
   }
 }

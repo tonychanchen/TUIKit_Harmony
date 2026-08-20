@@ -13,7 +13,7 @@ import { LoginStore } from '@tencentcloud/atomicxcore';
 import { MessageInputMoreDialog, MenuItem } from './MessageInputMoreDialog';
 import { EmojiDataManager, EmojiItem, EmojiPicker, EmojiTextSegment } from '../../emojipicker/Index';
 import { AudioRecorder } from '../../audiorecorder/Index';
-import { AudioRecorderView } from '../Index';
+import { AudioRecorderView, VoiceRecordReleaseAction } from './AudioRecorderView';
 import { FilePicker } from '../../filepicker/Index';
 import { VideoRecorder, RecordMode, VideoRecorderErrorCode, RecordListener } from '../../videorecorder/Index';
 import { AlbumPicker, AlbumPickerResult, PickMode } from '../../albumpicker/Index';
@@ -40,7 +40,12 @@ import { GroupMember } from '@tencentcloud/atomicxcore';
 import { CallMediaType } from '../../call/common/CallStore';
 import { UserPickerData } from '../../userpicker/Index';
 
-type VoiceRecordReleaseAction = 'send' | 'cancel' | 'transcribe';
+interface VoiceActionTargetArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 @Component
 export struct MessageInput {
@@ -62,20 +67,21 @@ export struct MessageInput {
   @State private inputFocused: boolean = false;
   private hiddenButtonId: string = 'hiddenFocusButton';
   @State private isVoiceRecording: boolean = false;
+  @State private isTextInputVoiceRecording: boolean = false;
   @State private recordingDuration: number = 0;
   @State private showKeyboardPlaceholder: boolean = false;
   @State private shouldCancelRecording: boolean = false;
   @State private shouldTranscribeRecording: boolean = false;
   @State private dragOffset: number = 0;
+  private cancelActionTarget?: VoiceActionTargetArea;
+  private transcribeActionTarget?: VoiceActionTargetArea;
+  private voiceReleaseInProgress: boolean = false;
   @State private showVoiceTranscriptionDraft: boolean = false;
   @State private voiceTranscriptionAudioPath: string = '';
   @State private voiceTranscriptionAudioDuration: number = 0;
   @State private voiceTranscriptionText: string = '';
   @State private voiceTranscriptionLoading: boolean = false;
-  private readonly cancelThreshold: number = -50; // Upward drag threshold for cancel
   private voiceRecordReleaseAction: VoiceRecordReleaseAction = 'send';
-  private longPressTimer?: number;
-  private initialTouchY: number = 0;
   // Draft related properties
   private conversationStore: ConversationListStore = ConversationListStore.create();
   private draftSaveTimer?: number;
@@ -403,37 +409,80 @@ export struct MessageInput {
 
   build() {
     Column() {
-      // Quote preview bar above the input
-      this.QuotePreviewBar()
-      if (this.showVoiceTranscriptionDraft) {
-        VoiceTranscriptionDraftView({
-          audioDuration: this.voiceTranscriptionAudioDuration,
-          text: $voiceTranscriptionText,
-          isLoading: $voiceTranscriptionLoading,
-          onCancel: () => {
-            this.hideVoiceTranscriptionDraft();
-          },
-          onSendAudio: () => {
-            this.sendVoiceMessage(this.voiceTranscriptionAudioDuration, this.voiceTranscriptionAudioPath);
-            this.hideVoiceTranscriptionDraft();
-          },
-          onSendText: (text: string) => {
-            this.sendVoiceTranscriptionText(text);
-          }
-        })
-      } else {
-        // Route to different input bar styles based on configuration
+      Divider()
+        .width('100%')
+        .height(0.5)
+        .color(this.themeState.colors.strokeColorPrimary)
+
+      Column() {
+        this.QuotePreviewBar()
         if (this.effectiveConfig.inputStyle === 'classic') {
           this.buildClassicStyle()
         } else {
           this.buildMinimalistStyle()
         }
       }
+      .width('100%')
+      .justifyContent(FlexAlign.End)
+      .alignItems(HorizontalAlign.Center)
+      .backgroundColor(this.themeState.colors.bgColorOperate)
+      .expandSafeArea([SafeAreaType.SYSTEM, SafeAreaType.KEYBOARD], [SafeAreaEdge.BOTTOM])
+      .bindContentCover(this.isVoiceRecording, this.VoiceRecordingOverlay, {
+        backgroundColor: Color.Transparent,
+        modalTransition: ModalTransition.NONE
+      })
     }
     .width('100%')
-    .justifyContent(FlexAlign.End)
-    .alignItems(HorizontalAlign.Center)
-    .expandSafeArea([SafeAreaType.SYSTEM, SafeAreaType.KEYBOARD], [SafeAreaEdge.BOTTOM])
+    .bindContentCover(this.showVoiceTranscriptionDraft, this.VoiceTranscriptionOverlay, {
+      backgroundColor: Color.Transparent,
+      modalTransition: ModalTransition.NONE
+    })
+  }
+
+  @Builder
+  private VoiceRecordingOverlay() {
+    AudioRecorderView({
+      recordingDuration: this.recordingDuration,
+      shouldCancelRecording: $shouldCancelRecording,
+      shouldTranscribeRecording: $shouldTranscribeRecording,
+      primaryColor: this.themeState.colors.textColorLink || '#4A90E2',
+      fullScreen: true,
+      onTimeLimitReached: () => {
+        this.finishVoiceRecording();
+      },
+      onActionTargetAreaChange: (action: VoiceRecordReleaseAction, x: number, y: number, width: number, height: number) => {
+        this.updateVoiceActionTargetArea(action, x, y, width, height);
+      },
+      onPointerUpdate: (x: number, y: number) => {
+        this.updateVoiceRecordActionAt(x, y);
+      },
+      onPointerEnd: (x: number, y: number, forceCancel?: boolean) => {
+        this.finishVoiceRecordingAt(x, y, forceCancel ?? false);
+      }
+    })
+      .width('100%')
+      .height('100%')
+  }
+
+  @Builder
+  private VoiceTranscriptionOverlay() {
+    VoiceTranscriptionDraftView({
+      audioDuration: this.voiceTranscriptionAudioDuration,
+      text: $voiceTranscriptionText,
+      isLoading: $voiceTranscriptionLoading,
+      onCancel: () => {
+        this.hideVoiceTranscriptionDraft();
+      },
+      onSendAudio: () => {
+        this.sendVoiceMessage(this.voiceTranscriptionAudioDuration, this.voiceTranscriptionAudioPath);
+        this.hideVoiceTranscriptionDraft();
+      },
+      onSendText: (text: string) => {
+        this.sendVoiceTranscriptionText(text);
+      }
+    })
+      .width('100%')
+      .height('100%')
   }
 
   @Builder
@@ -572,28 +621,8 @@ export struct MessageInput {
    */
   @Builder
   private buildClassicStyle() {
-    if (this.isVoiceRecording) {
-      // Voice recording overlay - same as minimalist style
-      AudioRecorderView({
-        recordingDuration: this.recordingDuration,
-        shouldCancelRecording: $shouldCancelRecording,
-        shouldTranscribeRecording: $shouldTranscribeRecording,
-        primaryColor: this.themeState.colors.textColorLink || '#4A90E2',
-        onCancel: () => {
-          this.cancelVoiceRecording();
-        },
-        onSend: (action?: VoiceRecordReleaseAction) => {
-          this.finishVoiceRecording(action ?? 'send');
-        },
-        onTimeLimitReached: () => {
-          this.finishVoiceRecording();
-        },
-        onDragUpdate: (shouldCancel: boolean, shouldTranscribe?: boolean) => {
-          this.shouldCancelRecording = shouldCancel;
-          this.shouldTranscribeRecording = shouldTranscribe ?? false;
-        }
-      })
-    } else {
+    Column() {
+      if (!this.isVoiceRecording || this.isTextInputVoiceRecording) {
       ClassicInputBar({
         inputFocused: $inputFocused,
         isVoiceRecording: $isVoiceRecording,
@@ -605,16 +634,15 @@ export struct MessageInput {
           onSend: () => {
             this.sendTextMessage();
           },
-          onVoiceRecordStart: () => {
-            this.startVoiceRecording();
+          onVoiceRecordStart: (fromTextInput?: boolean) => {
+            this.isTextInputVoiceRecording = fromTextInput ?? false;
+            this.startVoiceRecording(fromTextInput ?? false);
           },
-          onVoiceRecordEnd: (action: VoiceRecordReleaseAction) => {
-            this.finishVoiceRecording(action);
+          onVoiceRecordEnd: (x: number, y: number, forceCancel?: boolean) => {
+            this.finishVoiceRecordingAt(x, y, forceCancel ?? false);
           },
-          onVoiceRecordDragUpdate: (dragOffset: number, shouldCancel: boolean, shouldTranscribe?: boolean) => {
-            this.dragOffset = dragOffset;
-            this.shouldCancelRecording = shouldCancel;
-            this.shouldTranscribeRecording = shouldTranscribe ?? false;
+          onVoiceRecordPointerUpdate: (x: number, y: number) => {
+            this.updateVoiceRecordActionAt(x, y);
           },
           onEmojiSelected: (emoji: EmojiItem) => {
             this.handleEmojiSelected(emoji);
@@ -686,7 +714,10 @@ export struct MessageInput {
           }
         } as ClassicInputBarCallbacks
       })
+        .opacity(this.isTextInputVoiceRecording ? 0 : 1)
+      }
     }
+    .width('100%')
   }
 
   /**
@@ -695,30 +726,7 @@ export struct MessageInput {
    */
   @Builder
   private buildMinimalistStyle() {
-    if (this.isVoiceRecording) {
-      // Voice recording overlay
-      AudioRecorderView({
-        recordingDuration: this.recordingDuration,
-        shouldCancelRecording: $shouldCancelRecording,
-        shouldTranscribeRecording: $shouldTranscribeRecording,
-        primaryColor: this.themeState.colors.textColorLink || '#4A90E2',
-        transcribeHorizontalActionThreshold: -72,
-        onCancel: () => {
-          this.cancelVoiceRecording();
-        },
-        onSend: (action?: VoiceRecordReleaseAction) => {
-          this.finishVoiceRecording(action ?? 'send');
-        },
-        onTimeLimitReached: () => {
-          this.finishVoiceRecording();
-        },
-        onDragUpdate: (shouldCancel: boolean, shouldTranscribe?: boolean) => {
-          this.shouldCancelRecording = shouldCancel;
-          this.shouldTranscribeRecording = shouldTranscribe ?? false;
-        }
-      })
-    } else {
-      MinimalistInputBar({
+    MinimalistInputBar({
         showEmojiPicker: $showEmojiPicker,
         inputFocused: $inputFocused,
         isVoiceRecording: $isVoiceRecording,
@@ -733,16 +741,15 @@ export struct MessageInput {
           onEmojiToggle: (showEmoji: boolean) => {
             // Emoji toggle handled by MinimalistInputBar
           },
-          onVoiceRecordStart: () => {
-            this.startVoiceRecording();
+          onVoiceRecordStart: (fromTextInput?: boolean) => {
+            this.isTextInputVoiceRecording = fromTextInput ?? false;
+            this.startVoiceRecording(fromTextInput ?? false);
           },
-          onVoiceRecordEnd: (action: VoiceRecordReleaseAction) => {
-            this.finishVoiceRecording(action);
+          onVoiceRecordEnd: (x: number, y: number, forceCancel?: boolean) => {
+            this.finishVoiceRecordingAt(x, y, forceCancel ?? false);
           },
-          onVoiceRecordDragUpdate: (dragOffset: number, shouldCancel: boolean, shouldTranscribe?: boolean) => {
-            this.dragOffset = dragOffset;
-            this.shouldCancelRecording = shouldCancel;
-            this.shouldTranscribeRecording = shouldTranscribe ?? false;
+          onVoiceRecordPointerUpdate: (x: number, y: number) => {
+            this.updateVoiceRecordActionAt(x, y);
           },
           onCameraClick: () => {
             this.takePhoto();
@@ -817,8 +824,6 @@ export struct MessageInput {
           }
         } as MinimalistInputBarCallbacks
       })
-    }
-
 
     Button()
       .width(0)
@@ -1401,29 +1406,16 @@ export struct MessageInput {
     }
   }
 
-  // Start long press timer
-  private startLongPressTimer(): void {
-    this.longPressTimer = setTimeout(() => {
-      console.log('[MessageInput] Long press timer triggered - start recording');
-      this.startVoiceRecording();
-    }, 300);
-  }
-
-  // Cancel long press timer
-  private cancelLongPressTimer(): void {
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = undefined;
-    }
-  }
-
   // Start voice recording with gesture control
-  private startVoiceRecording(): void {
+  private startVoiceRecording(fromTextInput: boolean = false): void {
     this.showEmojiPicker = false;
-    this.hideKeyboard();
+    if (!fromTextInput) {
+      this.hideKeyboard();
+    }
     
     // Reset recording state
     this.recordingDuration = 0;
+    this.voiceReleaseInProgress = false;
     this.shouldCancelRecording = false;
     this.shouldTranscribeRecording = false;
     this.dragOffset = 0;
@@ -1435,52 +1427,103 @@ export struct MessageInput {
       onRecordingStart: () => {
         this.recordingDuration = 0;
         this.isVoiceRecording = true;
-        console.log('[MessageInput] Voice recording started');
       },
       onRecordingStop: (filePath: string, duration: number) => {
-        this.isVoiceRecording = false;
         const releaseAction = this.voiceRecordReleaseAction;
         this.voiceRecordReleaseAction = 'send';
+        if (releaseAction === 'transcribe') {
+          this.showVoiceTranscriptionDraftView(filePath, duration);
+        }
+        this.isVoiceRecording = false;
+        this.isTextInputVoiceRecording = false;
+        this.voiceReleaseInProgress = false;
         this.recordingDuration = 0;
         this.shouldCancelRecording = false;
         this.shouldTranscribeRecording = false;
         this.dragOffset = 0;
-        if (releaseAction === 'transcribe') {
-          this.showVoiceTranscriptionDraftView(filePath, duration);
-        } else {
+        if (releaseAction !== 'transcribe') {
           this.sendVoiceMessage(Math.max(1, Math.floor(duration)), filePath);
         }
-        console.log('[MessageInput] Voice recording stopped');
       },
       onRecordingCancel: () => {
+        const releaseAction = this.voiceRecordReleaseAction;
         this.isVoiceRecording = false;
+        this.isTextInputVoiceRecording = false;
+        this.voiceReleaseInProgress = false;
+        if (releaseAction === 'cancel') {
+          this.voiceRecordReleaseAction = 'send';
+        }
+        this.recordingDuration = 0;
+        this.shouldCancelRecording = false;
+        this.shouldTranscribeRecording = false;
+        this.dragOffset = 0;
+      },
+      onRecordingTooShort: () => {
+        const releaseAction = this.voiceRecordReleaseAction;
+        this.isVoiceRecording = false;
+        this.isTextInputVoiceRecording = false;
+        this.voiceReleaseInProgress = false;
         this.voiceRecordReleaseAction = 'send';
         this.recordingDuration = 0;
         this.shouldCancelRecording = false;
         this.shouldTranscribeRecording = false;
         this.dragOffset = 0;
-        console.log('[MessageInput] Voice recording cancelled');
+        if (releaseAction !== 'cancel') {
+          Toast.error($r('app.string.audio_too_short_error'), this.getUIContext(), 2000);
+        }
       }
     });
   }
 
-  // Finish voice recording (send message)
-  private finishVoiceRecording(action: VoiceRecordReleaseAction = 'send'): void {
-    if (this.isVoiceRecording) {
-      this.voiceRecordReleaseAction = action;
-      if (action === 'cancel') {
-        AudioRecorder.getInstance().cancelRecord();
-      } else {
-        AudioRecorder.getInstance().stopRecord();
-      }
+  private updateVoiceActionTargetArea(action: VoiceRecordReleaseAction, x: number, y: number, width: number, height: number): void {
+    const target: VoiceActionTargetArea = { x, y, width, height };
+    if (action === 'cancel') {
+      this.cancelActionTarget = target;
+    } else if (action === 'transcribe') {
+      this.transcribeActionTarget = target;
     }
   }
 
-  // Cancel voice recording
-  private cancelVoiceRecording(): void {
-    if (this.isVoiceRecording) {
-      this.voiceRecordReleaseAction = 'cancel';
+  private updateVoiceRecordActionAt(x: number, y: number): void {
+    this.shouldCancelRecording = this.isPointInVoiceActionTarget(x, y, this.cancelActionTarget);
+    this.shouldTranscribeRecording = !this.shouldCancelRecording &&
+      this.isPointInVoiceActionTarget(x, y, this.transcribeActionTarget);
+  }
+
+  private finishVoiceRecordingAt(x: number, y: number, forceCancel: boolean = false): void {
+    if (forceCancel) {
+      this.finishVoiceRecording('cancel');
+      return;
+    }
+    this.updateVoiceRecordActionAt(x, y);
+    this.finishVoiceRecording(this.shouldCancelRecording
+      ? 'cancel'
+      : (this.shouldTranscribeRecording ? 'transcribe' : 'send'));
+  }
+
+  private isPointInVoiceActionTarget(x: number, y: number, target?: VoiceActionTargetArea): boolean {
+    if (!target || target.width <= 0 || target.height <= 0) {
+      return false;
+    }
+    const centerX = target.x + target.width / 2;
+    const centerY = target.y + target.height / 2;
+    const radius = Math.min(target.width, target.height) / 2;
+    const deltaX = x - centerX;
+    const deltaY = y - centerY;
+    return deltaX * deltaX + deltaY * deltaY <= radius * radius;
+  }
+
+  // Finish voice recording (send message)
+  private finishVoiceRecording(action: VoiceRecordReleaseAction = 'send'): void {
+    if (!this.isVoiceRecording || this.voiceReleaseInProgress) {
+      return;
+    }
+    this.voiceReleaseInProgress = true;
+    this.voiceRecordReleaseAction = action;
+    if (action === 'cancel') {
       AudioRecorder.getInstance().cancelRecord();
+    } else {
+      AudioRecorder.getInstance().stopRecord();
     }
   }
 

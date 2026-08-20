@@ -19,6 +19,9 @@
     { "name": "search_groups_title", "value": "المجموعات" },
     { "name": "search_messages_title", "value": "الرسائل" },
     { "name": "search_view_more", "value": "عرض المزيد" },
+    { "name": "search_view_more_contacts", "value": "عرض المزيد من جهات الاتصال" },
+    { "name": "search_view_more_groups", "value": "عرض المزيد من المجموعات" },
+    { "name": "search_view_more_messages", "value": "عرض المزيد من الرسائل" },
     { "name": "search_related_messages_count", "value": "%s رسائل ذات صلة" }
   ]
 }

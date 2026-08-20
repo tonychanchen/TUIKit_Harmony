@@ -30,11 +30,19 @@
     },
     {
       "name": "clear_messages",
-      "value": "Clear Messages"
+      "value": "Clear chat history"
     },
     {
       "name": "delete_conversation",
-      "value": "Delete Conversation"
+      "value": "Delete chat"
+    },
+    {
+      "name": "mute_conversation",
+      "value": "Mute"
+    },
+    {
+      "name": "unmute_conversation",
+      "value": "Unmute"
     },
     {
       "name": "clear_messages_title",
@@ -62,11 +70,11 @@
     },
     {
       "name": "mark_as_read",
-      "value": "Mark as Read"
+      "value": "Mark as read"
     },
     {
       "name": "mark_as_unread",
-      "value": "Mark as Unread"
+      "value": "Mark as unread"
     },
     {
       "name": "theme_select_title",

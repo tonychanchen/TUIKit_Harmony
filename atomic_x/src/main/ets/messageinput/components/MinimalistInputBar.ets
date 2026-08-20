@@ -2,7 +2,10 @@ import { ThemeState, EventBus } from '../../basecomponent/Index';
 import { EmojiItem, EmojiDataManager } from '../../emojipicker/Index';
 import { MessageInputConfigProtocol } from '../config/MessageInputConfig';
 
-type VoiceRecordReleaseAction = 'send' | 'cancel' | 'transcribe';
+interface VoiceTouchPoint {
+  x: number;
+  y: number;
+}
 
 /**
  * Callbacks interface for MinimalistInputBar
@@ -11,8 +14,8 @@ export interface MinimalistInputBarCallbacks {
   onMoreClick?: () => void;
   onEmojiToggle?: (showEmoji: boolean) => void;
   onVoiceRecordStart?: () => void;
-  onVoiceRecordEnd?: (action: VoiceRecordReleaseAction) => void;
-  onVoiceRecordDragUpdate?: (dragOffset: number, shouldCancel: boolean, shouldTranscribe?: boolean) => void;
+  onVoiceRecordEnd?: (x: number, y: number, forceCancel?: boolean) => void;
+  onVoiceRecordPointerUpdate?: (x: number, y: number) => void;
   onCameraClick?: () => void;
   onInputFocusChange?: (focused: boolean) => void;
   onSubmit?: () => void;
@@ -50,16 +53,14 @@ export struct MinimalistInputBar {
   callbacks: MinimalistInputBarCallbacks = {};
   
   // Internal state
+  @State private hasInputContent: boolean = false;
   private hiddenButtonId: string = 'minimalistHiddenFocusButton';
   private richEditorId: string = 'minimalist_rich_editor';
   private longPressTimer?: number;
-  private initialTouchX: number = 0;
-  private initialTouchY: number = 0;
-  private shouldTranscribeRecording: boolean = false;
-  private readonly cancelThreshold: number = -50;
-  private readonly horizontalActionThreshold: number = 72;
-  @State private dragOffset: number = 0;
-  @State private shouldCancelRecording: boolean = false;
+
+  aboutToAppear() {
+    this.checkInputContent();
+  }
 
   build() {
     Column() {
@@ -116,10 +117,10 @@ export struct MinimalistInputBar {
             .focusable(true)
             .defaultFocus(this.inputFocused && !this.showEmojiPicker)
             .enterKeyType(EnterKeyType.Send)
-            .placeholder($r('app.string.input_message_placeholder'), {
+            .placeholder(this.inputFocused || this.hasInputContent ? '' : $r('app.string.input_message_placeholder'), {
               fontColor: this.themeState.colors.textColorTertiary,
               font: {
-                size: 14,
+                size: 16,
                 weight: FontWeight.Normal,
                 family: "HarmonyOS Sans",
                 style: FontStyle.Normal
@@ -176,12 +177,14 @@ export struct MinimalistInputBar {
               if (this.callbacks.onIMEInputComplete) {
                 this.callbacks.onIMEInputComplete(value);
               }
-              
+
+              this.checkInputContent();
               if (this.callbacks.onInputChange) {
                 this.callbacks.onInputChange();
               }
             })
             .onDidChange((rangeBefore: TextRange, rangeAfter: TextRange) => {
+              this.checkInputContent();
               // Detect paste via system menu (no onIMEInputComplete triggered)
               if (rangeAfter.end !== undefined && rangeAfter.start !== undefined &&
                   rangeBefore.end !== undefined && rangeBefore.start !== undefined) {
@@ -267,38 +270,23 @@ export struct MinimalistInputBar {
         .onTouch((event: TouchEvent) => {
           if (event.type === TouchType.Down) {
             console.log('[MinimalistInputBar] Touch down - start long press timer');
-            this.initialTouchX = event.touches[0].x;
-            this.initialTouchY = event.touches[0].y;
             this.startLongPressTimer();
           } else if (event.type === TouchType.Move) {
-            if (this.isVoiceRecording) {
-              this.dragOffset = event.touches[0].y - this.initialTouchY;
-              const dragOffsetX = event.touches[0].x - this.initialTouchX;
-              this.updateVoiceRecordReleaseAction(dragOffsetX);
-              if (this.callbacks.onVoiceRecordDragUpdate) {
-                this.callbacks.onVoiceRecordDragUpdate(this.dragOffset, this.shouldCancelRecording, this.shouldTranscribeRecording);
-              }
+            const point = this.getWindowTouchPoint(event);
+            if (this.isVoiceRecording && point) {
+              this.callbacks.onVoiceRecordPointerUpdate?.(point.x, point.y);
             }
           } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
             console.log('[MinimalistInputBar] Touch up/cancel');
             this.cancelLongPressTimer();
-            if (this.isVoiceRecording) {
-              this.finishVoiceRecording();
+            const point = this.getWindowTouchPoint(event, true);
+            if (this.isVoiceRecording && point) {
+              this.callbacks.onVoiceRecordEnd?.(point.x, point.y, event.type === TouchType.Cancel);
+            } else if (this.isVoiceRecording && event.type === TouchType.Cancel) {
+              this.callbacks.onVoiceRecordEnd?.(0, 0, true);
             }
           }
         })
-        .gesture(
-          PanGesture({ fingers: 1, direction: PanDirection.All, distance: 1 })
-            .onActionUpdate((event: GestureEvent) => {
-              if (this.isVoiceRecording) {
-                this.dragOffset = event.offsetY;
-                this.updateVoiceRecordReleaseAction(event.offsetX);
-                if (this.callbacks.onVoiceRecordDragUpdate) {
-                  this.callbacks.onVoiceRecordDragUpdate(this.dragOffset, this.shouldCancelRecording, this.shouldTranscribeRecording);
-                }
-              }
-            })
-        )
       }
 
       // Show camera button if enabled
@@ -355,26 +343,42 @@ export struct MinimalistInputBar {
     }
   }
 
-  private updateVoiceRecordReleaseAction(dragOffsetX: number): void {
-    const isSlideUp = this.dragOffset < this.cancelThreshold;
-    this.shouldCancelRecording = isSlideUp && dragOffsetX < -this.horizontalActionThreshold;
-    this.shouldTranscribeRecording = isSlideUp && dragOffsetX >= -this.horizontalActionThreshold;
-  }
-
-  private finishVoiceRecording(): void {
-    // Only proceed if we're actually recording (managed by MessageInput)
-    if (this.isVoiceRecording) {
-      const action: VoiceRecordReleaseAction = this.shouldCancelRecording ? 'cancel' : (this.shouldTranscribeRecording ? 'transcribe' : 'send');
-      // Don't set isVoiceRecording here - let MessageInput manage it through AudioRecorder callbacks
-      this.shouldCancelRecording = false;
-      this.shouldTranscribeRecording = false;
-      this.dragOffset = 0;
-      if (this.callbacks.onVoiceRecordEnd) {
-        this.callbacks.onVoiceRecordEnd(action);
-      }
+  private getWindowTouchPoint(event: TouchEvent, useChangedTouch: boolean = false): VoiceTouchPoint | undefined {
+    const touches = useChangedTouch ? event.changedTouches : event.touches;
+    const touch = touches?.[0];
+    if (!touch) {
+      return undefined;
     }
+    return {
+      x: Number(touch.windowX),
+      y: Number(touch.windowY)
+    };
   }
   
+  private checkInputContent(): void {
+    const spans = this.richEditorController.getSpans({
+      start: 0,
+      end: -1
+    });
+
+    let hasContent = false;
+    if (spans && spans.length > 0) {
+      for (const span of spans) {
+        const textSpan = span as RichEditorTextSpanResult;
+        if (textSpan.value !== undefined && textSpan.value !== null && textSpan.value.trim().length > 0) {
+          hasContent = true;
+          break;
+        }
+        const imageSpan = span as RichEditorImageSpanResult;
+        if (imageSpan.valueResourceStr !== undefined || imageSpan.valuePixelMap !== undefined) {
+          hasContent = true;
+          break;
+        }
+      }
+    }
+    this.hasInputContent = hasContent;
+  }
+
   /**
    * Extract inserted text from RichEditor spans
    * @param start Start position

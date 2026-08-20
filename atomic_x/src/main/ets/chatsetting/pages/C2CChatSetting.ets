@@ -1,4 +1,5 @@
 import {
+  AlertDialog,
   Avatar,
   AvatarContentType,
   AvatarSize,
@@ -20,6 +21,7 @@ import {
 } from '../viewmodel/C2CChatSettingViewModel';
 import { GroupNameEditDialog } from '../dialog/GroupSettingDialogs';
 import { AtomicCallEventPublisher } from '../../common/AtomicCallEventPublisher';
+import { ChatBackgroundPickerDialog } from './ChatBackgroundPicker';
 
 @CustomDialog
 export struct C2CSettingDialog {
@@ -61,9 +63,8 @@ export struct C2CSettingDialog {
 @Component
 export struct C2CChatSetting {
   private static readonly CELL_HEIGHT: number = 56;
-  private static readonly SECTION_MARGIN: number = 12;
-  private static readonly HORIZONTAL_PADDING: number = 8;
-  private static readonly BORDER_RADIUS: number = 12;
+  private static readonly SECTION_MARGIN: number = 10;
+  private static readonly HORIZONTAL_PADDING: number = 16;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @StorageLink('LanguageState') languageState: LanguageState = LanguageState.getInstance();
   @State c2cStore?: C2CSettingStore = undefined;
@@ -86,6 +87,7 @@ export struct C2CChatSetting {
   onVoiceCallClick?: () => void;
   /** Video call entry callback; see `onVoiceCallClick`. */
   onVideoCallClick?: () => void;
+  private chatBackgroundDialogController?: CustomDialogController;
   private remarkEditDialogController?: CustomDialogController = new CustomDialogController({
     builder: GroupNameEditDialog({
       title: $r('app.string.chatsetting_set_remark'),
@@ -135,18 +137,19 @@ export struct C2CChatSetting {
             this.UserInfoSectionBuilder()
             this.RemarkSectionBuilder()
             this.NotificationSettingsSectionBuilder()
+            this.ChatBackgroundSectionBuilder()
             this.BlacklistSectionBuilder()
             this.ActionButtonsSectionBuilder()
           }
           .width('100%')
         }
         .layoutWeight(1)
-        .backgroundColor(this.themeState.colors.bgColorOperate)
+        .backgroundColor(this.themeState.colors.bgColorTopBar)
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .backgroundColor(this.themeState.colors.bgColorTopBar)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 
@@ -170,55 +173,52 @@ export struct C2CChatSetting {
     .layoutWeight(1)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
-    .backgroundColor(this.themeState.colors.bgColorInput)
+    .backgroundColor(this.themeState.colors.bgColorTopBar)
   }
 
   @Builder
   NavigationBarBuilder() {
-    Row() {
-      // Back button
+    Stack() {
       Row() {
-        Image($rawfile('basecomponent/common_back_icon.svg'))
-          .width(16)
-          .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
-          .scale({
-            x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
-            y: 1
-          })
-      }
-      .width(44)
-      .height(44)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
-      .onClick(() => {
-        if (this.dialogController) {
-          this.dialogController.close();
-        } else {
-          console.warn('[C2CChatSettingPage] dialogController not available');
+        Row() {
+          Image($rawfile('basecomponent/common_back_icon.svg'))
+            .width(16)
+            .height(16)
+            .fillColor(this.themeState.colors.textColorSecondary)
+            .scale({
+              x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
+              y: 1
+            })
         }
-      })
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+        .margin({ left: 16 })
+        .onClick(() => {
+          if (this.dialogController) {
+            this.dialogController.close();
+          } else {
+            console.warn('[C2CChatSettingPage] dialogController not available');
+          }
+        })
+      }
+      .width('100%')
+      .height(56)
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center)
 
-      Blank()
-
-      // Title
       Text($r('app.string.chatsetting_contact_info_title'))
         .fontSize(18)
         .fontWeight(600)
         .fontFamily('SF Pro Display')
         .fontColor(this.themeState.colors.textColorPrimary)
-
-      Blank()
-
+        .align(Alignment.Center)
     }
     .width('100%')
     .height(56)
-    .padding({ left: 16, right: 16 })
     .backgroundColor(this.themeState.colors.bgColorOperate)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
 
-    // Divider
     Divider()
       .height(0.5)
       .color(this.themeState.colors.strokeColorSecondary)
@@ -226,156 +226,90 @@ export struct C2CChatSetting {
 
   @Builder
   UserInfoSectionBuilder() {
-    Column() {
-
+    Row() {
       Avatar({
         content: {
           type: AvatarContentType.Image,
           url: this.c2cState?.avatarURL,
           name: this.getUserInitials() || '',
         },
-        avatarSize: AvatarSize.XL,
-      }).margin({ top: 24, bottom: 16 })
+        avatarSize: AvatarSize.L,
+      })
 
-      Text((this.c2cState?.nickname || this.c2cStore?.userID || ''))
-        .fontSize(24)
-        .fontWeight(600)
-        .fontFamily('PingFang HK')
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .margin({ bottom: 4 })
+      Column({ space: 4 }) {
+        Text(this.c2cState?.nickname || this.c2cStore?.userID || '')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-      // User ID
-      Text(`ID: ${this.c2cStore?.userID}`)
-        .fontSize(15)
-        .fontWeight(400)
-        .fontFamily('SF Pro Text')
-        .fontColor(this.themeState.colors.textColorSecondary)
-        .margin({ bottom: 16 })
+        Text(`ID: ${this.c2cStore?.userID || ''}`)
+          .fontSize(13)
+          .fontColor(this.themeState.colors.textColorSecondary)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-
-      Row({ space: 24 }) {
-        this.QuickActionButtonBuilder($r('app.string.chatsetting_message'),
-          $rawfile('chatsetting/setting_sendmessage_icon.svg'))
+        if (this.c2cState?.signature) {
+          Text(this.c2cState.signature)
+            .fontSize(13)
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
       }
-      .width('100%')
-      .justifyContent(FlexAlign.SpaceEvenly)
-      .margin({ bottom: 24 })
+      .margin({ left: 16 })
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .alignItems(HorizontalAlign.Center)
-    .backgroundColor(this.themeState.colors.bgColorOperate)
-    .borderRadius(C2CChatSetting.BORDER_RADIUS)
     .padding({
       left: C2CChatSetting.HORIZONTAL_PADDING,
-      right: C2CChatSetting.HORIZONTAL_PADDING
+      right: C2CChatSetting.HORIZONTAL_PADDING,
+      top: 12,
+      bottom: 12
     })
-    .margin({
-      top: C2CChatSetting.SECTION_MARGIN,
-      bottom: C2CChatSetting.SECTION_MARGIN
-    })
-  }
-
-  @Builder
-  QuickActionButtonBuilder(label: string | Resource, icon: string | Resource) {
-    Column({ space: 8 }) {
-
-      Image(icon)
-        .width(36)
-        .height(36)
-        .fillColor(this.themeState.colors.textColorLink)
-        .borderRadius(12)
-
-
-      Text(label)
-        .fontSize(16)
-        .fontWeight(400)
-        .fontFamily('PingFang SC')
-        .fontColor(this.themeState.colors.textColorPrimary)
-        .textAlign(TextAlign.Center)
-    }
-    .width(92)
-    .backgroundColor(this.themeState.colors.bgColorInput)
-    .borderRadius(12)
-    .padding({ top: 16, bottom: 16 })
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
-    .onClick(() => {
-      this.handleQuickActionClick(label);
-    })
+    .alignItems(VerticalAlign.Center)
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: C2CChatSetting.SECTION_MARGIN })
   }
 
   @Builder
   RemarkSectionBuilder() {
     Column({ space: 0 }) {
-
       this.RemarkRowBuilder()
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .borderRadius(C2CChatSetting.BORDER_RADIUS)
-    .padding({
-      left: C2CChatSetting.HORIZONTAL_PADDING,
-      right: C2CChatSetting.HORIZONTAL_PADDING
-    })
-    .margin({
-      bottom: C2CChatSetting.SECTION_MARGIN
-    })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: C2CChatSetting.SECTION_MARGIN })
   }
 
   @Builder
   NotificationSettingsSectionBuilder() {
     Column({ space: 0 }) {
-
       this.DoNotDisturbRowBuilder()
       this.DividerBuilder()
-
-
       this.TopChatRowBuilder()
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .borderRadius(C2CChatSetting.BORDER_RADIUS)
-    .padding({
-      left: C2CChatSetting.HORIZONTAL_PADDING,
-      right: C2CChatSetting.HORIZONTAL_PADDING
-    })
-    .margin({
-      bottom: C2CChatSetting.SECTION_MARGIN
-    })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: C2CChatSetting.SECTION_MARGIN })
   }
 
   @Builder
   ChatBackgroundSectionBuilder() {
     Column({ space: 0 }) {
-
       this.ChatBackgroundRowBuilder()
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .borderRadius(C2CChatSetting.BORDER_RADIUS)
-    .padding({
-      left: C2CChatSetting.HORIZONTAL_PADDING,
-      right: C2CChatSetting.HORIZONTAL_PADDING
-    })
-    .margin({
-      bottom: C2CChatSetting.SECTION_MARGIN
-    })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: C2CChatSetting.SECTION_MARGIN })
   }
 
   @Builder
   BlacklistSectionBuilder() {
     Column({ space: 0 }) {
-
       this.BlacklistRowBuilder()
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .borderRadius(C2CChatSetting.BORDER_RADIUS)
-    .padding({
-      left: C2CChatSetting.HORIZONTAL_PADDING,
-      right: C2CChatSetting.HORIZONTAL_PADDING
-    })
-    .margin({
-      bottom: C2CChatSetting.SECTION_MARGIN
-    })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: C2CChatSetting.SECTION_MARGIN })
   }
 
   @Builder
@@ -390,7 +324,7 @@ export struct C2CChatSetting {
       Blank()
 
       Row({ space: 8 }) {
-        Text(this.c2cState?.remark || '')
+        Text(this.c2cState?.remark || this.c2cState?.nickname || this.c2cStore?.userID || '')
           .fontSize(17)
           .fontWeight(400)
           .fontFamily('SF Pro Text')
@@ -490,7 +424,9 @@ export struct C2CChatSetting {
       Blank()
 
       Row({ space: 8 }) {
-        Text('Default')
+        Text(this.c2cState?.chatBackgroundImageUri
+          ? $r('app.string.chatsetting_custom')
+          : $r('app.string.chatsetting_default'))
           .fontSize(17)
           .fontWeight(400)
           .fontFamily('SF Pro Text')
@@ -508,9 +444,28 @@ export struct C2CChatSetting {
     .height(C2CChatSetting.CELL_HEIGHT)
     .padding({ left: C2CChatSetting.HORIZONTAL_PADDING, right: C2CChatSetting.HORIZONTAL_PADDING })
     .onClick(() => {
-      console.log('Chat background clicked');
-
+      this.openChatBackgroundPicker();
     })
+  }
+
+  private openChatBackgroundPicker(): void {
+    if (!this.c2cStore) {
+      return;
+    }
+    this.chatBackgroundDialogController = new CustomDialogController({
+      builder: ChatBackgroundPickerDialog({
+        selectedImageUri: this.c2cState?.chatBackgroundImageUri || null,
+        onBackgroundSelected: (imageUri: string | null) => {
+          this.c2cStore?.setChatBackground(imageUri);
+          this.c2cState = this.c2cStore?.state;
+        }
+      }),
+      alignment: DialogAlignment.Bottom,
+      customStyle: true,
+      maskColor: 'rgba(0, 0, 0, 0.6)',
+      autoCancel: true
+    });
+    this.chatBackgroundDialogController.open();
   }
 
   @Builder
@@ -560,24 +515,34 @@ export struct C2CChatSetting {
   @Builder
   DividerBuilder() {
     Divider()
-      .height(1)
+      .height(0.5)
       .color(this.themeState.colors.strokeColorSecondary)
   }
 
   @Builder
   ActionButtonsSectionBuilder() {
     Column({ space: 0 }) {
+      this.ActionButtonBuilder($r('app.string.chatsetting_message'),
+        this.themeState.colors.textColorLink, () => {
+          this.handleSendMessageClick();
+        })
+      this.DividerBuilder()
+
+      this.ActionButtonBuilder($r('app.string.menu_voice_call'),
+        this.themeState.colors.textColorLink, () => {
+          this.handleVoiceCallClick();
+        })
+      this.DividerBuilder()
+
+      this.ActionButtonBuilder($r('app.string.menu_video_call'),
+        this.themeState.colors.textColorLink, () => {
+          this.handleVideoCallClick();
+        })
+      this.DividerBuilder()
 
       this.ActionButtonBuilder($r('app.string.chatsetting_clear_chat_history_title'),
         this.themeState.colors.textColorError, () => {
-          if (this.conversationID && this.conversationStore) {
-            clearConversationMessagesCompat(this.conversationStore, this.conversationID).then(() => {
-              Toast.success($r('app.string.chatsetting_clear_chat_success'), this.getUIContext());
-            }).catch((error: Error) => {
-              Toast.error($r('app.string.chatsetting_clear_chat_fail'), this.getUIContext());
-              console.error('Clear history failed:', error);
-            });
-          }
+          this.showClearHistoryConfirmDialog();
         })
 
       this.DividerBuilder()
@@ -611,16 +576,15 @@ export struct C2CChatSetting {
             console.error('Delete friend or conversation failed:', error);
           });
         })
+      this.DividerBuilder()
+
+      this.ActionButtonBuilder($r('app.string.chatsetting_report_group'),
+        this.themeState.colors.textColorError, () => {
+          Toast.info($r('app.string.chatsetting_report_contact_toast'), this.getUIContext());
+        })
     }
-    .backgroundColor(this.themeState.colors.bgColorTopBar)
-    .borderRadius(C2CChatSetting.BORDER_RADIUS)
-    .padding({
-      left: C2CChatSetting.HORIZONTAL_PADDING,
-      right: C2CChatSetting.HORIZONTAL_PADDING
-    })
-    .margin({
-      bottom: C2CChatSetting.SECTION_MARGIN
-    })
+    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .margin({ bottom: C2CChatSetting.SECTION_MARGIN })
   }
 
   @Builder
@@ -676,12 +640,31 @@ export struct C2CChatSetting {
       });
   }
 
-  private handleQuickActionClick(label: string | Resource): void {
-    if (!this.c2cStore) {
-      Toast.error($r('app.string.chatsetting_user_status_error'), this.getUIContext());
-      return;
+  private showClearHistoryConfirmDialog(): void {
+    AlertDialog.show(
+      undefined,
+      $r('app.string.chatsetting_clear_contact_history_confirm'),
+      $r('app.string.chatsetting_cancel_clear'),
+      $r('app.string.chatsetting_confirm_clear'),
+      undefined,
+      () => {
+      },
+      () => {
+        this.performClearHistory();
+      },
+      this.getUIContext()
+    );
+  }
+
+  private performClearHistory(): void {
+    if (this.conversationID && this.conversationStore) {
+      clearConversationMessagesCompat(this.conversationStore, this.conversationID).then(() => {
+        Toast.success($r('app.string.chatsetting_clear_chat_success'), this.getUIContext());
+      }).catch((error: Error) => {
+        Toast.error($r('app.string.chatsetting_clear_chat_fail'), this.getUIContext());
+        console.error('Clear history failed:', error);
+      });
     }
-      this.handleSendMessageClick();
   }
 
   private handleSendMessageClick(): void {

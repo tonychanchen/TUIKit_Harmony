@@ -50,7 +50,7 @@
     },
     {
       "name": "chat_title",
-      "value": "聊天"
+      "value": "消息"
     },
     {
       "name": "search_placeholder",
@@ -134,7 +134,7 @@
     },
     {
       "name": "contacts_title",
-      "value": "联系人"
+      "value": "通讯录"
     },
     {
       "name": "contacts_search_placeholder",

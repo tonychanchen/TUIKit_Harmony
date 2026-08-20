@@ -21,7 +21,6 @@ interface C2CDialogParams {
   onContactDelete?: () => void;
 }
 
-
 interface ContactDetailDialogParams {
   userInfo: ContactInfo;
 }
@@ -196,6 +195,7 @@ export class UserInteractionHelper {
       levelMode: LevelMode.EMBEDDED,
       immersiveMode: ImmersiveMode.EXTEND,
       autoCancel: false,
+      keyboardAvoidMode: KeyboardAvoidMode.NONE,
       maskColor: Color.Transparent
     };
 
@@ -263,16 +263,16 @@ struct ContactDetailDialogComponent {
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @StorageLink('LanguageState') languageState: LanguageState = LanguageState.getInstance();
   @Prop userInfo?: ContactInfo = undefined;
+  @State showSendForm: boolean = false;
 
-  @Builder
-  NavigationBarBuilder() {
-    Row() {
-      // Back button
+  build() {
+    Column() {
+      Row() {
       Row() {
         Image($rawfile('basecomponent/common_back_icon.svg'))
           .width(16)
           .height(16)
-          .fillColor(this.themeState.colors.textColorLink)
+          .fillColor(this.themeState.colors.textColorPrimary)
           .scale({
             x: this.languageState.getLayoutDirection() === LayoutDirection.RTL ? -1 : 1,
             y: 1
@@ -283,35 +283,36 @@ struct ContactDetailDialogComponent {
       .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
       .onClick(() => {
-        UserInteractionHelper.closeDialog();
+        if (this.showSendForm) {
+          this.showSendForm = false;
+        } else {
+          UserInteractionHelper.closeDialog();
+        }
       })
 
-      Blank()
+        Text($r('app.string.add_contacts_title'))
+          .fontSize(17)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .fontFamily('PingFang SC')
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center)
 
-      // Title
-      Text($r('app.string.info'))
-        .fontSize(18)
-        .fontWeight(600)
-        .fontFamily('SF Pro Display')
-        .fontColor(this.themeState.colors.textColorPrimary)
+        Row()
+          .width(44)
+          .height(44)
+      }
+      .width('100%')
+      .height(56)
+      .padding({ left: 8, right: 8 })
+      .alignItems(VerticalAlign.Center)
+      .backgroundColor(this.themeState.colors.bgColorOperate)
 
-      Blank()
-    }
-    .width('100%')
-    .height(56)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(this.themeState.colors.bgColorOperate)
-    .justifyContent(FlexAlign.SpaceBetween)
-    .alignItems(VerticalAlign.Center)
-    .border({ width: { bottom: 0.5 }, color: this.themeState.colors.strokeColorSecondary })
-  }
+      Divider()
+        .color(this.themeState.colors.strokeColorSecondary)
+        .strokeWidth(0.5)
+        .width('100%')
 
-  build() {
-    Column({ space: 0 }) {
-      // Navigation Bar
-      this.NavigationBarBuilder()
-
-      // Contact Detail Content
       Column() {
         ContactDetailPage({
           userInfo: this.userInfo,
@@ -322,11 +323,11 @@ struct ContactDetailDialogComponent {
       }
       .layoutWeight(1)
       .width('100%')
-      .backgroundColor(this.themeState.colors.bgColorOperate)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .backgroundColor(this.themeState.colors.bgColorDialogModule)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }
 
@@ -339,10 +340,10 @@ function C2CDialogBuilder(params: C2CDialogParams) {
   })
 }
 
-
 @Builder
 function ContactDetailDialogBuilder(params: ContactDetailDialogParams) {
   ContactDetailDialogComponent({
     userInfo: params.userInfo
   })
 }
+

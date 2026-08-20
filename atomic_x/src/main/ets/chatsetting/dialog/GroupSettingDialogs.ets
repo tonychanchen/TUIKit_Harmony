@@ -105,9 +105,7 @@ export struct GroupNameEditDialog {
 
   build() {
     Column() {
-
       Column() {
-
         Row() {
           Text(this.title)
             .fontSize(17)
@@ -121,12 +119,10 @@ export struct GroupNameEditDialog {
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center)
 
-        // Divider
         Divider()
           .height(0.4)
           .color(this.themeState.colors.strokeColorPrimary)
           .width('100%')
-
 
         Column() {
           TextInput({ text: this.inputText, placeholder: this.placeholder })
@@ -148,7 +144,6 @@ export struct GroupNameEditDialog {
             })
             .maxLength(this.maxLength)
 
-
           if (this.helpText) {
             Text(this.helpText)
               .fontSize(14)
@@ -161,12 +156,10 @@ export struct GroupNameEditDialog {
         }
         .width('100%')
 
-        // Divider
         Divider()
           .height(0.4)
           .color(this.themeState.colors.strokeColorPrimary)
           .width('100%')
-
 
         Button() {
           Text($r('app.string.chatsetting_confirm'))
@@ -199,4 +192,90 @@ export struct GroupNameEditDialog {
 
     this.controller.close();
   }
-} 
+}
+
+@CustomDialog
+export struct GroupTextInputDialog {
+  @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
+  title: string | Resource = '';
+  initialText: string = '';
+  placeholder: string | Resource = '';
+  multiline: boolean = false;
+  maxLength: number = 0;
+  onConfirm?: (value: string) => void;
+  controller: CustomDialogController;
+  @State inputText: string = '';
+
+  aboutToAppear(): void {
+    this.inputText = this.initialText;
+  }
+
+  build() {
+    Column() {
+      Text(this.title)
+        .fontSize(16)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(this.themeState.colors.textColorPrimary)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .margin({ bottom: 20 })
+
+      if (this.multiline) {
+        TextArea({ text: this.inputText, placeholder: this.placeholder })
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .placeholderColor(this.themeState.colors.textColorTertiary)
+          .width('100%')
+          .height(160)
+          .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+          .backgroundColor(this.themeState.colors.bgColorDialog)
+          .border({ width: 1, color: this.themeState.colors.strokeColorPrimary })
+          .borderRadius(8)
+          .maxLength(this.maxLength)
+          .onChange((value: string): void => {
+            this.inputText = value;
+          })
+
+        Text(`${this.inputText.length}/${this.maxLength}`)
+          .fontSize(12)
+          .fontColor(this.themeState.colors.textColorTertiary)
+          .width('100%')
+          .textAlign(TextAlign.End)
+          .margin({ top: 6, bottom: 20 })
+      } else {
+        TextInput({ text: this.inputText, placeholder: this.placeholder })
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .placeholderColor(this.themeState.colors.textColorTertiary)
+          .width('100%')
+          .height(40)
+          .padding({ left: 16, right: 16 })
+          .backgroundColor(this.themeState.colors.bgColorDialog)
+          .border({ width: 1, color: this.themeState.colors.strokeColorPrimary })
+          .borderRadius(8)
+          .onChange((value: string): void => {
+            this.inputText = value;
+          })
+          .margin({ bottom: 20 })
+      }
+
+      Button() {
+        Text($r('app.string.chatsetting_confirm'))
+          .fontSize(16)
+          .fontColor(this.themeState.colors.textColorButton)
+      }
+      .width('100%')
+      .height(36)
+      .type(ButtonType.Capsule)
+      .backgroundColor(this.themeState.colors.buttonColorPrimaryDefault)
+      .onClick((): void => {
+        this.onConfirm?.(this.inputText.trim());
+        this.controller.close();
+      })
+    }
+    .width('80%')
+    .padding(20)
+    .backgroundColor(this.themeState.colors.bgColorDialog)
+    .borderRadius(12)
+  }
+}

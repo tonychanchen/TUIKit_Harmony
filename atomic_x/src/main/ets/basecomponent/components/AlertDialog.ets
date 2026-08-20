@@ -14,6 +14,7 @@ interface DoubleButtonAlertDialogParams {
   message?: string | Resource
   cancelText?: string | Resource
   confirmText?: string | Resource
+  confirmDangerous?: boolean
   onDismiss?: () => void
   onCancel?: () => void
   onConfirm?: () => void
@@ -108,6 +109,7 @@ struct DoubleButtonAlertDialog {
   @Prop message?: string | Resource
   @Prop cancelText: string | Resource = 'cancel'
   @Prop confirmText: string | Resource = 'confirm'
+  @Prop confirmDangerous: boolean = false
   onDismiss?: () => void
   onCancel?: () => void
   onConfirm?: () => void
@@ -201,7 +203,7 @@ struct DoubleButtonAlertDialog {
           Text(this.confirmText)
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.themeState.colors.textColorLink)
+            .fontColor(this.confirmDangerous ? this.themeState.colors.textColorError : this.themeState.colors.textColorLink)
             .textAlign(TextAlign.Center)
             .lineHeight(24)
             .width('50%')
@@ -263,6 +265,7 @@ struct DoubleButtonAlertDialogComponent {
   @Prop message?: string | Resource
   @Prop cancelText: string | Resource = 'Cancel'
   @Prop confirmText: string | Resource = 'Done'
+  @Prop confirmDangerous: boolean = false
   onDismiss?: () => void
   onCancel?: () => void
   onConfirm?: () => void
@@ -274,6 +277,7 @@ struct DoubleButtonAlertDialogComponent {
       message: this.message,
       cancelText: this.cancelText,
       confirmText: this.confirmText,
+      confirmDangerous: this.confirmDangerous,
       onDismiss: this.onDismiss,
       onCancel: this.onCancel,
       onConfirm: this.onConfirm,
@@ -299,6 +303,7 @@ function DoubleButtonAlertDialogBuilder(params: DoubleButtonAlertDialogParams) {
     message: params.message,
     cancelText: params.cancelText ?? 'Cancel',
     confirmText: params.confirmText ?? 'Done',
+    confirmDangerous: params.confirmDangerous ?? false,
     onDismiss: params.onDismiss,
     onCancel: params.onCancel,
     onConfirm: params.onConfirm,
@@ -329,8 +334,10 @@ export class AlertDialog {
     onDismiss?: () => void,
     onCancel?: () => void,
     onConfirm?: () => void,
-    context?: UIContext
+    context?: UIContext,
+    confirmDangerous?: boolean
   ): string
+
   static show(
     param1?: string | Resource,
     param2?: string | Resource,
@@ -339,7 +346,8 @@ export class AlertDialog {
     param5?: (() => void) | UIContext,
     param6?: (() => void) | UIContext,
     param7?: (() => void),
-    param8?: UIContext
+    param8?: UIContext,
+    param9?: boolean
   ): string {
     
     if (arguments.length <= 5) {
@@ -362,7 +370,7 @@ export class AlertDialog {
       const onConfirm = typeof param7 === 'function' ? param7 : undefined
       const context = param8 as UIContext
 
-      return AlertDialog.showDoubleButton(title, message, cancelText, confirmText, onDismiss, onCancel, onConfirm, context)
+      return AlertDialog.showDoubleButton(title, message, cancelText, confirmText, onDismiss, onCancel, onConfirm, context, param9 ?? false)
     }
   }
 
@@ -437,7 +445,8 @@ export class AlertDialog {
     onDismiss?: () => void,
     onCancel?: () => void,
     onConfirm?: () => void,
-    context?: UIContext
+    context?: UIContext,
+    confirmDangerous: boolean = false
   ): string {
     if (context) {
       AlertDialog.ctx = context
@@ -454,6 +463,7 @@ export class AlertDialog {
       message: message,
       cancelText: cancelText ?? 'Cancel',
       confirmText: confirmText ?? 'Done',
+      confirmDangerous: confirmDangerous,
       onDismiss: onDismiss,
       onCancel: onCancel,
       onConfirm: onConfirm,

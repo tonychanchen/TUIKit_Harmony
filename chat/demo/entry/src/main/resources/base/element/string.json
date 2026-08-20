@@ -26,7 +26,7 @@
     },
     {
       "name": "demo_profile_tab_name",
-      "value": "Settings"
+      "value": "Me"
     },
     {
       "name": "demo_profile_signature_label",
@@ -213,6 +213,10 @@
       "value": "Account"
     },
     {
+      "name": "profile_nickname",
+      "value": "Nickname"
+    },
+    {
       "name": "profile_signature",
       "value": "Signature"
     },
@@ -254,7 +258,7 @@
     },
     {
       "name": "gender_unknown",
-      "value": "Unknown"
+      "value": "Secret"
     },
     {
       "name": "unsetted",
@@ -289,12 +293,12 @@
       "value": "Select Language"
     },
     {
-      "name": "login_success_message",
-      "value": "User %s login success"
+      "name": "language_traditional",
+      "value": "Traditional Chinese"
     },
     {
-      "name": "theme_random_color",
-      "value": "Random Color"
+      "name": "login_success_message",
+      "value": "User %s login success"
     },
     {
       "name": "setting_message_read_receipt",
@@ -315,10 +319,6 @@
     {
       "name": "translate_target_language_setting",
       "value": "Translate Target Language"
-    },
-    {
-      "name": "setting_classic_message_action",
-      "value": "Classic UI Style"
     },
     {
       "name": "translate_language_select_title",

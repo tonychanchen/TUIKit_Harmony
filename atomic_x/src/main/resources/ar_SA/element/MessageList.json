@@ -173,6 +173,10 @@
       "value": "اختر محادثة"
     },
     {
+      "name": "forward_select_from_contacts",
+      "value": "اختر من جهات الاتصال"
+    },
+    {
       "name": "forward_recent_chats",
       "value": "المحادثات الأخيرة"
     },
@@ -182,7 +186,7 @@
     },
     {
       "name": "forward_send",
-      "value": "إرسال"
+      "value": "إعادة توجيه"
     },
     {
       "name": "forward_success",
@@ -207,6 +211,14 @@
     {
       "name": "forward_merged",
       "value": "إعادة توجيه مدمج"
+    },
+    {
+      "name": "multiselect_delete",
+      "value": "حذف"
+    },
+    {
+      "name": "multiselect_delete_confirm",
+      "value": "حذف الرسائل المحددة؟"
     },
     {
       "name": "forward_limit_tip",
@@ -251,6 +263,10 @@
     {
       "name": "messagelist_violation_warning",
       "value": "يحتوي على محتوى حساس"
+    },
+    {
+      "name": "messagelist_floating_back_to_quote",
+      "value": "العودة إلى الرسالة المقتبسة"
     },
     {
       "name": "read_receipt_all_read",

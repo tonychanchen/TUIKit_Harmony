@@ -1,5 +1,5 @@
 import { MessageInfo, MessageStatus, MessagePayload } from '@tencentcloud/atomicxcore';
-import { ThemeState } from '../../basecomponent/Index';
+import { ThemeState, LanguageState } from '../../basecomponent/Index';
 import { MessageRenderContext } from '../context/MessageRenderContext';
 import {
   CallingMessageDataProvider,
@@ -71,6 +71,7 @@ export struct CallMessageBubbleViewContent {
   @State message?: MessageInfo = undefined;
   @ObjectLink messagePayload: MessagePayload;
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
+  @StorageLink('LanguageState') languageState: LanguageState = LanguageState.getInstance();
 
   private getEffectiveIsSelf(): boolean {
     if (this.message) {
@@ -84,16 +85,15 @@ export struct CallMessageBubbleViewContent {
 
   build() {
     Row() {
-      this.CallIcon()
-      Text(this.getCallText())
-        .fontSize(15)
-        .fontColor(this.getEffectiveIsSelf() ?
-          this.themeState.colors.textColorAntiPrimary :
-          this.themeState.colors.textColorPrimary)
-        .fontWeight(FontWeight.Medium)
-        .maxLines(999)
-        .textOverflow({ overflow: TextOverflow.None })
+      if (this.isIconAfterText()) {
+        this.CallText()
+        this.CallIcon(true)
+      } else {
+        this.CallIcon(false)
+        this.CallText()
+      }
     }
+    .alignItems(VerticalAlign.Center)
     .padding({
       left: 12,
       right: 12,
@@ -103,14 +103,25 @@ export struct CallMessageBubbleViewContent {
   }
 
   @Builder
-  CallIcon() {
-    Image(this.getCallIconResource())
-      .width(16)
-      .height(16)
-      .margin({ right: 8 })
-      .fillColor(this.getEffectiveIsSelf() ?
-        this.themeState.colors.textColorAntiPrimary :
-        this.themeState.colors.textColorSecondary)
+  private CallText() {
+    Text(this.getCallText())
+      .fontSize(16)
+      .fontColor(this.getContentColor())
+      .fontWeight(FontWeight.Normal)
+      .maxLines(2)
+      .textOverflow({ overflow: TextOverflow.Ellipsis })
+  }
+
+  @Builder
+  private CallIcon(isAfterText: boolean) {
+    if (this.hasCallIcon()) {
+      Image(this.getCallIconResource())
+        .width(22)
+        .height(this.getCallIconHeight())
+        .margin(isAfterText ? { left: 8 } : { right: 8 })
+        .fillColor(this.getContentColor())
+        .scale({ x: this.shouldMirrorCallIcon() ? -1 : 1, y: 1 })
+    }
   }
 
   private getCallIconResource(): Resource {
@@ -122,6 +133,39 @@ export struct CallMessageBubbleViewContent {
       return $rawfile('messagelist/video_icon.svg');
     }
     return $rawfile('messagelist/call_icon.svg');
+  }
+
+  private hasCallIcon(): boolean {
+    if (!this.message) {
+      return false;
+    }
+    const callingProvider = new CallingMessageDataProvider(this.message);
+    return callingProvider.streamMediaType === CallStreamMediaType.audio ||
+      callingProvider.streamMediaType === CallStreamMediaType.video;
+  }
+
+  private getCallIconHeight(): number {
+    if (!this.message) {
+      return 8;
+    }
+    const callingProvider = new CallingMessageDataProvider(this.message);
+    return callingProvider.streamMediaType === CallStreamMediaType.video ? 15 : 8;
+  }
+
+  private getContentColor(): string {
+    return this.getEffectiveIsSelf()
+      ? this.themeState.colors.textColorAntiPrimary
+      : this.themeState.colors.textColorPrimary;
+  }
+
+  private isIconAfterText(): boolean {
+    const isRtl = this.languageState.getLayoutDirection() === LayoutDirection.RTL;
+    return this.getEffectiveIsSelf() !== isRtl;
+  }
+
+  private shouldMirrorCallIcon(): boolean {
+    const isRtl = this.languageState.getLayoutDirection() === LayoutDirection.RTL;
+    return this.getEffectiveIsSelf() === isRtl;
   }
 
   private getCallText(): string {

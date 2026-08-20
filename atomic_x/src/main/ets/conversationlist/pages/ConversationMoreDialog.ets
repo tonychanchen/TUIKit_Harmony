@@ -8,7 +8,8 @@ export enum ConversationDialogAction {
   PIN = 'pinConversation',
   CLEAR = 'clearConversation',
   DELETE = 'deleteConversation',
-  MUTE = 'muteConversation'
+  MUTE = 'muteConversation',
+  MARK_UNREAD = 'markUnread'
 }
 
 @CustomDialog

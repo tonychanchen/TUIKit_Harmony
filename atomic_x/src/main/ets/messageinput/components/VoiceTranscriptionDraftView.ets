@@ -26,25 +26,73 @@ export struct VoiceTranscriptionDraftView {
     this.userEdited = false;
   }
 
+  private overlayGradientColors(): Array<[ResourceColor, number]> {
+    return [
+      ['#00000000', 0.0],
+      [this.themeState.colors.bgColorMaskDisappeared, 0.42],
+      [this.themeState.colors.bgColorOperate, 0.67],
+      [this.themeState.colors.bgColorOperate, 1.0]
+    ];
+  }
+
   build() {
     Column({ space: 14 }) {
       this.BubbleBuilder()
       Row() {
-        this.ActionButtonBuilder($r('app.string.cancel'), this.themeState.colors.buttonColorSecondaryDefault, this.themeState.colors.textColorPrimary, 56, 48, () => {
-          this.onCancel?.();
-        })
-        Blank()
-        this.ActionButtonBuilder($r('app.string.voice_transcription_send_original_voice'), this.themeState.colors.buttonColorSecondaryDefault, this.themeState.colors.textColorPrimary, 56, 48, () => {
-          this.onSendAudio?.();
-        })
-        Blank()
+        Column({ space: 8 }) {
+          Row() {
+            Image($rawfile('messageinput/close_icon.svg'))
+              .width(24)
+              .height(24)
+          }
+          .width(48)
+          .height(48)
+          .borderRadius(24)
+          .backgroundColor(this.themeState.colors.buttonColorSecondaryDefault)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
+          .onClick(() => {
+            this.onCancel?.();
+          })
+
+          Text($r('app.string.cancel'))
+            .fontSize(12)
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .textAlign(TextAlign.Center)
+        }
+        .alignItems(HorizontalAlign.Center)
+
+        Column({ space: 8 }) {
+          Row() {
+            Image($rawfile('messageinput/voice_transcription_audio.svg'))
+              .width(24)
+              .height(24)
+          }
+          .width(48)
+          .height(48)
+          .borderRadius(24)
+          .backgroundColor(this.themeState.colors.buttonColorSecondaryDefault)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
+          .onClick(() => {
+            this.onSendAudio?.();
+          })
+
+          Text($r('app.string.voice_transcription_send_original_voice'))
+            .fontSize(12)
+            .fontColor(this.themeState.colors.textColorSecondary)
+            .textAlign(TextAlign.Center)
+        }
+        .alignItems(HorizontalAlign.Center)
+        .margin({ left: 46 })
+
         Text($r('app.string.send_button'))
           .fontSize(14)
           .fontColor(this.themeState.colors.textColorButton)
           .textAlign(TextAlign.Center)
           .width(80)
-          .height(56)
-          .borderRadius(28)
+          .height(80)
+          .borderRadius(40)
           .backgroundColor(
             (!this.isLoading && ((this.userEdited ? this.draftText : this.text) || '').trim().length > 0)
               ? this.themeState.colors.buttonColorPrimaryDefault
@@ -56,9 +104,11 @@ export struct VoiceTranscriptionDraftView {
               this.onSendText?.(effective.trim());
             }
           })
+          .margin({ left: 57 })
       }
       .width('100%')
       .padding({ left: 28, right: 28 })
+      .justifyContent(FlexAlign.Center)
       .alignItems(VerticalAlign.Center)
 
       Row({ space: 10 }) {
@@ -90,8 +140,13 @@ export struct VoiceTranscriptionDraftView {
       .borderRadius(20)
     }
     .width('100%')
+    .height('100%')
     .padding({ top: 16, bottom: 16 })
-    .backgroundColor(this.themeState.colors.bgColorOperate)
+    .justifyContent(FlexAlign.End)
+    .linearGradient({
+      angle: 180,
+      colors: this.overlayGradientColors()
+    })
   }
 
   @Builder
@@ -105,58 +160,83 @@ export struct VoiceTranscriptionDraftView {
 
   @Builder
   private BubbleBuilder() {
-    Stack() {
-      if (this.isLoading) {
-        Row({ space: 8 }) {
-          Circle().width(6).height(6).fill(this.themeState.colors.textColorButton).opacity(0.45)
-          Circle().width(6).height(6).fill(this.themeState.colors.textColorButton).opacity(0.7)
-          Circle().width(6).height(6).fill(this.themeState.colors.textColorButton).opacity(1)
+    if (this.isLoading) {
+      Column() {
+        Stack() {
+          Row({ space: 8 }) {
+            Circle().width(6).height(6).fill(this.themeState.colors.textColorButton).opacity(0.45)
+            Circle().width(6).height(6).fill(this.themeState.colors.textColorButton).opacity(0.7)
+            Circle().width(6).height(6).fill(this.themeState.colors.textColorButton).opacity(1)
+          }
+          .justifyContent(FlexAlign.Start)
+          .alignItems(VerticalAlign.Center)
         }
         .width('100%')
-        .height('100%')
-        .justifyContent(FlexAlign.Start)
-        .alignItems(VerticalAlign.Center)
-        .padding({ left: 18 })
-      } else if (((this.userEdited ? this.draftText : this.text) || '').trim().length === 0) {
-        Text($r('app.string.voice_transcription_empty'))
-          .fontSize(16)
-          .fontColor(this.themeState.colors.textColorButton)
-          .width('100%')
-          .height('100%')
-          .padding({ left: 16, right: 16 })
-          .textAlign(TextAlign.Start)
-      } else {
-        TextArea({ text: this.userEdited ? this.draftText : this.text, controller: this.controller })
-          .fontSize(16)
-          .fontColor(this.themeState.colors.textColorButton)
-          .backgroundColor(Color.Transparent)
-          .width('100%')
-          .height('100%')
-          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-          .maxLines(4)
-          .onChange((value: string) => {
-            this.draftText = value;
-            this.userEdited = true;
-          })
+        .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+        .height(50)
+        .backgroundColor(this.bubbleBackgroundColor())
+        .borderRadius(8)
+
+        Row() {
+          Blank()
+          Polygon()
+            .points([[0, 0], [24, 0], [12, 14]])
+            .fill(this.bubbleBackgroundColor())
+            .width(24)
+            .height(14)
+        }
+        .width('100%')
+        .padding({ right: 40 })
       }
+      .width('84%')
+    } else {
+      Column() {
+        Stack() {
+          if (((this.userEdited ? this.draftText : this.text) || '').trim().length === 0) {
+            Text($r('app.string.voice_transcription_empty'))
+              .fontSize(16)
+              .fontColor(this.themeState.colors.textColorButton)
+              .width('100%')
+              .textAlign(TextAlign.Center)
+          } else {
+            TextArea({ text: this.userEdited ? this.draftText : this.text, controller: this.controller })
+              .fontSize(16)
+              .fontColor(this.themeState.colors.textColorButton)
+              .backgroundColor(Color.Transparent)
+              .width('100%')
+              .maxLines(4)
+              .onChange((value: string) => {
+                this.draftText = value;
+                this.userEdited = true;
+              })
+          }
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+        .constraintSize({ minHeight: 44, maxHeight: 148 })
+        .backgroundColor(this.bubbleBackgroundColor())
+        .borderRadius(8)
+
+        Row() {
+          Blank()
+          Polygon()
+            .points([[0, 0], [24, 0], [12, 14]])
+            .fill(this.bubbleBackgroundColor())
+            .width(24)
+            .height(14)
+        }
+        .width('100%')
+        .padding({ right: 40 })
+      }
+      .width('84%')
     }
-    .width('84%')
-    .height(!this.isLoading && ((this.userEdited ? this.draftText : this.text) || '').trim().length > 0 && (this.userEdited ? this.draftText : this.text).length > 24 ? 104 : 68)
-    .backgroundColor(!this.isLoading && ((this.userEdited ? this.draftText : this.text) || '').trim().length === 0 ? this.themeState.colors.buttonColorHangupDefault : this.themeState.colors.buttonColorPrimaryDefault)
-    .borderRadius(8)
   }
 
-  @Builder
-  private ActionButtonBuilder(text: Resource, backgroundColor: ResourceColor, fontColor: ResourceColor, width: number, height: number, action: () => void) {
-    Text(text)
-      .fontSize(14)
-      .fontColor(fontColor)
-      .textAlign(TextAlign.Center)
-      .width(width)
-      .height(height)
-      .borderRadius(height / 2)
-      .backgroundColor(backgroundColor)
-      .onClick(action)
+  private bubbleBackgroundColor(): ResourceColor {
+    if (!this.isLoading && ((this.userEdited ? this.draftText : this.text) || '').trim().length === 0) {
+      return this.themeState.colors.buttonColorHangupDefault;
+    }
+    return this.themeState.colors.buttonColorPrimaryDefault;
   }
 
   private formatDuration(seconds: number): string {
