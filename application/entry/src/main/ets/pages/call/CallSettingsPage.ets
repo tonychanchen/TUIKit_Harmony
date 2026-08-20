@@ -20,7 +20,6 @@ export struct CallSettingsDestination {
   @State floatWindow: boolean = SettingsConfig.shared().floatWindow;
   @State enableVirtualBackground: boolean = SettingsConfig.shared().enableVirtualBackground;
   @State enableIncomingBanner: boolean = SettingsConfig.shared().enableIncomingBanner;
-  @State enableAITranscriber: boolean = SettingsConfig.shared().enableAITranscriber;
 
   @State strRoomId: string = SettingsConfig.shared().strRoomId;
   @State intRoomId: string = String(SettingsConfig.shared().intRoomId);
@@ -116,15 +115,6 @@ export struct CallSettingsDestination {
                 } catch (e) {
                   hilog.warn(DOMAIN, TAG, 'enableIncomingBanner failed: %{public}s', JSON.stringify(e));
                 }
-              },
-            });
-
-            SettingsSwitchRow({
-              label: $r('app.string.EnableAITranscriber'),
-              isOn: this.enableAITranscriber,
-              disabled: true,
-              disabledHint: $r('app.string.V1NotSupported'),
-              onChange: (_v: boolean) => {
               },
             });
 

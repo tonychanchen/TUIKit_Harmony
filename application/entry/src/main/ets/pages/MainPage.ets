@@ -7,6 +7,11 @@ import { SettingsDestination } from './SettingsPage';
 import { AvatarSelectorDestination } from './AvatarSelectorPage';
 import { LanguageSelectDestination } from './LanguageSelectPage';
 import { RoomHomeDestination, CreateRoomDestination, JoinRoomDestination, RoomMainDestination } from './room/RoomPages';
+import { CallDestination } from './call/CallPage';
+import { JoinGroupCallDestination } from './call/JoinGroupCallPage';
+import { CallSettingsDestination } from './call/CallSettingsPage';
+import { SettingDetailDestination } from './call/SettingDetailPage';
+import { SettingDetailParam, CallTestRouter } from '../common/CallTestRouter';
 
 @Entry
 @Component
@@ -59,8 +64,15 @@ struct MainPage {
                 this.navStack.pushPath({ name: 'RoomHome' });
               })
 
-            Column()
+            MainMenuCard({
+              icon: $r('app.media.main_call'),
+              title: $r('app.string.main_call_title'),
+              desc: $r('app.string.main_call_desc')
+            })
               .layoutWeight(1)
+              .onClick(() => {
+                this.navStack.pushPath({ name: CallTestRouter.CALL });
+              })
           }
           .width('100%')
           .margin({ top: 12 })
@@ -98,6 +110,14 @@ struct MainPage {
       JoinRoomDestination({ navStack: this.navStack })
     } else if (name === 'RoomMain') {
       RoomMainDestination({ navStack: this.navStack, params: param as EnterRoomParams })
+    } else if (name === CallTestRouter.CALL) {
+      CallDestination({ navStack: this.navStack })
+    } else if (name === CallTestRouter.JOIN_GROUP) {
+      JoinGroupCallDestination({ navStack: this.navStack })
+    } else if (name === CallTestRouter.SETTINGS) {
+      CallSettingsDestination({ navStack: this.navStack })
+    } else if (name === CallTestRouter.SETTING_DETAIL) {
+      SettingDetailDestination({ navStack: this.navStack, param: param as SettingDetailParam })
     }
   }
 

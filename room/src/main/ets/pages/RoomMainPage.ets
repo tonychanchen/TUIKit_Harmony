@@ -187,10 +187,13 @@ export struct RoomMainPage {
     };
     this.participantListener.onParticipantDeviceClosed = (device: DeviceType, _operator: RoomUser) => {
       let message: Resource | undefined;
+      const userName = _operator.userName ?? _operator.userID;
       if (device === DeviceType.microphone) {
-        message = $r('app.string.roomkit_toast_muted_by_host');
+        message = $r('app.string.roomkit_toast_muted_by_host', userName);
       } else if (device === DeviceType.camera) {
-        message = $r('app.string.roomkit_toast_camera_closed_by_host');
+        message = $r('app.string.roomkit_toast_camera_closed_by_host', userName);
+      } else if (device === DeviceType.screenShare) {
+        message = $r('app.string.roomkit_toast_screen_share_closed_by_host', userName);
       }
       if (message) {
         Toast.warning(message, this.getUIContext());
@@ -226,11 +229,11 @@ export struct RoomMainPage {
       const userName = invitation.senderNameCard.length > 0 ? invitation.senderNameCard : invitation.senderUserName;
       let title: string = '';
       if (invitation.device === DeviceType.microphone) {
-        title = (this.getUIContext().getHostContext()?.resourceManager.getStringSync($r('app.string.roomkit_msg_invite_unmute_audio')) ?? '')
-          .replace('xxx', userName);
+        title = this.getUIContext().getHostContext()?.resourceManager
+          .getStringSync($r('app.string.roomkit_msg_invite_unmute_audio'), userName) ?? '';
       } else if (invitation.device === DeviceType.camera) {
-        title = (this.getUIContext().getHostContext()?.resourceManager.getStringSync($r('app.string.roomkit_msg_invite_start_video')) ?? '')
-          .replace('xxx', userName);
+        title = this.getUIContext().getHostContext()?.resourceManager
+          .getStringSync($r('app.string.roomkit_msg_invite_start_video'), userName) ?? '';
       }
       const alertId = AlertDialog.show(
         title,
@@ -277,8 +280,8 @@ export struct RoomMainPage {
         Toast.info($r('app.string.roomkit_switch_to_participant_byself'), this.getUIContext());
       } else {
         const displayName = userInfo.userName.length > 0 ? userInfo.userName : userInfo.userID;
-        const message = (this.getUIContext().getHostContext()?.resourceManager.getStringSync($r('app.string.roomkit_switch_to_participant')) ?? '')
-          .replace('xxx', displayName);
+        const message = this.getUIContext().getHostContext()?.resourceManager
+          .getStringSync($r('app.string.roomkit_switch_to_participant'), displayName) ?? '';
         Toast.info(message, this.getUIContext());
       }
     };
@@ -336,10 +339,13 @@ export struct RoomMainPage {
     if (this.isWebinar()) {
       return;
     }
-    if (this.config.autoEnableCamera) {
+    const roomInfo = this.roomStore.state.currentRoom;
+    const isAllCameraDisabled = roomInfo?.isAllCameraDisabled === true;
+    const isAllMicrophoneDisabled = roomInfo?.isAllMicrophoneDisabled === true;
+    if (this.config.autoEnableCamera && !isAllCameraDisabled) {
       await DeviceOperator.openCamera(this.getUIContext());
     }
-    if (this.config.autoEnableMicrophone && this.participantStore) {
+    if (this.config.autoEnableMicrophone && !isAllMicrophoneDisabled && this.participantStore) {
       await DeviceOperator.unmuteMicrophone(this.getUIContext(), this.participantStore);
     }
     this.deviceStore.setAudioRoute(

@@ -6,8 +6,9 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@tencentcloud/atomicxcore": "4.1.0",
+    "@tencentcloud/atomicxcore": "^5.0.1",
     "@tencentcloud/tuiroomkit": "file:../../room",
+    "@tencentcloud/tuicallkit": "file:../../call",
     "@ohos/crypto-js": "2.0.2",
     "pako": "2.1.0"
   }

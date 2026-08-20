@@ -330,8 +330,8 @@ export struct RoomMemberItemView {
     return this.roomId.startsWith(RoomConstants.webinarPrefix);
   }
 
-  private getString(resource: Resource): string {
-    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource) ?? '';
+  private getString(resource: Resource, ...args: Array<string | number>): string {
+    return this.getUIContext().getHostContext()?.resourceManager.getStringSync(resource, ...args) ?? '';
   }
 }
 
