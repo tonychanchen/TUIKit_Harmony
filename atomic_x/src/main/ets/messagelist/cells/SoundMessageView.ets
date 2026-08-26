@@ -5,6 +5,27 @@ import { CompletionHandlerAdapter } from '../../basecomponent/utils/CompletionHa
 import { AudioPlayer, AudioPlayerListener } from '../../audioplayer/Index';
 import { AsrDisplayManager } from '../utils/AsrDisplayManager';
 import { MessageRenderContext } from '../context/MessageRenderContext';
+import { display } from '@kit.ArkUI';
+
+const VOICE_MAX_DURATION_SECONDS: number = 60;
+const VOICE_ABSOLUTE_MIN_WIDTH: number = 80;
+const VOICE_ABSOLUTE_MAX_WIDTH: number = 260;
+const VOICE_MIN_WIDTH_SCREEN_RATIO: number = 0.22;
+const VOICE_MAX_WIDTH_SCREEN_RATIO: number = 0.55;
+let cachedScreenWidthVp: number = 0;
+
+function getScreenWidthVp(): number {
+  if (cachedScreenWidthVp > 0) {
+    return cachedScreenWidthVp;
+  }
+  let widthVp = 360;
+  try {
+    widthVp = px2vp(display.getDefaultDisplaySync().width);
+  } catch (error) {
+  }
+  cachedScreenWidthVp = widthVp;
+  return widthVp;
+}
 
 class SoundMessageAudioListener implements AudioPlayerListener {
   private component: SoundMessageViewContent;
@@ -137,6 +158,7 @@ export struct SoundMessageViewContent {
     }
     .width(16)
     .height(16)
+    .scale({ x: this.message.isSentBySelf ? -1 : 1, y: 1 })
   }
 
   convertVoiceToText(): void {
@@ -207,8 +229,14 @@ export struct SoundMessageViewContent {
   }
 
   private getBubbleWidth(): number {
+    const screenWidth = getScreenWidthVp();
+    const minWidth = Math.min(Math.max(screenWidth * VOICE_MIN_WIDTH_SCREEN_RATIO, VOICE_ABSOLUTE_MIN_WIDTH),
+      VOICE_ABSOLUTE_MAX_WIDTH);
+    const maxWidth = Math.min(Math.max(screenWidth * VOICE_MAX_WIDTH_SCREEN_RATIO, minWidth),
+      VOICE_ABSOLUTE_MAX_WIDTH);
     const duration = Math.max(0, Math.floor(this.messagePayload?.audioDuration ?? 0));
-    return Math.min(240, Math.max(120, 76 + duration * 2.8));
+    const clampedDuration = Math.min(Math.max(duration, 1), VOICE_MAX_DURATION_SECONDS);
+    return minWidth + (maxWidth - minWidth) * (clampedDuration / VOICE_MAX_DURATION_SECONDS);
   }
 
   startVoiceAnimation(): void {

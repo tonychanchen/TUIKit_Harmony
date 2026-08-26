@@ -97,6 +97,10 @@
       "value": "فشل في تحميل الصورة"
     },
     {
+      "name": "messagelist_delete_confirm",
+      "value": "هل تريد حذف هذه الرسالة؟"
+    },
+    {
       "name": "messagelist_unknown_file",
       "value": "ملف غير معروف"
     },
@@ -255,6 +259,42 @@
     {
       "name": "action_convert_to_text",
       "value": "تحويل إلى نص"
+    },
+    {
+      "name": "action_listen_from_here",
+      "value": "الاستماع من هنا"
+    },
+    {
+      "name": "listen_speaker_self",
+      "value": "أنا"
+    },
+    {
+      "name": "listen_says",
+      "value": "%1$s قال: "
+    },
+    {
+      "name": "listen_sent_image",
+      "value": "%1$s أرسل صورة"
+    },
+    {
+      "name": "listen_sent_video",
+      "value": "%1$s أرسل فيديو"
+    },
+    {
+      "name": "listen_sent_file",
+      "value": "%1$s أرسل ملفًا"
+    },
+    {
+      "name": "listen_sent_merged",
+      "value": "%1$s أرسل: %2$s"
+    },
+    {
+      "name": "listen_from_here_empty",
+      "value": "لا يوجد محتوى للقراءة"
+    },
+    {
+      "name": "action_reaction",
+      "value": "تفاعل"
     },
     {
       "name": "messagelist_convert_to_text_failed",

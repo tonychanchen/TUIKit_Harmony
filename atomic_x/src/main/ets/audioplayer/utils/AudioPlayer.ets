@@ -67,8 +67,11 @@ class MediaAudioPlayer extends AudioPlayer {
       this.avPlayer = await media.createAVPlayer();
       this.setupAVPlayerCallbacks();
 
-      const fdPath = await this.getFileDescriptor(filePath);
-      this.avPlayer.url = fdPath;
+      if (MediaAudioPlayer.isNetworkUrl(filePath)) {
+        this.avPlayer.url = filePath;
+      } else {
+        this.avPlayer.url = await this.getFileDescriptor(filePath);
+      }
 
     } catch (error) {
       if (this.listener?.onError) {
@@ -211,6 +214,10 @@ class MediaAudioPlayer extends AudioPlayer {
   }
 
   
+  private static isNetworkUrl(path: string): boolean {
+    return path.startsWith('http://') || path.startsWith('https://');
+  }
+
   private async getFileDescriptor(filePath: string): Promise<string> {
     try {
       const file = await fs.open(filePath, fs.OpenMode.READ_ONLY);

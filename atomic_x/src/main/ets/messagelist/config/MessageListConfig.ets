@@ -43,6 +43,7 @@ export interface MessageActionConfigProtocol {
   isSupportConvertToText?: boolean;
   isSupportTranslate?: boolean;
   isSupportQuote?: boolean;
+  isSupportListenFromHere?: boolean;
 }
 
 /**
@@ -83,6 +84,7 @@ export class ChatMessageListConfig implements MessageListStyleProtocol {
   private userIsSupportConvertToText?: boolean;
   private userIsSupportTranslate?: boolean;
   private userIsSupportQuote?: boolean;
+  private userIsSupportListenFromHere?: boolean;
 
   constructor(config?: Partial<MessageListStyleProtocol>) {
     if (config) {
@@ -109,6 +111,7 @@ export class ChatMessageListConfig implements MessageListStyleProtocol {
       this.userIsSupportConvertToText = config.isSupportConvertToText;
       this.userIsSupportTranslate = config.isSupportTranslate;
       this.userIsSupportQuote = config.isSupportQuote;
+      this.userIsSupportListenFromHere = config.isSupportListenFromHere;
     }
   }
 
@@ -231,6 +234,13 @@ export class ChatMessageListConfig implements MessageListStyleProtocol {
   get isSupportQuote(): boolean {
     if (this.userIsSupportQuote !== undefined) {
       return this.userIsSupportQuote;
+    }
+    return true;
+  }
+
+  get isSupportListenFromHere(): boolean {
+    if (this.userIsSupportListenFromHere !== undefined) {
+      return this.userIsSupportListenFromHere;
     }
     return true;
   }

@@ -5,6 +5,7 @@ import router from '@ohos.router';
 import { MMKV } from '@tencent/mmkv';
 import { ImageSizeUtil, ThemeState, Log, Toast, ContextProvider } from '@tencentcloud/atomicx/src/main/ets/basecomponent/Index';
 import DemoConstants from '../utils/DemoConstants';
+import { WelcomeMessageSender } from '../utils/WelcomeMessageSender';
 import { TIMPushInterfaces } from '../push/TIMPushInterfaces';
 import { common } from '@kit.AbilityKit';
 
@@ -127,6 +128,7 @@ struct DevLoginPage {
     const loginUserID = LoginStore.shared().state.loginUserInfo?.userID || '';
     Toast.success($r('app.string.login_success_message', loginUserID), this.getUIContext());
     this.registerPush();
+    WelcomeMessageSender.scheduleWelcomeMessage();
     router.replaceUrl({ url: "pages/HomePage" });
   }
 

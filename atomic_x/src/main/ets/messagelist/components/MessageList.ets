@@ -38,6 +38,9 @@ import {
 import { ImmersiveMode, LevelMode } from '@kit.ArkUI';
 import pasteboard from '@ohos.pasteboard';
 import { ChatBackgroundStore } from '../../chatsetting/utils/ChatBackgroundStore';
+import { ListenFromHereController, ListenPlaybackState } from '../listen/ListenFromHereController';
+import { buildListenPlan, ListenPlanResources, ListenItem } from '../listen/ListenFromHere';
+import { ListenPlaybackBar } from '../listen/ListenPlaybackBar';
 
 function isGroupCallingMessage(message: MessageInfo): boolean {
   const callingProvider = new CallingMessageDataProvider(message);
@@ -154,6 +157,8 @@ export struct MessageList {
   @State private effectiveConfig: MessageListStyleProtocol = new ChatMessageListConfig();
   @State private floatingEntry?: MessageListFloatingEntry = undefined;
   @State private chatBackgroundImageUri: string | null = null;
+  private listenController: ListenFromHereController = new ListenFromHereController();
+  @State private listenState: ListenPlaybackState = { isActive: false, isLoading: false, currentText: '' };
 
   // ASR Display Manager for voice-to-text feature
   @State private asrDisplayManager: AsrDisplayManager = new AsrDisplayManager();
@@ -166,6 +171,7 @@ export struct MessageList {
   private receiptTimer?: number = undefined;
 
   aboutToDisappear(): void {
+    this.listenController.stop();
     if (this.receiptTimer !== undefined) {
       clearTimeout(this.receiptTimer);
       this.receiptTimer = undefined;
@@ -297,6 +303,9 @@ export struct MessageList {
         onConvertToText: (msg: MessageInfo) => {
           this.handleConvertVoiceToText(msg);
         },
+        onListenFromHere: (msg: MessageInfo) => {
+          this.handleListenFromHere(msg);
+        },
         onTranslateText: (msg: MessageInfo) => {
           this.handleTranslateText(msg);
         },
@@ -336,6 +345,22 @@ export struct MessageList {
   }
 
   handleMessageDeleted(msgId: string) {
+    AlertDialog.show(
+      undefined,
+      $r('app.string.messagelist_delete_confirm'),
+      $r('app.string.cancel'),
+      $r('app.string.confirm'),
+      undefined,
+      undefined,
+      () => {
+        this.performDeleteMessage(msgId);
+      },
+      this.getUIContext(),
+      true
+    );
+  }
+
+  private performDeleteMessage(msgId: string) {
     if (!this.messageListStore || !this.messageListState) {
       Toast.info($r('app.string.messagelist_delete_failed_invalid_state'), this.getUIContext());
       return;
@@ -506,6 +531,9 @@ export struct MessageList {
           },
           onConvertToText: (msg: MessageInfo) => {
             this.handleConvertVoiceToText(msg);
+          },
+          onListenFromHere: (msg: MessageInfo) => {
+            this.handleListenFromHere(msg);
           },
           onTranslate: (msg: MessageInfo) => {
             this.handleTranslateText(msg);
@@ -771,6 +799,23 @@ export struct MessageList {
 
       if (this.floatingEntry) {
         this.FloatingEntryBuilder(this.floatingEntry)
+      }
+
+      if (this.listenState.isActive) {
+        Column() {
+          ListenPlaybackBar({
+            isLoading: this.listenState.isLoading,
+            currentText: this.listenState.currentText,
+            onClose: () => {
+              this.listenController.stop();
+            }
+          })
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
+        .justifyContent(FlexAlign.Start)
+        .padding({ top: 12 })
+        .hitTestBehavior(HitTestMode.Transparent)
       }
     }
     .width('100%')
@@ -1946,6 +1991,39 @@ export struct MessageList {
   }
 
   // ============ Voice to Text Methods ============
+
+  private buildListenResources(): ListenPlanResources {
+    return {
+      selfSpeaker: TextUtils.getResourceString($r('app.string.listen_speaker_self')),
+      says: (name: string) => TextUtils.getResourceStringWithArgs($r('app.string.listen_says'), name),
+      sentImage: (name: string) => TextUtils.getResourceStringWithArgs($r('app.string.listen_sent_image'), name),
+      sentVideo: (name: string) => TextUtils.getResourceStringWithArgs($r('app.string.listen_sent_video'), name),
+      sentFile: (name: string) => TextUtils.getResourceStringWithArgs($r('app.string.listen_sent_file'), name),
+      sentMerged: (name: string, title: string) =>
+        TextUtils.getResourceStringWithArgs($r('app.string.listen_sent_merged'), name, title),
+    };
+  }
+
+  private handleListenFromHere(message: MessageInfo) {
+    if (!message || !this.messageListState) {
+      return;
+    }
+    const list = this.messageListState.messageList;
+    const startIndex = list.findIndex((m: MessageInfo) => m.msgID === message.msgID);
+    if (startIndex < 0) {
+      return;
+    }
+    const slice = list.slice(startIndex);
+    const plan: ListenItem[] = buildListenPlan(slice, this.buildListenResources());
+    if (plan.length === 0) {
+      Toast.info($r('app.string.listen_from_here_empty'), this.getUIContext());
+      return;
+    }
+    this.listenController.setStateListener((state: ListenPlaybackState) => {
+      this.listenState = { isActive: state.isActive, isLoading: state.isLoading, currentText: state.currentText };
+    });
+    this.listenController.start(plan);
+  }
 
   private handleConvertVoiceToText(message: MessageInfo) {
     if (!message || message.messageType !== MessageType.AUDIO) {

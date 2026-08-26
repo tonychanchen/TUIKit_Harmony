@@ -2,7 +2,7 @@
   "string": [
     {
       "name": "input_message_placeholder",
-      "value": "Send a message or hold to talk..."
+      "value": "Type or hold to talk..."
     },
     {
       "name": "send_button",

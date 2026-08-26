@@ -38,6 +38,7 @@ export struct MessageActionDialog {
   onConvertToText?: (message: MessageInfo) => void;  // Handle convert voice to text
   onTranslateText?: (message: MessageInfo) => void;  // Handle translate text message
   onQuote?: (message: MessageInfo) => void;
+  onListenFromHere?: (message: MessageInfo) => void;  // Handle listen from here (TTS)
   asrDisplayManager?: AsrDisplayManager;  // ASR display state manager
   translationDisplayManager?: TranslationDisplayManager;  // Translation display state manager
   customActions?: MessageCustomAction[] = []; // Custom actions from MessageList
@@ -359,8 +360,7 @@ export struct MessageActionDialog {
       configuredActions.push({
         text: $r('app.string.action_convert_to_text'),
         action: 'convertToText',
-        icon: $rawfile('messagelist/icon_extion_convert_to_text.svg'),
-        useIntrinsicIconColor: true
+        icon: $rawfile('messagelist/icon_extion_convert_to_text.svg')
       });
     }
 
@@ -370,6 +370,15 @@ export struct MessageActionDialog {
         text: $r('app.string.action_translate'),
         action: 'translate',
         icon: $rawfile('messagelist/icon_extion_translate.svg')
+      });
+    }
+
+    // Add listen from here action for text messages
+    if (this.shouldShowListenFromHere()) {
+      configuredActions.push({
+        text: $r('app.string.action_listen_from_here'),
+        action: 'listenFromHere',
+        icon: $rawfile('messagelist/icon_extion_listen_from_here.svg')
       });
     }
 
@@ -484,6 +493,26 @@ export struct MessageActionDialog {
     const isExpanded = this.asrDisplayManager?.isExpanded(this.message.msgID) ?? false;
 
     return !hasAsrText || !isExpanded;
+  }
+
+  private shouldShowListenFromHere(): boolean {
+    if (!this.effectiveConfig.isSupportListenFromHere) {
+      return false;
+    }
+
+    if (this.message.messageType !== MessageType.TEXT) {
+      return false;
+    }
+
+    if (this.message.status === MessageStatus.VIOLATION) {
+      return false;
+    }
+
+    if (this.message.status !== MessageStatus.SEND_SUCCESS) {
+      return false;
+    }
+
+    return true;
   }
 
   private shouldShowTranslate(): boolean {
@@ -604,6 +633,8 @@ export struct MessageActionDialog {
       this.openReadReceiptDetail();
     } else if (action === 'convertToText') {
       this.handleConvertToText();
+    } else if (action === 'listenFromHere') {
+      this.handleListenFromHere();
     } else if (action === 'translate') {
       this.handleTranslateText();
     } else if (action === 'quote') {
@@ -641,6 +672,12 @@ export struct MessageActionDialog {
   private handleConvertToText() {
     if (this.onConvertToText) {
       this.onConvertToText(this.message);
+    }
+  }
+
+  private handleListenFromHere() {
+    if (this.onListenFromHere) {
+      this.onListenFromHere(this.message);
     }
   }
 

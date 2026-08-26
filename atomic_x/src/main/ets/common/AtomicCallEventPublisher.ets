@@ -26,10 +26,6 @@ export class AtomicCallEventPublisher {
   private static readonly KEY_CALL_ID: string = 'callId';
   private static readonly DEFAULT_TIMEOUT_SECONDS: number = 30;
 
-  private static isCallKitIntegrated(): boolean {
-    return TUIEventBus.getInstance().hasSubscribers(AtomicCallEventPublisher.EVENT_START_CALL);
-  }
-
   /**
    * Publish a "chat -> start call" event.
    *
@@ -40,6 +36,8 @@ export class AtomicCallEventPublisher {
    * @param chatGroupId    optional group ID for a group call
    */
   static publishStartCall(participantIds: string[], mediaType: CallMediaType, chatGroupId?: string): void {
+    DataReport.reportInteractionMetrics(InteractionMetrics.CHAT_INVOKE_CALL);
+
     if (!participantIds || participantIds.length === 0) {
       return;
     }
@@ -56,11 +54,6 @@ export class AtomicCallEventPublisher {
     data[AtomicCallEventPublisher.KEY_CHAT_GROUP_ID] =
       ((chatGroupId !== undefined) ? chatGroupId : '') as Object;
     data[AtomicCallEventPublisher.KEY_TIMEOUT] = AtomicCallEventPublisher.DEFAULT_TIMEOUT_SECONDS as Object;
-
-    // Skip reporting when the host app has not integrated CallKit.
-    if (AtomicCallEventPublisher.isCallKitIntegrated()) {
-      DataReport.reportInteractionMetrics(InteractionMetrics.CHAT_INVOKE_CALL);
-    }
 
     const params = new PublishParams(false, data);
     TUIEventBus.getInstance().publish(AtomicCallEventPublisher.EVENT_START_CALL, null, params);

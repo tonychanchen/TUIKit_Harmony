@@ -36,6 +36,20 @@ export default class TextUtils {
   }
 
   static getResourceString(resource: Resource): string {
-    return getContext().getApplicationContext().resourceManager.getStringSync(resource);
+    return getContext().resourceManager.getStringSync(resource.id);
+  }
+
+  static getResourceStringWithArgs(resource: Resource, ...args: string[]): string {
+    const template = getContext().resourceManager.getStringSync(resource.id);
+    return TextUtils.formatPositionalArgs(template, args);
+  }
+
+  private static formatPositionalArgs(template: string, args: string[]): string {
+    let result = template;
+    for (let i = 0; i < args.length; i++) {
+      const positional = '%' + (i + 1).toString() + '$s';
+      result = result.split(positional).join(args[i]);
+    }
+    return result;
   }
 }

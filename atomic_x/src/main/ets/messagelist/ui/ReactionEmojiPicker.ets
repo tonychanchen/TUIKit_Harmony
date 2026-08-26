@@ -2,7 +2,7 @@ import { ThemeState } from '../../basecomponent/Index';
 import { EmojiDataManager, EmojiItem } from '../../emojipicker/data/EmojiData';
 import { preferences } from '@kit.ArkData';
 
-const MAX_QUICK_EMOJI_COUNT = 6;
+const MAX_QUICK_EMOJI_COUNT = 11;
 const RECENT_EMOJI_KEY = 'recent_emojis';
 
 /**
@@ -105,6 +105,7 @@ export struct ReactionEmojiPicker {
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   onEmojiClick?: (emoji: EmojiItem) => void;
   onExpandClick?: () => void;
+  onCollapseClick?: () => void;
   @State private quickEmojis: EmojiItem[] = [];
   private updateListener: () => void = () => {
     this.loadQuickEmojis();
@@ -169,33 +170,79 @@ export struct ReactionEmojiPicker {
   }
 
   build() {
-    Row() {
-      // Quick emoji items
-      ForEach(this.quickEmojis, (emoji: EmojiItem) => {
-        this.EmojiItem(emoji)
-      }, (emoji: EmojiItem) => emoji.id)
-
-      // Expand button
+    Column() {
       Row() {
-        Image($rawfile('messagelist/icon_extion_reaction_expand.svg'))
-          .width(20)
-          .height(20)
-          .objectFit(ImageFit.Contain)
-          .fillColor(this.themeState.colors.textColorSecondary)
-      }
-      .width(28)
-      .height(28)
-      .justifyContent(FlexAlign.Center)
-      .borderRadius(8)
-      .onClick(() => {
-        if (this.onExpandClick) {
-          this.onExpandClick();
+        Text($r('app.string.action_reaction'))
+          .fontSize(14)
+          .fontColor(this.themeState.colors.textColorPrimary)
+          .layoutWeight(1)
+        Row() {
+          Image($rawfile('messagelist/icon_extion_reaction_expand.svg'))
+            .width(14)
+            .height(14)
+            .objectFit(ImageFit.Contain)
+            .fillColor(this.themeState.colors.textColorPrimary)
         }
-      })
+        .width(28)
+        .height(28)
+        .justifyContent(FlexAlign.Center)
+        .onClick(() => {
+          if (this.onCollapseClick) {
+            this.onCollapseClick();
+          }
+        })
+      }
+      .width('100%')
+      .height(40)
+      .padding({ left: 12, right: 12, top: 6, bottom: 0 })
+
+      Row() {
+        ForEach(this.quickEmojis.slice(0, 6), (emoji: EmojiItem) => {
+          this.EmojiItem(emoji)
+        }, (emoji: EmojiItem) => emoji.id)
+      }
+      .width('100%')
+      .padding({ left: 8, right: 8 })
+      .justifyContent(FlexAlign.SpaceBetween)
+
+      Divider()
+        .width('90%')
+        .height(0.5)
+        .color(this.themeState.colors.strokeColorPrimary)
+        .margin({ top: 4, bottom: 4 })
+
+      Row() {
+        ForEach(this.quickEmojis.slice(6, 11), (emoji: EmojiItem) => {
+          this.EmojiItem(emoji)
+        }, (emoji: EmojiItem) => emoji.id)
+        this.MoreEmojiButton()
+      }
+      .width('100%')
+      .padding({ left: 8, right: 8, bottom: 10 })
+      .justifyContent(FlexAlign.SpaceBetween)
     }
-    .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+    .width('100%')
     .backgroundColor(this.themeState.colors.dropdownColorDefault)
     .borderRadius(16)
+  }
+
+  @Builder
+  private MoreEmojiButton() {
+    Row() {
+      Image($rawfile('messagelist/icon_extion_more.svg'))
+        .width(24)
+        .height(24)
+        .objectFit(ImageFit.Contain)
+    }
+    .width(32)
+    .height(32)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(8)
+    .onClick(() => {
+      if (this.onExpandClick) {
+        this.onExpandClick();
+      }
+    })
   }
 
   @Builder
@@ -206,18 +253,15 @@ export struct ReactionEmojiPicker {
         .height(24)
         .objectFit(ImageFit.Contain)
     }
-    .width(28)
-    .height(28)
+    .width(32)
+    .height(32)
     .justifyContent(FlexAlign.Center)
     .borderRadius(8)
     .onClick(() => {
-      console.log(`[ReactionEmoji] 👆 User clicked emoji - ID: ${emoji.id}, Name: ${emoji.name}, Image: ${emoji.imageFile}`);
       RecentEmojiManager.getInstance().addRecentEmoji(emoji.id);
       if (this.onEmojiClick) {
-        console.log(`[ReactionEmoji] 📤 Triggering onEmojiClick callback`);
         this.onEmojiClick(emoji);
       }
     })
-    .margin({ right: 8 })
   }
 }

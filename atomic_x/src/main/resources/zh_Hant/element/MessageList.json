@@ -97,6 +97,10 @@
       "value": "刪除失敗：訊息列表狀態無效"
     },
     {
+      "name": "messagelist_delete_confirm",
+      "value": "確定刪除該訊息？"
+    },
+    {
       "name": "messagelist_message_deleted",
       "value": "訊息已刪除"
     },
@@ -287,6 +291,42 @@
     {
       "name": "action_convert_to_text",
       "value": "轉文字"
+    },
+    {
+      "name": "action_listen_from_here",
+      "value": "從目前開始聽"
+    },
+    {
+      "name": "listen_speaker_self",
+      "value": "我"
+    },
+    {
+      "name": "listen_says",
+      "value": "%1$s說："
+    },
+    {
+      "name": "listen_sent_image",
+      "value": "%1$s傳送了圖片"
+    },
+    {
+      "name": "listen_sent_video",
+      "value": "%1$s傳送了影片"
+    },
+    {
+      "name": "listen_sent_file",
+      "value": "%1$s傳送了檔案"
+    },
+    {
+      "name": "listen_sent_merged",
+      "value": "%1$s傳送了%2$s"
+    },
+    {
+      "name": "listen_from_here_empty",
+      "value": "沒有可朗讀的內容"
+    },
+    {
+      "name": "action_reaction",
+      "value": "貼表情"
     },
     {
       "name": "messagelist_convert_to_text_failed",

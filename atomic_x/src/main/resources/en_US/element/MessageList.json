@@ -97,6 +97,10 @@
       "value": "Delete failed: invalid state"
     },
     {
+      "name": "messagelist_delete_confirm",
+      "value": "Delete this message?"
+    },
+    {
       "name": "messagelist_message_deleted",
       "value": "Message deleted"
     },
@@ -194,7 +198,7 @@
     },
     {
       "name": "action_multiselect",
-      "value": "Multi Select"
+      "value": "Select"
     },
     {
       "name": "multiselect_selected",
@@ -279,6 +283,42 @@
     {
       "name": "action_convert_to_text",
       "value": "Convert to Text"
+    },
+    {
+      "name": "action_listen_from_here",
+      "value": "Listen"
+    },
+    {
+      "name": "listen_speaker_self",
+      "value": "I"
+    },
+    {
+      "name": "listen_says",
+      "value": "%1$s said: "
+    },
+    {
+      "name": "listen_sent_image",
+      "value": "%1$s sent an image"
+    },
+    {
+      "name": "listen_sent_video",
+      "value": "%1$s sent a video"
+    },
+    {
+      "name": "listen_sent_file",
+      "value": "%1$s sent a file"
+    },
+    {
+      "name": "listen_sent_merged",
+      "value": "%1$s sent: %2$s"
+    },
+    {
+      "name": "listen_from_here_empty",
+      "value": "Nothing to read aloud"
+    },
+    {
+      "name": "action_reaction",
+      "value": "Reaction"
     },
     {
       "name": "messagelist_convert_to_text_failed",

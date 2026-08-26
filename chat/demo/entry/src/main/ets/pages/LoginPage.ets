@@ -6,6 +6,7 @@ import { MMKV } from '@tencent/mmkv';
 import router from '@ohos.router';
 import web_webview from '@ohos.web.webview'
 import DemoConstants from '../utils/DemoConstants';
+import { WelcomeMessageSender } from '../utils/WelcomeMessageSender';
 import { LoginStore } from '@tencentcloud/atomicxcore';
 
 class LoginCompletionHandler {
@@ -216,6 +217,7 @@ struct LoginPage {
     const loginUserID = LoginStore.shared().state.loginUserInfo?.userID || '';
     Toast.success($r('app.string.login_success_message', loginUserID), this.getUIContext());
 
+    WelcomeMessageSender.scheduleWelcomeMessage();
     router.replaceUrl({ url: "pages/HomePage" });
   }
 

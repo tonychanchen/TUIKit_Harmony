@@ -3,10 +3,19 @@ import { LoginStore } from '@tencentcloud/atomicxcore';
 import { ConversationType } from '@tencentcloud/atomicxcore';
 import { ThemeState, AppBuilderConfig, MessageAction } from '../../basecomponent/Index';
 import { MessageListStyleProtocol, ChatMessageListConfig } from '../config/MessageListConfig';
-import { ReactionEmojiPicker, RecentEmojiManager } from './ReactionEmojiPicker';
+import { ReactionEmojiPicker } from './ReactionEmojiPicker';
 import { EmojiItem } from '../../emojipicker/data/EmojiData';
 import { AsrDisplayManager } from '../utils/AsrDisplayManager';
 import { TranslationDisplayManager } from '../utils/TranslationDisplayManager';
+
+export const CLASSIC_MESSAGE_ACTION_POPUP_WIDTH: number = 228;
+const ACTION_ICON_SIZE: number = 16;
+const ACTION_LABEL_SIZE: number = 10;
+const ACTION_ITEM_VERTICAL_PADDING: number = 11;
+const ACTION_LABEL_MARGIN_TOP: number = 4;
+const ACTION_GRID_HORIZONTAL_PADDING: number = 4;
+const ACTION_GRID_BOTTOM_PADDING: number = 8;
+const ACTION_DIVIDER_WIDTH: string = '90%';
 
 /**
  * Message action item interface for classic popup menu
@@ -18,6 +27,7 @@ export interface ClassicMessageActionItem {
   color?: string | ResourceColor;
   iconColor?: string | ResourceColor;
   useIntrinsicIconColor?: boolean;
+  strokeIcon?: boolean;
 }
 
 /**
@@ -55,12 +65,14 @@ export struct ClassicMessageActionPopup {
   onConvertToText?: () => void;
   onTranslate?: () => void;
   onQuote?: () => void;
+  onListenFromHere?: () => void;
   onEmojiReaction?: (emoji: EmojiItem) => void;
   onExpandEmojiPicker?: () => void;
   onClose?: () => void;
   customActions?: ClassicCustomActionItem[] = [];
   @State private effectiveConfig: MessageListStyleProtocol = new ChatMessageListConfig();
   @State private actionItems: ClassicMessageActionItem[] = [];
+  @State private isReactionPickerVisible: boolean = false;
 
   aboutToAppear() {
     if (this.config) {
@@ -72,16 +84,14 @@ export struct ClassicMessageActionPopup {
   private initializeActions() {
     const items: ClassicMessageActionItem[] = [];
 
-    // Multi-select action (order aligned with Android View: multiSelect, forward, quote, copy, recall, delete, ...)
-    if (this.effectiveConfig.isSupportMultiSelect) {
+    if (this.effectiveConfig.isSupportCopy && this.shouldShowCopy()) {
       items.push({
-        text: $r('app.string.action_multiselect'),
-        icon: $rawfile('messagelist/icon_extion_multi.svg'),
-        action: 'multiselect'
+        text: $r('app.string.action_copy'),
+        icon: $rawfile('messagelist/icon_extion_copy.svg'),
+        action: 'copy'
       });
     }
 
-    // Forward action - exclude failed and violation messages
     if (this.effectiveConfig.isSupportForward &&
         this.message.status !== MessageStatus.VIOLATION &&
         this.message.status !== MessageStatus.SEND_FAIL) {
@@ -89,11 +99,10 @@ export struct ClassicMessageActionPopup {
         text: $r('app.string.action_forward'),
         icon: $rawfile('messagelist/icon_extion_forward.svg'),
         action: 'forward',
-        useIntrinsicIconColor: true
+        strokeIcon: true
       });
     }
 
-    // Quote action - only for send success messages
     if (this.shouldShowQuote()) {
       items.push({
         text: $r('app.string.action_quote'),
@@ -102,48 +111,38 @@ export struct ClassicMessageActionPopup {
       });
     }
 
-    // Copy action - only for text messages
-    if (this.effectiveConfig.isSupportCopy  &&
-        this.shouldShowCopy()) {
+    if (this.effectiveConfig.isSupportMultiSelect) {
       items.push({
-        text: $r('app.string.action_copy'),
-        icon: $rawfile('messagelist/icon_extion_copy.svg'),
-        action: 'copy'
+        text: $r('app.string.action_multiselect'),
+        icon: $rawfile('messagelist/icon_extion_multi.svg'),
+        action: 'multiselect'
       });
     }
 
-    // Recall action - only for own messages within time limit
-    if (this.shouldShowRecall()) {
-      items.push({
-        text: $r('app.string.action_recall'),
-        icon: $rawfile('messagelist/icon_extion_recall.svg'),
-        action: 'recall',
-        useIntrinsicIconColor: true
-      });
-    }
-
-    // Delete action
     if (this.effectiveConfig.isSupportDelete) {
       items.push({
         text: $r('app.string.action_delete'),
         icon: $rawfile('messagelist/icon_extion_delete.svg'),
-        action: 'delete',
-        color: this.themeState.colors.textColorError,
-        iconColor: this.themeState.colors.textColorError,
+        action: 'delete'
       });
     }
 
-    // Convert to text action - only for sound messages
+    if (this.shouldShowRecall()) {
+      items.push({
+        text: $r('app.string.action_recall'),
+        icon: $rawfile('messagelist/icon_extion_recall.svg'),
+        action: 'recall'
+      });
+    }
+
     if (this.shouldShowConvertToText()) {
       items.push({
         text: $r('app.string.action_convert_to_text'),
         icon: $rawfile('messagelist/icon_extion_convert_to_text.svg'),
-        action: 'convertToText',
-        useIntrinsicIconColor: true
+        action: 'convertToText'
       });
     }
 
-    // Translate action - only for text messages
     if (this.shouldShowTranslate()) {
       items.push({
         text: $r('app.string.action_translate'),
@@ -152,14 +151,29 @@ export struct ClassicMessageActionPopup {
       });
     }
 
-    // Custom actions
+    if (this.shouldShowListenFromHere()) {
+      items.push({
+        text: $r('app.string.action_listen_from_here'),
+        icon: $rawfile('messagelist/icon_extion_listen_from_here.svg'),
+        action: 'listenFromHere'
+      });
+    }
+
     if (this.customActions && this.customActions.length > 0) {
-          this.customActions.forEach((customAction: ClassicCustomActionItem, index: number) => {
+      this.customActions.forEach((customAction: ClassicCustomActionItem, index: number) => {
         items.push({
           text: customAction.title,
           icon: customAction.iconName as Resource,
           action: `custom_${index}`
         });
+      });
+    }
+
+    if (this.effectiveConfig.isSupportReaction && this.message.status !== MessageStatus.VIOLATION) {
+      items.push({
+        text: $r('app.string.action_reaction'),
+        icon: $rawfile('messagelist/icon_extion_reaction.svg'),
+        action: 'reaction'
       });
     }
 
@@ -267,8 +281,28 @@ export struct ClassicMessageActionPopup {
     return true;
   }
 
+  private shouldShowListenFromHere(): boolean {
+    if (!this.effectiveConfig.isSupportListenFromHere) {
+      return false;
+    }
+    if (this.message.messageType !== MessageType.TEXT) {
+      return false;
+    }
+    if (this.message.status === MessageStatus.VIOLATION) {
+      return false;
+    }
+    if (this.message.status !== MessageStatus.SEND_SUCCESS) {
+      return false;
+    }
+    return true;
+  }
+
   private handleAction(action: string) {
-    // Close popup first
+    if (action === 'reaction') {
+      this.isReactionPickerVisible = true;
+      return;
+    }
+
     if (this.onClose) {
       this.onClose();
     }
@@ -287,6 +321,8 @@ export struct ClassicMessageActionPopup {
       this.onDetail();
     } else if (action === 'convertToText' && this.onConvertToText) {
       this.onConvertToText();
+    } else if (action === 'listenFromHere' && this.onListenFromHere) {
+      this.onListenFromHere();
     } else if (action === 'translate' && this.onTranslate) {
       this.onTranslate();
     } else if (action === 'quote' && this.onQuote) {
@@ -308,82 +344,127 @@ export struct ClassicMessageActionPopup {
     }
   }
 
+  private getStrokeColorMatrix(color: string): number[] {
+    const rgb = this.parseHexColor(color);
+    const r = Number.isNaN(rgb[0]) ? 255 : rgb[0];
+    const g = Number.isNaN(rgb[1]) ? 255 : rgb[1];
+    const b = Number.isNaN(rgb[2]) ? 255 : rgb[2];
+    return [
+      0, 0, 0, 0, r,
+      0, 0, 0, 0, g,
+      0, 0, 0, 0, b,
+      0, 0, 0, 1, 0
+    ];
+  }
+
+  private parseHexColor(color: string): number[] {
+    let hex = color;
+    if (hex.startsWith('#')) {
+      hex = hex.substring(1);
+    }
+    if (hex.length === 8) {
+      hex = hex.substring(2);
+    }
+    return [
+      parseInt(hex.substring(0, 2), 16),
+      parseInt(hex.substring(2, 4), 16),
+      parseInt(hex.substring(4, 6), 16)
+    ];
+  }
+
+  @Builder
+  private ActionItem(item: ClassicMessageActionItem) {
+    Column() {
+      if (item.strokeIcon) {
+        Image(item.icon)
+          .width(ACTION_ICON_SIZE)
+          .height(ACTION_ICON_SIZE)
+          .objectFit(ImageFit.Contain)
+          .colorFilter(this.getStrokeColorMatrix(item.iconColor?.toString() ?? this.themeState.colors.textColorPrimary))
+      } else if (item.useIntrinsicIconColor) {
+        Image(item.icon)
+          .width(ACTION_ICON_SIZE)
+          .height(ACTION_ICON_SIZE)
+          .objectFit(ImageFit.Contain)
+      } else {
+        Image(item.icon)
+          .width(ACTION_ICON_SIZE)
+          .height(ACTION_ICON_SIZE)
+          .objectFit(ImageFit.Contain)
+          .fillColor(item.iconColor ?? this.themeState.colors.textColorPrimary)
+      }
+
+      Text(item.text)
+        .fontSize(ACTION_LABEL_SIZE)
+        .lineHeight(14)
+        .fontColor(item.color ?? this.themeState.colors.textColorPrimary)
+        .margin({ top: ACTION_LABEL_MARGIN_TOP })
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+    }
+    .width('20%')
+    .padding({ top: ACTION_ITEM_VERTICAL_PADDING, bottom: ACTION_ITEM_VERTICAL_PADDING })
+    .alignItems(HorizontalAlign.Center)
+    .onClick(() => {
+      this.handleAction(item.action);
+    })
+  }
+
   build() {
     Column() {
-      // Reaction emoji picker at the top (inside popup)
-      if (this.effectiveConfig.isSupportReaction && this.message.status !== MessageStatus.VIOLATION) {
-        Row() {
-          ReactionEmojiPicker({
-            onEmojiClick: (emoji: EmojiItem) => {
-              if (this.onClose) {
-                this.onClose();
-              }
-              if (this.onEmojiReaction) {
-                this.onEmojiReaction(emoji);
-              }
-            },
-            onExpandClick: () => {
-              if (this.onClose) {
-                this.onClose();
-              }
-              if (this.onExpandEmojiPicker) {
-                this.onExpandEmojiPicker();
-              }
+      if (this.isReactionPickerVisible) {
+        ReactionEmojiPicker({
+          onEmojiClick: (emoji: EmojiItem) => {
+            if (this.onClose) {
+              this.onClose();
             }
-          })
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .padding({ top: 12, bottom: 8 })
-      }
-
-      // Divider line
-      if (this.effectiveConfig.isSupportReaction && this.message.status !== MessageStatus.VIOLATION && this.actionItems.length > 0) {
-        Divider()
-          .width('90%')
-          .height(0.5)
-          .color(this.themeState.colors.strokeColorPrimary)
-          .margin({ bottom: 8 })
-      }
-
-      // Action buttons using Flex layout (auto height)
-      if (this.actionItems.length > 0) {
-        Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-          ForEach(this.actionItems, (item: ClassicMessageActionItem) => {
-            Column() {
-              if (item.useIntrinsicIconColor) {
-                Image(item.icon)
-                  .width(18)
-                  .height(18)
-                  .objectFit(ImageFit.Contain)
-              } else {
-                Image(item.icon)
-                  .width(18)
-                  .height(18)
-                  .objectFit(ImageFit.Contain)
-                  .fillColor(item.iconColor ?? this.themeState.colors.textColorPrimary)
-              }
-
-              Text(item.text)
-                .fontSize(11)
-                .fontColor(item.color ?? this.themeState.colors.textColorSecondary)
-                .margin({ top: 6 })
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            if (this.onEmojiReaction) {
+              this.onEmojiReaction(emoji);
             }
-            .width('20%')
-            .padding({ top: 8, bottom: 8 })
-            .alignItems(HorizontalAlign.Center)
-            .onClick(() => {
-              this.handleAction(item.action);
-            })
-          }, (item: ClassicMessageActionItem, index: number) => `${item.action}_${index}`)
+          },
+          onExpandClick: () => {
+            if (this.onClose) {
+              this.onClose();
+            }
+            if (this.onExpandEmojiPicker) {
+              this.onExpandEmojiPicker();
+            }
+          },
+          onCollapseClick: () => {
+            this.isReactionPickerVisible = false;
+          }
+        })
+      } else {
+        if (this.actionItems.length > 0) {
+          Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
+            ForEach(this.actionItems.slice(0, 5), (item: ClassicMessageActionItem) => {
+              this.ActionItem(item)
+            }, (item: ClassicMessageActionItem, index: number) => `${item.action}_${index}`)
+          }
+          .width('100%')
+          .padding({ left: ACTION_GRID_HORIZONTAL_PADDING, right: ACTION_GRID_HORIZONTAL_PADDING,
+            bottom: ACTION_GRID_BOTTOM_PADDING })
+
+          if (this.actionItems.length > 5) {
+            Divider()
+              .width(ACTION_DIVIDER_WIDTH)
+              .height(0.5)
+              .color(this.themeState.colors.strokeColorPrimary)
+              .margin({ top: 2, bottom: 2 })
+
+            Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
+              ForEach(this.actionItems.slice(5, 10), (item: ClassicMessageActionItem) => {
+                this.ActionItem(item)
+              }, (item: ClassicMessageActionItem, index: number) => `${item.action}_${index + 5}`)
+            }
+            .width('100%')
+            .padding({ left: ACTION_GRID_HORIZONTAL_PADDING, right: ACTION_GRID_HORIZONTAL_PADDING,
+              bottom: ACTION_GRID_BOTTOM_PADDING })
+          }
         }
-        .width('100%')
-        .padding({ left: 8, right: 8, bottom: 12 })
       }
     }
-    .width(280)
+    .width(CLASSIC_MESSAGE_ACTION_POPUP_WIDTH)
     .backgroundColor(this.themeState.colors.dropdownColorDefault)
     .borderRadius(7)
     .shadow({

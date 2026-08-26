@@ -12,7 +12,8 @@ import {
   AppBuilderConfig,
   ConversationAction,
   ContextProvider,
-  LanguageState
+  LanguageState,
+  AlertDialog
 } from '../../basecomponent/Index';
 import { ConversationListStore, ConversationInfo, ConversationLoadOption, ConversationType, ReceiveMessageOption, ConversationListState, ConversationMarkType, GroupAtType, GroupAtInfo } from '@tencentcloud/atomicxcore';
 import { ErrorInfo } from '@tencentcloud/atomicxcore';
@@ -181,7 +182,7 @@ struct ConversationListRow {
               Image($rawfile('conversationlist/muted_icon.svg'))
                 .width(16)
                 .height(16)
-                .fillColor(this.themeState.colors.textColorSecondary)
+                .fillColor(this.themeState.colors.textColorDisable)
                 .margin({ left: 8 })
             }
           }
@@ -744,8 +745,20 @@ export struct ConversationList {
   private handleConversationAction(action: DialogAction, conversationId: string, conversation: ConversationInfo) {
     switch (action) {
       case DialogAction.DELETE:
-        console.log('Deleting conversation:', conversationId);
-        this.deleteConversation(conversation);
+        AlertDialog.show(
+          undefined,
+          $r('app.string.delete_conversation_confirm'),
+          $r('app.string.cancel'),
+          $r('app.string.confirm'),
+          undefined,
+          undefined,
+          () => {
+            console.log('Deleting conversation:', conversationId);
+            this.deleteConversation(conversation);
+          },
+          this.getUIContext(),
+          true
+        );
         break;
 
       case DialogAction.CLEAR:

@@ -27,7 +27,7 @@ import { ReactionDetailSheet } from './ReactionDetailSheet';
 import { AsrDisplayManager } from '../utils/AsrDisplayManager';
 import { TranslationDisplayManager } from '../utils/TranslationDisplayManager';
 import { AuxiliaryTextPopupMenu, AuxiliaryTextMenuItemConfig } from './AuxiliaryTextPopupMenu';
-import { ClassicMessageActionPopup, ClassicCustomActionItem } from './ClassicMessageActionPopup';
+import { ClassicMessageActionPopup, ClassicCustomActionItem, CLASSIC_MESSAGE_ACTION_POPUP_WIDTH } from './ClassicMessageActionPopup';
 import { MessageQuoteBubbleView } from '../cells/MessageQuoteBubbleView';
 import { EventBus } from '../../basecomponent/utils/EventBus';
 import { MessageQuoteEvent } from './MessageQuoteEvent';
@@ -158,6 +158,7 @@ export struct MessageItem {
   onTranslationBubbleLongPress?: (message: MessageInfo) => void;
   @ObjectLink messageListStore: MessageListStore;
   @State private shouldShowAvatarValue: boolean = true;
+  @State private messageBubbleWidth: number = 0;
   @State private inputStore?: MessageInputStore = undefined;
   @State private messageActionStore?: MessageActionStore = undefined;
   private resendDialogController?: CustomDialogController;
@@ -183,6 +184,7 @@ export struct MessageItem {
   onConvertToText?: (message: MessageInfo) => void;
   onTranslate?: (message: MessageInfo) => void;
   onQuote?: (message: MessageInfo) => void;
+  onListenFromHere?: (message: MessageInfo) => void;
   onEmojiReaction?: (emoji: EmojiItem, message: MessageInfo) => void;
   onExpandEmojiPicker?: (message: MessageInfo) => void;
 
@@ -463,6 +465,11 @@ export struct MessageItem {
           this.onConvertToText(this.message);
         }
       },
+      onListenFromHere: () => {
+        if (this.onListenFromHere) {
+          this.onListenFromHere(this.message);
+        }
+      },
       onTranslate: () => {
         if (this.onTranslate) {
           this.onTranslate(this.message);
@@ -543,6 +550,23 @@ export struct MessageItem {
     return message.isSentBySelf ?? false;
   }
 
+  private updateMessageBubbleWidth(area: Area): void {
+    const width = Number(area.width);
+    if (!Number.isNaN(width) && width > 0 && width !== this.messageBubbleWidth) {
+      this.messageBubbleWidth = width;
+    }
+  }
+
+  private getActionPopupArrowOffset(): number {
+    const avatarPlaceholder = this.shouldShowAvatarValue
+      ? 40 + (this.effectiveConfig.avatarSpacing ?? 8)
+      : 0;
+    const bubbleHalfWidth = this.messageBubbleWidth / 2;
+    return this.getEffectiveIsSelf()
+      ? Math.max(0, CLASSIC_MESSAGE_ACTION_POPUP_WIDTH - avatarPlaceholder - bubbleHalfWidth)
+      : Math.max(0, avatarPlaceholder + bubbleHalfWidth);
+  }
+
   @Builder
   MessageBubble(message: MessageInfo) {
 
@@ -567,6 +591,9 @@ export struct MessageItem {
         }
       }
       .padding({ bottom: this.shouldShowTimeInBubble(message) ? 4 : 0 })
+      .onAreaChange((_old: Area, area: Area): void => {
+        this.updateMessageBubbleWidth(area);
+      })
     } else if (this.getMessageEffectiveIsSelf(message)) {
       Column() {
         GetMessageView(this.createRenderContext(message));
@@ -591,6 +618,9 @@ export struct MessageItem {
         duration: 300,
         curve: Curve.EaseInOut
       })
+      .onAreaChange((_old: Area, area: Area): void => {
+        this.updateMessageBubbleWidth(area);
+      })
     } else {
       Column() {
         GetMessageView(this.createRenderContext(message));
@@ -613,6 +643,9 @@ export struct MessageItem {
       .animation({
         duration: 300,
         curve: Curve.EaseInOut
+      })
+      .onAreaChange((_old: Area, area: Area): void => {
+        this.updateMessageBubbleWidth(area);
       })
     }
   }
@@ -1157,7 +1190,6 @@ export struct MessageItem {
               duration: 300,
               curve: Curve.EaseInOut
             })
-            
             // ASR text bubble (separate from voice bubble)
             if (this.shouldShowAsrBubble(this.message)) {
               this.AsrTextBubble(this.message)
@@ -1214,7 +1246,7 @@ export struct MessageItem {
         .alignItems(VerticalAlign.Top)
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        .onClick(() => {
+                .onClick(() => {
           this.handleItemTapForDismiss();
         })
         .gesture(
@@ -1225,25 +1257,27 @@ export struct MessageItem {
             })
         )
         .bindPopup(
-          this.showClassicActionPopup && 
+          this.showClassicActionPopup &&
           this.effectiveConfig.messageActionStyle === 'popup' &&
-        this.message.status !== MessageStatus.REVOKED &&
-        this.message.status !== MessageStatus.VIOLATION,
+          this.message.status !== MessageStatus.REVOKED &&
+          this.message.status !== MessageStatus.VIOLATION,
           {
-          builder: this.ClassicActionPopupBuilder,
-          placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
-          enableArrow: false,
-          mask: false,
-          radius: 7,
-          popupColor: Color.Transparent,
-          backgroundBlurStyle: BlurStyle.NONE,
-          shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
-          onStateChange: (e) => {
-            if (!e.isVisible) {
-              this.showClassicActionPopup = false;
+            builder: this.ClassicActionPopupBuilder,
+            placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
+            arrowOffset: this.getActionPopupArrowOffset(),
+            offset: { x: 0, y: 0 },
+            enableArrow: true,
+            mask: false,
+            radius: 7,
+            popupColor: this.themeState.colors.dropdownColorDefault,
+            backgroundBlurStyle: BlurStyle.NONE,
+            shadow: { radius: 8, color: '#33000000', offsetX: 0, offsetY: 2 },
+            onStateChange: (e) => {
+              if (!e.isVisible) {
+                this.showClassicActionPopup = false;
+              }
             }
-          }
-        })
+          })
       }
     }
     .width('100%')
@@ -1361,7 +1395,7 @@ export struct MessageItem {
         .alignItems(VerticalAlign.Top)
         .width('100%')
         .justifyContent(FlexAlign.End)
-        .onClick(() => {
+                .onClick(() => {
           this.handleItemTapForDismiss();
         })
         .gesture(
@@ -1372,25 +1406,27 @@ export struct MessageItem {
             })
         )
         .bindPopup(
-          this.showClassicActionPopup && 
+          this.showClassicActionPopup &&
           this.effectiveConfig.messageActionStyle === 'popup' &&
-        this.message.status !== MessageStatus.REVOKED &&
-        this.message.status !== MessageStatus.VIOLATION,
+          this.message.status !== MessageStatus.REVOKED &&
+          this.message.status !== MessageStatus.VIOLATION,
           {
-          builder: this.ClassicActionPopupBuilder,
-          placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
-          enableArrow: false,
-          mask: false,
-          radius: 7,
-          popupColor: Color.Transparent,
-          backgroundBlurStyle: BlurStyle.NONE,
-          shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
-          onStateChange: (e) => {
-            if (!e.isVisible) {
-              this.showClassicActionPopup = false;
+            builder: this.ClassicActionPopupBuilder,
+            placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
+            arrowOffset: this.getActionPopupArrowOffset(),
+            offset: { x: 0, y: 0 },
+            enableArrow: true,
+            mask: false,
+            radius: 7,
+            popupColor: this.themeState.colors.dropdownColorDefault,
+            backgroundBlurStyle: BlurStyle.NONE,
+            shadow: { radius: 8, color: '#33000000', offsetX: 0, offsetY: 2 },
+            onStateChange: (e) => {
+              if (!e.isVisible) {
+                this.showClassicActionPopup = false;
+              }
             }
-          }
-        })
+          })
       }
     }
     .width('100%')
@@ -1557,25 +1593,27 @@ export struct MessageItem {
             })
         )
         .bindPopup(
-          this.showClassicActionPopup && 
+          this.showClassicActionPopup &&
           this.effectiveConfig.messageActionStyle === 'popup' &&
-        this.message.status !== MessageStatus.REVOKED &&
-        this.message.status !== MessageStatus.VIOLATION,
+          this.message.status !== MessageStatus.REVOKED &&
+          this.message.status !== MessageStatus.VIOLATION,
           {
-          builder: this.ClassicActionPopupBuilder,
-          placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
-          enableArrow: false,
-          mask: false,
-          radius: 7,
-          popupColor: Color.Transparent,
-          backgroundBlurStyle: BlurStyle.NONE,
-          shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 },
-          onStateChange: (e) => {
-            if (!e.isVisible) {
-              this.showClassicActionPopup = false;
+            builder: this.ClassicActionPopupBuilder,
+            placement: this.getEffectiveIsSelf() ? Placement.TopRight : Placement.TopLeft,
+            arrowOffset: this.getActionPopupArrowOffset(),
+            offset: { x: 0, y: 0 },
+            enableArrow: true,
+            mask: false,
+            radius: 7,
+            popupColor: this.themeState.colors.dropdownColorDefault,
+            backgroundBlurStyle: BlurStyle.NONE,
+            shadow: { radius: 8, color: '#33000000', offsetX: 0, offsetY: 2 },
+            onStateChange: (e) => {
+              if (!e.isVisible) {
+                this.showClassicActionPopup = false;
+              }
             }
-          }
-        })
+          })
       }
     }
   }

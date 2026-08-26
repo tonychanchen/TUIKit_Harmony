@@ -1,11 +1,13 @@
 import { ThemeState } from '../../basecomponent/Index';
 import { EmojiDataManager, EmojiItem, EmojiCategory } from '../data/EmojiData';
 import dataPreferences from '@ohos.data.preferences';
+import window from '@ohos.window';
 @Component
 export struct EmojiPicker {
   @StorageLink('ThemeState') themeState: ThemeState = ThemeState.getInstance();
   @State selectedEmojiType: string = 'normal'; 
   @State recentEmojis: EmojiItem[] = [];
+  @State bottomSafeHeight: number = 0;
   
   maxRecentEmojis: number = 8;
   showTypeSelector: boolean = true;
@@ -18,8 +20,24 @@ export struct EmojiPicker {
   onSendClick?: () => void;
 
   aboutToAppear() {
-    
+    this.updateBottomSafeHeight();
     this.loadRecentEmojis();
+  }
+
+  // Query the system bottom safe-area (navigation indicator) height in vp so the
+  // panel can extend below the home indicator to the very bottom of the screen.
+  private updateBottomSafeHeight(): void {
+    try {
+      window.getLastWindow(getContext(this)).then((w: window.Window) => {
+        const avoidArea = w.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+        const bottomPx = avoidArea.bottomRect.height;
+        if (bottomPx > 0) {
+          this.bottomSafeHeight = px2vp(bottomPx);
+        }
+      }).catch(() => {
+      });
+    } catch (e) {
+    }
   }
 
   build() {
@@ -43,7 +61,7 @@ export struct EmojiPicker {
       .layoutWeight(1)
     }
     .width('100%')
-    .height(this.panelHeight)
+    .height(this.panelHeight + this.bottomSafeHeight)
     .backgroundColor(this.themeState.colors.bgColorOperate)
     .borderRadius({ topLeft: 12, topRight: 12 })
     .padding({
@@ -55,12 +73,12 @@ export struct EmojiPicker {
     .transition({
       type: TransitionType.Insert,
       opacity: 1,
-      translate: { y: 280 }
+      translate: { y: this.panelHeight + this.bottomSafeHeight }
     })
     .transition({
       type: TransitionType.Delete,
       opacity: 0,
-      translate: { y: 280 }
+      translate: { y: this.panelHeight + this.bottomSafeHeight }
     })
   }
 
@@ -248,7 +266,7 @@ export struct EmojiPicker {
     }
     .alignItems(VerticalAlign.Center)
     .margin({ right: 8 })
-    .padding({ top: 16, bottom: 0 })
+    .padding({ top: 16, bottom: this.bottomSafeHeight + 8 })
     .hitTestBehavior(HitTestMode.Transparent)
   }
 
